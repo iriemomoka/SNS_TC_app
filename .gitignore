@@ -1,0 +1,16 @@
+# tc_app/node_modules/
+# tc_app/.expo/
+tc_app/dist/
+tc_app/npm-debug.*
+tc_app/*.jks
+tc_app/*.p8
+tc_app/*.p12
+tc_app/*.key
+tc_app/*.mobileprovision
+tc_app/*.orig.*
+tc_app/web-build/
+
+# macOS
+tc_app/.DS_Store
+
+.vscode/

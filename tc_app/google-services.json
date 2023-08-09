@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "180233638342",
+    "project_id": "totalcloud-c9d60",
+    "storage_bucket": "totalcloud-c9d60.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:180233638342:android:ca589f5c6c8dfc7d7662c7",
+        "android_client_info": {
+          "package_name": "com.totalcloud.totalcloud"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "180233638342-afl93fbitioh1rp9h4j3922f89ef1imo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgAXgKmHYNdCE629GswTrtDa8xvZ4K1D0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "180233638342-afl93fbitioh1rp9h4j3922f89ef1imo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

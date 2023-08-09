@@ -1,0 +1,10 @@
+{
+  "hostType": "lan",
+  "lanType": "ip",
+  "dev": true,
+  "minify": false,
+  "urlRandomness": "xh-3e5",
+  "https": false,
+  "scheme": "exp+totalcloud",
+  "devClient": false
+}

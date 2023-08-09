@@ -1,0 +1,77 @@
+{
+  "expo": {
+    "name": "TC",
+    "slug": "totalcloud",
+    "version": "2.1.4",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "notification": {
+      "icon": "./assets/notificationicon.png"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "jsEngine": "hermes",
+    "ios": {
+      "bundleIdentifier": "com.totalcloud.totalcloud",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "buildNumber": "2.1.4",
+      "infoPlist": {
+        "UIRequiresFullScreen": "YES",
+        "CFBundleDevelopmentRegion": "ja_JP",
+        "NSPhotoLibraryUsageDescription": "プロフィールに写真を登録するのに使用します",
+        "NSCameraUsageDescription": "オンライン通話にカメラを使用します",
+        "NSMicrophoneUsageDescription": "オンライン通話にマイクを使用します",
+        "NSUserTrackingUsageDescription": "「許可」することで表示される広告がユーザーに最適化された内容になります。"
+      },
+      "supportsTablet": true
+    },
+    "android": {
+      "versionCode": 31,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_CONTACTS",
+        "READ_EXTERNAL_STORAGE",
+        "VIBRATE",
+        "com.anddoes.launcher.permission.UPDATE_COUNT",
+        "com.android.launcher.permission.INSTALL_SHORTCUT",
+        "com.google.android.c2dm.permission.RECEIVE",
+        "com.google.android.gms.permission.ACTIVITY_RECOGNITION",
+        "com.google.android.providers.gsf.permission.READ_GSERVICES",
+        "com.htc.launcher.permission.READ_SETTINGS",
+        "com.htc.launcher.permission.UPDATE_SHORTCUT",
+        "com.majeur.launcher.permission.UPDATE_BADGE",
+        "com.sec.android.provider.badge.permission.READ",
+        "com.sec.android.provider.badge.permission.WRITE",
+        "com.sonyericsson.home.permission.BROADCAST_BADGE"
+      ],
+      "package": "com.totalcloud.totalcloud",
+      "googleServicesFile": "./google-services.json"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "17f9fbe4-117d-4572-aaf6-39347ef9f85d"
+      }
+    },
+    "plugins": [
+      "expo-localization",
+      "expo-tracking-transparency"
+    ]
+  }
+}
