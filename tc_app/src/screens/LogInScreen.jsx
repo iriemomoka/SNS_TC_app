@@ -79,12 +79,12 @@ export default function LogInScreen(props) {
   
   useEffect(() => {
     
-    // ios用トラッキング許可
-    if (Platform.OS === 'ios') {
-      (async () => {
-        const { status } = await requestTrackingPermissionsAsync();
-      })();
-    }
+    // // ios用トラッキング許可
+    // if (Platform.OS === 'ios') {
+    //   (async () => {
+    //     const { status } = await requestTrackingPermissionsAsync();
+    //   })();
+    // }
     
     registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
     

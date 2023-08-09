@@ -2330,7 +2330,6 @@ export function MyModal5(props){
       } else {
         setTel(cus.main.tel1)
       }
-      console.log(cus.beginning_communication)
       setTitle(cus.beginning_communication.title)
       setNote(cus.beginning_communication.note)
       

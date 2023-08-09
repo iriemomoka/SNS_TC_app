@@ -283,7 +283,6 @@ export default function TalkScreen(props) {
   // websocket通信(メール届いたら更新)
   route.websocket.onmessage = (message) => {
     let catchmail_flg = JSON.parse( message.data );
-    console.log(catchmail_flg.message)
     
     fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
     {
@@ -597,7 +596,6 @@ export default function TalkScreen(props) {
                         `insert into communication_mst values (?,?,?,?,?,?,?,?,?,?);`,
                         [c.communication_id,c.customer_id,c.speaker,c.time,c.title,c.note,c.line_note,c.file_path,c.status,c.html_flg],
                         () => {
-                          console.log(c.communication_id)
                           console.log("新しいコミュニケーションを追加したよ");
                         },
                         () => {

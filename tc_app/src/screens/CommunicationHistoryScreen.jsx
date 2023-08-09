@@ -1454,6 +1454,7 @@ export default function CommunicationHistoryScreen(props) {
                 setName(text);
               }}
               placeholder="  お客様名検索"
+              placeholderTextColor="#b3b3b3"
             />
             <TouchableOpacity style={styles.buttonContainer} onPress={onSubmit}>
               <Text style={styles.buttonLabel}>検　索</Text>
