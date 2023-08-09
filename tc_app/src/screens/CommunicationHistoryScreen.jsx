@@ -38,11 +38,7 @@ let domain = "https://www.total-cloud.net/";
 
 Notifications.setBadgeCountAsync(0);
 
-
 export default function CommunicationHistoryScreen(props) {
-  if (AppState.currentState === "active") {
-    Notifications.setBadgeCountAsync(0);
-  }
 
   const [isLoading, setLoading] = useState(false);
 
@@ -63,7 +59,16 @@ export default function CommunicationHistoryScreen(props) {
   const [menu, setMenu] = useState(false);
   const deviceScreen = Dimensions.get('window');
 
-  const items = staffs.map((item) => {
+  var items = [];
+
+  const [a, setA] = useState(false);
+
+  const [staff_db, setStaff_db] = useState(false);
+  const [fixed, setFixed] = useState(false);
+
+  const [cus_list, setCus_list] = useState([]);
+
+  var items = staffs.map((item) => {
     return {
       label:
         item.account != "all"
@@ -74,30 +79,44 @@ export default function CommunicationHistoryScreen(props) {
     };
   });
   items.unshift({ label: "担当無し", value: "" });
-
-  const [a, setA] = useState(false);
-
-  const [staff_db, setStaff_db] = useState(false);
-  const [fixed, setFixed] = useState(false);
-
-  const [cus_list, setCus_list] = useState([]);
-
-  navigation.setOptions({
-    headerStyle: !global.fc_flg
-      ? { backgroundColor: "#1d449a", height: 110 }
-      : { backgroundColor: "#fd2c77", height: 110 },
-    headerTitle: () =>
-      !global.fc_flg ? (
-        <Image source={require("../../assets/logo.png")} />
-      ) : (
-        <Image
-          source={require("../../assets/logo_onetop.png")}
-          style={styles.header_img}
-        />
-      ),
-  });
-
+  
   useEffect(() => {
+
+    if (AppState.currentState === "active") {
+      Notifications.setBadgeCountAsync(0);
+    }
+
+    navigation.setOptions({
+      headerStyle: !global.fc_flg
+        ? { backgroundColor: "#1d449a", height: 110 }
+        : { backgroundColor: "#fd2c77", height: 110 },
+      headerTitle: () =>
+        !global.fc_flg ? (
+          <Image source={require("../../assets/logo.png")} />
+        ) : (
+          <Image
+            source={require("../../assets/logo_onetop.png")}
+            style={styles.header_img}
+          />
+        ),
+      headerRight: () => (
+        <View style={{marginRight:15}}>
+          <TouchableOpacity
+            style={{width:60,height:60,justifyContent:'center',alignItems:'center'}}
+            onPress={() => {
+              setMenu(!menu);
+            }}
+          >
+            <Feather
+              name="menu"
+              color="white"
+              size={35}
+            />
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+
     // ※【ヘッダー移転元【変数代入効かないから移動】】※
 
     // ログイン時のみサーバーDB見に行く
@@ -321,27 +340,6 @@ export default function CommunicationHistoryScreen(props) {
       notificationInteractionSubscription.remove();
     };
   }, []);
-
-  
-  // ハンバーガーメニュー
-  navigation.setOptions({
-    headerRight: () => (
-      <View style={{marginRight:15}}>
-        <TouchableOpacity
-          style={{width:60,height:60,justifyContent:'center',alignItems:'center'}}
-          onPress={() => {
-            setMenu(!menu);
-          }}
-        >
-          <Feather
-            name="menu"
-            color="white"
-            size={35}
-          />
-        </TouchableOpacity>
-      </View>
-    ),
-  });
 
   useEffect(() => {
     if (route.notifications && fixed) {
