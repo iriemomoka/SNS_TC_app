@@ -30,7 +30,6 @@
         "NSPhotoLibraryUsageDescription": "プロフィールに写真を登録するのに使用します",
         "NSCameraUsageDescription": "オンライン通話にカメラを使用します",
         "NSMicrophoneUsageDescription": "オンライン通話にマイクを使用します",
-        "NSUserTrackingUsageDescription": "「許可」することで表示される広告がユーザーに最適化された内容になります。"
       },
       "supportsTablet": true
     },
