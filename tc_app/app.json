@@ -29,7 +29,8 @@
         "CFBundleDevelopmentRegion": "ja_JP",
         "NSPhotoLibraryUsageDescription": "プロフィールに写真を登録するのに使用します",
         "NSCameraUsageDescription": "オンライン通話にカメラを使用します",
-        "NSMicrophoneUsageDescription": "オンライン通話にマイクを使用します"
+        "NSMicrophoneUsageDescription": "オンライン通話にマイクを使用します",
+        "NSUserTrackingUsageDescription": "Allow this app to collect app-related data that can be used for tracking you or your device."
       },
       "supportsTablet": true
     },
@@ -65,12 +66,13 @@
     },
     "extra": {
       "eas": {
-        "projectId": "17f9fbe4-117d-4572-aaf6-39347ef9f85d"
+        "projectId": "e3c3717d-cef6-4ef9-9725-53f3cf30d03b"
       }
     },
     "plugins": [
       "expo-localization",
       "expo-tracking-transparency"
-    ]
+    ],
+    "owner": "iriemomoka"
   }
 }

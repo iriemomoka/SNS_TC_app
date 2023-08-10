@@ -1,5 +1,5 @@
 # tc_app/node_modules/
-# tc_app/.expo/
+tc_app/.expo/
 tc_app/dist/
 tc_app/npm-debug.*
 tc_app/*.jks
