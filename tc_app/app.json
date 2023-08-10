@@ -29,7 +29,7 @@
         "CFBundleDevelopmentRegion": "ja_JP",
         "NSPhotoLibraryUsageDescription": "プロフィールに写真を登録するのに使用します",
         "NSCameraUsageDescription": "オンライン通話にカメラを使用します",
-        "NSMicrophoneUsageDescription": "オンライン通話にマイクを使用します",
+        "NSMicrophoneUsageDescription": "オンライン通話にマイクを使用します"
       },
       "supportsTablet": true
     },
