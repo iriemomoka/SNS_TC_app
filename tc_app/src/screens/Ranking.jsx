@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, BackHandler, AppState, KeyboardAvoidingView, ScrollView, Image, Dimensions, Platform, FlatList } from "react-native";
+  StyleSheet, Text, View, LogBox, TouchableOpacity, Alert, BackHandler, AppState, KeyboardAvoidingView, ScrollView, Image, Dimensions, Platform, FlatList } from "react-native";
 import Modal from "react-native-modal";
 import * as Notifications from "expo-notifications";
 import { Feather } from "@expo/vector-icons";
@@ -12,6 +12,8 @@ import Toast from 'react-native-root-toast';
 
 import Loading from "../components/Loading";
 import { db } from '../components/Databace';
+
+LogBox.ignoreAllLogs(true)
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -91,6 +93,8 @@ export default function Ranking(props) {
   
   const [barChart, setBarChart] = useState([0,0,0,0,0,0,0,0,0,0,0,0]);
   
+  const [kaishi, setKaishi] = useState(false);
+
   //**********************************************
   // 
   // 【業務進捗表】 付帯の種類
@@ -583,6 +587,7 @@ export default function Ranking(props) {
     if(testShopIdArray.includes(shop_id)){
       Alert.alert('エラー','テスト店舗は順位取得できません');
       setLoading(false);
+      setKaishi(false);
       return;
     }
 
@@ -638,6 +643,7 @@ export default function Ranking(props) {
     const gwdRank =  await getWorkDataRanking(DATA,rankData,month_);
 
     setLoading(false);
+    setKaishi(false);
 
   }
 
@@ -2216,8 +2222,8 @@ export default function Ranking(props) {
 
     return(
       <View style={[styles.rankdataList,index==4&&{borderBottomWidth:0}]}>
-        <Text style={styles.rankdataLabel}>{item["date"].substring(0, 10)}</Text>
-        <Text style={styles.rankdataLabel}>{item["getdate"]}</Text>
+        <Text style={styles.rankdataLabel1}>{item["date"].substring(0, 10)}</Text>
+        <Text style={styles.rankdataLabel2}>{item["getdate"]}</Text>
         <Text style={styles.rankdataData}>{data}</Text>
         <Text style={styles.rankdataRank}>{rank}位</Text>
       </View>
@@ -2254,11 +2260,74 @@ export default function Ranking(props) {
         keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 70}
       >
         <Loading isLoading={isLoading} />
+        <Toast
+          position={0}
+          shadow={true}
+          animation={true}
+          backgroundColor={'#333333'}
+          visible={kaishi}
+        >
+          売上順位集計中{"\n"}1～2分程度かかります
+        </Toast>
+        <View style={{width:'90%',alignSelf: "center",marginBottom:20,zIndex:999 }} >
+          <View style={{ flexDirection: "row",alignItems:'center' }}>
+            <Text style={styles.title}>売上順位</Text>
+            <Text style={styles.sub_title}>{date?date+' 時点':''}</Text>
+          </View>
+          <View style={{ flexDirection: "row" }}>
+            <DropDownPicker
+              style={styles.dropDown}
+              containerStyle={{ width: 160 }}
+              dropDownContainerStyle={[styles.dropDownContainer,{width:160}]}
+              open={open_month}
+              value={month}
+              items={months}
+              setOpen={setOpen_month}
+              setValue={setMonth}
+              dropDownDirection={"BOTTOM"}
+            />
+            <TouchableOpacity
+              onPress={() => {
+                Alert.alert(
+                  '確認',
+                  '売上順位を集計しますか？',
+                  [
+                    {
+                      text: "はい",
+                      onPress: async() => {
+                        // Toast.show('集計処理中は広告が流れます\nそのままお待ちください', {
+                        //   duration: Toast.durations.LONG,
+                        //   position: 0,
+                        //   shadow: true,
+                        //   animation: true,
+                        //   backgroundColor:'#333333',
+                        //   opacity:0.6,
+                        // });
+                        setKaishi(true);
+                        setLoading(true);
+                        // Reward();
+                        const getR = await getRanking(true);
+                        await getRankingAll(getR);
+                      }
+                    },
+                    {
+                      text: "いいえ",
+                    },
+                  ]
+                )
+              }}
+              style={styles.btn}
+            >
+              <Text style={styles.btn_text}>集 計</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
         <ScrollView style={[
           styles.form,
           Platform.OS === "ios" ? {} : {flex:1}
           ]}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={Platform.OS === "ios"&&{ paddingBottom: 120 }}
         >
           <GestureRecognizer
             onSwipeRight={() => {
@@ -2266,56 +2335,6 @@ export default function Ranking(props) {
             }}
             style={{ flex: 1 }}
           >
-            <View style={{ flexDirection: "row",zIndex:997,alignItems:'center' }}>
-              <Text style={styles.title}>売上順位</Text>
-              <Text style={styles.sub_title}>{date?date+' 時点':''}</Text>
-            </View>
-            <View style={{ flexDirection: "row" }}>
-              <DropDownPicker
-                style={styles.dropDown}
-                containerStyle={{ width: 160 }}
-                dropDownContainerStyle={[styles.dropDownContainer,{width:160}]}
-                open={open_month}
-                value={month}
-                items={months}
-                setOpen={setOpen_month}
-                setValue={setMonth}
-                dropDownDirection={"BOTTOM"}
-              />
-              <TouchableOpacity
-                onPress={() => {
-                  Alert.alert(
-                    '確認',
-                    '売上順位を集計しますか？',
-                    [
-                      {
-                        text: "はい",
-                        onPress: async() => {
-                          // Toast.show('集計処理中は広告が流れます\nそのままお待ちください', {
-                          //   duration: Toast.durations.LONG,
-                          //   position: 0,
-                          //   shadow: true,
-                          //   animation: true,
-                          //   backgroundColor:'#333333',
-                          //   opacity:0.6,
-                          // });
-                          setLoading(true);
-                          // Reward();
-                          const getR = await getRanking(true);
-                          await getRankingAll(getR);
-                        }
-                      },
-                      {
-                        text: "いいえ",
-                      },
-                    ]
-                  )
-                }}
-                style={styles.btn}
-              >
-                <Text style={styles.btn_text}>集 計</Text>
-              </TouchableOpacity>
-            </View>
             <View style={styles.total}>
               <View style={styles.overall}>
                 <Text style={styles.overall_text}>店舗売上順位</Text>
@@ -2333,7 +2352,7 @@ export default function Ranking(props) {
                 renderItem={rankItem}
               />
             </View>
-            <View style={{ flexDirection: "row",zIndex:997,alignItems:'center' }}>
+            <View style={{ flexDirection: "row",alignItems:'center' }}>
               <Text style={styles.title}>売上年間推移</Text>
               <Text style={styles.sub_title}>総入金(税抜)</Text>
               <Text style={styles.year}>{year}年</Text>
@@ -2368,8 +2387,8 @@ export default function Ranking(props) {
                   ):(
                     <>
                     <View style={styles.rankdataListTop}>
-                      <Text style={[styles.rankdataLabel,styles.rankdataTop]}>取得日</Text>
-                      <Text style={[styles.rankdataLabel,styles.rankdataTop]}>対象月</Text>
+                      <Text style={[styles.rankdataLabel1,styles.rankdataTop]}>取得日</Text>
+                      <Text style={[styles.rankdataLabel2,styles.rankdataTop]}>対象月</Text>
                       <Text style={[styles.rankdataData,styles.rankdataTop]}>{record.label}</Text>
                       <Text style={[styles.rankdataRank,styles.rankdataTop]}>順位</Text>
                     </View>
@@ -2435,7 +2454,7 @@ const styles = StyleSheet.create({
   form: {
     width: "90%",
     alignSelf: "center",
-    flexGrow: 1
+    flexGrow: 1,
   },
   made: {
     fontSize: 14,
@@ -2496,7 +2515,6 @@ const styles = StyleSheet.create({
   },
   total: {
     flexDirection: "row",
-    marginTop:20,
     alignItems:'center'
   },
   overall: {
@@ -2561,23 +2579,29 @@ const styles = StyleSheet.create({
     fontSize:14,
     color:'#C8C8C8',
   },
-  rankdataLabel: {
-    fontSize:14,
+  rankdataLabel1: {
+    fontSize:12,
     color:'#202e53',
-    width:'28%'
+    width:'30%'
+  },
+  rankdataLabel2: {
+    fontSize:12,
+    color:'#202e53',
+    width:'25%'
   },
   rankdataData: {
     fontSize:14,
     color:'#4d4d4d',
     marginLeft:'auto',
     textAlign:'right',
-    width:'28%'
+    width:'30%'
   },
   rankdataRank: {
     fontSize:14,
     color:'#4d4d4d',
     marginLeft:20,
-    width:'16%'
+    width:'15%',
+    textAlign:'center'
   },
   year: {
     fontSize:16,
