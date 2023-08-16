@@ -70,7 +70,15 @@
     },
     "plugins": [
       "expo-localization",
-      "expo-tracking-transparency"
+      "expo-tracking-transparency",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
     ],
     "owner": "iriemomoka"
   }

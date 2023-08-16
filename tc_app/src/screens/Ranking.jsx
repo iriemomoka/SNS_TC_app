@@ -9,6 +9,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { BarChart } from "react-native-chart-kit";
 // import { AdMobRewarded } from 'expo-ads-admob';
 import Toast from 'react-native-root-toast';
+import { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
 
 import Loading from "../components/Loading";
 import { db } from '../components/Databace';
@@ -18,6 +19,10 @@ LogBox.ignoreAllLogs(true)
 const screenWidth = Dimensions.get('window').width;
 
 let domain = "https://www.total-cloud.net/";
+
+const rewarded = RewardedAd.createForAdRequest(TestIds.REWARDED, {
+  requestNonPersonalizedAdsOnly: true
+});
 
 export default function Ranking(props) {
   
@@ -2252,6 +2257,28 @@ export default function Ranking(props) {
   //   };
   // }, []);
 
+  useEffect(() => {
+
+    const unsubscribeLoaded = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {});
+
+    const unsubscribeEarned = rewarded.addAdEventListener(
+      RewardedAdEventType.EARNED_REWARD,
+      reward => {
+        console.log('User earned reward of ', reward);
+      },
+    );
+
+    // Start loading the rewarded ad straight away
+    rewarded.load();
+
+    // Unsubscribe from events on unmount
+    return () => {
+      unsubscribeLoaded();
+      unsubscribeEarned();
+    };
+
+  }, []);
+
   return (
     <>
       <KeyboardAvoidingView
@@ -2295,6 +2322,7 @@ export default function Ranking(props) {
                     {
                       text: "はい",
                       onPress: async() => {
+                        rewarded.show();
                         // Toast.show('集計処理中は広告が流れます\nそのままお待ちください', {
                         //   duration: Toast.durations.LONG,
                         //   position: 0,
@@ -2303,11 +2331,11 @@ export default function Ranking(props) {
                         //   backgroundColor:'#333333',
                         //   opacity:0.6,
                         // });
-                        setKaishi(true);
-                        setLoading(true);
-                        // Reward();
-                        const getR = await getRanking(true);
-                        await getRankingAll(getR);
+                        // setKaishi(true);
+                        // setLoading(true);
+                        // // Reward();
+                        // const getR = await getRanking(true);
+                        // await getRankingAll(getR);
                       }
                     },
                     {
