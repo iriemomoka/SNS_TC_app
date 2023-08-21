@@ -7,8 +7,9 @@ import { Feather } from '@expo/vector-icons';
 import Toast from 'react-native-root-toast';
 import VersionCheck from 'react-native-version-check-expo'
 import * as SQLite from "expo-sqlite";
-import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 
 import Loading from '../components/Loading';
 import { CreateDB, GetDB, db} from '../components/Databace';
@@ -38,7 +39,7 @@ let domain = 'https://www.total-cloud.net/';
 export default function LogInScreen(props) {
 
   // アプリの最新バージョンを取得する実装
-  const latestAppVersion = '2.1.6';
+  const latestAppVersion = '2.1.7';
   
   // 現在利用しているアプリのバージョンを取得する
   const appVersion = VersionCheck.getCurrentVersion();
@@ -79,12 +80,12 @@ export default function LogInScreen(props) {
   
   useEffect(() => {
     
-    // // ios用トラッキング許可
-    // if (Platform.OS === 'ios') {
-    //   (async () => {
-    //     const { status } = await requestTrackingPermissionsAsync();
-    //   })();
-    // }
+    // ios用トラッキング許可
+    if (Platform.OS === 'ios') {
+      (async () => {
+        const { status } = await requestTrackingPermissionsAsync();
+      })();
+    }
     
     registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
     
@@ -796,7 +797,7 @@ function delete_db(){
     let token;
     let experienceId = undefined;
     
-    if (Constants.isDevice) {
+    if (Device.isDevice) {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
       

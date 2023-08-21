@@ -1,11 +1,11 @@
 version: "3"
 services:
-  expo_sample:
-    container_name: expo_sample
+  tcapp:
+    container_name: tcapp
     tty: true
     build: .
     volumes:
-      - .:/home/sample_user
+      - .:/home
     environment:
       - REACT_NATIVE_PACKAGER_HOSTNAME=${LOCAL_IP_ADDR}
     ports:

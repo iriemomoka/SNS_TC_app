@@ -1,3 +1,3 @@
-expo_sample:
+tcapp:
 	docker-compose up -d
-	docker-compose exec expo_sample bash --login
+	docker-compose exec tcapp bash --login

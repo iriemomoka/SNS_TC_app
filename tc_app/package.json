@@ -70,7 +70,8 @@
     "react-native-version-check-expo": "^3.4.2",
     "react-native-web": "~0.18.11",
     "react-native-webview": "11.26.0",
-    "react-navigation": "^4.4.4"
+    "react-navigation": "^4.4.4",
+    "expo-device": "~5.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

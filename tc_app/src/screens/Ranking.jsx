@@ -9,7 +9,11 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { BarChart } from "react-native-chart-kit";
 // import { AdMobRewarded } from 'expo-ads-admob';
 import Toast from 'react-native-root-toast';
-import { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
+// import {
+//   RewardedInterstitialAd,
+//   RewardedAdEventType,
+//   TestIds,
+// } from 'react-native-google-mobile-ads';
 
 import Loading from "../components/Loading";
 import { db } from '../components/Databace';
@@ -20,9 +24,13 @@ const screenWidth = Dimensions.get('window').width;
 
 let domain = "https://www.total-cloud.net/";
 
-const rewarded = RewardedAd.createForAdRequest(TestIds.REWARDED, {
-  requestNonPersonalizedAdsOnly: true
-});
+// const adUnitId = Platform.OS === 'ios'
+//   ? 'ca-app-pub-1369937549147272~9208246342'  // ios
+//   : 'ca-app-pub-1369937549147272~4339063045'; // android
+
+// const rewardedInterstitial = RewardedInterstitialAd.createForAdRequest(adUnitId, {
+//   requestNonPersonalizedAdsOnly: true,
+// });
 
 export default function Ranking(props) {
   
@@ -2257,27 +2265,28 @@ export default function Ranking(props) {
   //   };
   // }, []);
 
-  useEffect(() => {
+  // useEffect(() => {
+    
+  //   const unsubscribeLoaded = rewardedInterstitial.addAdEventListener(
+  //     RewardedAdEventType.LOADED,
+  //     () => {},
+  //   );
 
-    const unsubscribeLoaded = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {});
+  //   const unsubscribeEarned = rewardedInterstitial.addAdEventListener(
+  //     RewardedAdEventType.EARNED_REWARD,
+  //     reward => {
+  //       console.log('広告が終了したらここに来ます')
+  //     },
+  //   );
 
-    const unsubscribeEarned = rewarded.addAdEventListener(
-      RewardedAdEventType.EARNED_REWARD,
-      reward => {
-        console.log('User earned reward of ', reward);
-      },
-    );
+  //   rewardedInterstitial.load();
 
-    // Start loading the rewarded ad straight away
-    rewarded.load();
+  //   return () => {
+  //     unsubscribeLoaded();
+  //     unsubscribeEarned();
+  //   };
 
-    // Unsubscribe from events on unmount
-    return () => {
-      unsubscribeLoaded();
-      unsubscribeEarned();
-    };
-
-  }, []);
+  // }, []);
 
   return (
     <>
@@ -2287,7 +2296,7 @@ export default function Ranking(props) {
         keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 70}
       >
         <Loading isLoading={isLoading} />
-        <Toast
+        {/* <Toast
           position={0}
           shadow={true}
           animation={true}
@@ -2295,7 +2304,7 @@ export default function Ranking(props) {
           visible={kaishi}
         >
           売上順位集計中{"\n"}1～2分程度かかります
-        </Toast>
+        </Toast> */}
         <View style={{width:'90%',alignSelf: "center",marginBottom:20,zIndex:999 }} >
           <View style={{ flexDirection: "row",alignItems:'center' }}>
             <Text style={styles.title}>売上順位</Text>
@@ -2322,20 +2331,19 @@ export default function Ranking(props) {
                     {
                       text: "はい",
                       onPress: async() => {
-                        rewarded.show();
-                        // Toast.show('集計処理中は広告が流れます\nそのままお待ちください', {
-                        //   duration: Toast.durations.LONG,
-                        //   position: 0,
-                        //   shadow: true,
-                        //   animation: true,
-                        //   backgroundColor:'#333333',
-                        //   opacity:0.6,
-                        // });
-                        // setKaishi(true);
-                        // setLoading(true);
-                        // // Reward();
-                        // const getR = await getRanking(true);
-                        // await getRankingAll(getR);
+                        Toast.show('集計処理中は広告が流れます\nそのままお待ちください', {
+                          duration: Toast.durations.LONG,
+                          position: 0,
+                          shadow: true,
+                          animation: true,
+                          backgroundColor:'#333333',
+                          opacity:0.6,
+                        });
+                        setKaishi(true);
+                        setLoading(true);
+                        // rewardedInterstitial.show();
+                        const getR = await getRanking(true);
+                        await getRankingAll(getR);
                       }
                     },
                     {

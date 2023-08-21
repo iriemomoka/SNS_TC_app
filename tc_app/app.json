@@ -2,7 +2,7 @@
   "expo": {
     "name": "TC",
     "slug": "totalcloud",
-    "version": "2.1.6",
+    "version": "2.1.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -23,18 +23,19 @@
     "ios": {
       "bundleIdentifier": "com.totalcloud.totalcloud",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "2.1.6",
+      "buildNumber": "2.1.7",
       "infoPlist": {
         "UIRequiresFullScreen": "YES",
         "CFBundleDevelopmentRegion": "ja_JP",
         "NSPhotoLibraryUsageDescription": "プロフィールに写真を登録するのに使用します",
         "NSCameraUsageDescription": "オンライン通話にカメラを使用します",
-        "NSMicrophoneUsageDescription": "オンライン通話にマイクを使用します"
+        "NSMicrophoneUsageDescription": "オンライン通話にマイクを使用します",
+        "NSUserTrackingUsageDescription": "「許可」することで表示される広告がユーザーに最適化された内容になります。"
       },
       "supportsTablet": true
     },
     "android": {
-      "versionCode": 33,
+      "versionCode": 34,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
@@ -81,5 +82,9 @@
       ]
     ],
     "owner": "iriemomoka"
+  },
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-1369937549147272~4339063045",
+    "ios_app_id": "ca-app-pub-1369937549147272~9208246342"
   }
 }
