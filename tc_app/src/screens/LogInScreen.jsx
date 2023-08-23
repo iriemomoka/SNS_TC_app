@@ -39,7 +39,7 @@ let domain = 'https://www.total-cloud.net/';
 export default function LogInScreen(props) {
 
   // アプリの最新バージョンを取得する実装
-  const latestAppVersion = '2.1.7';
+  const latestAppVersion = '2.2.0';
   
   // 現在利用しているアプリのバージョンを取得する
   const appVersion = VersionCheck.getCurrentVersion();
@@ -77,15 +77,8 @@ export default function LogInScreen(props) {
         (<Image source={require('../../assets/logo_onetop.png')} style={styles.header_img} />)
     });
   }, [fc_flg]);
-  
+
   useEffect(() => {
-    
-    // ios用トラッキング許可
-    if (Platform.OS === 'ios') {
-      (async () => {
-        const { status } = await requestTrackingPermissionsAsync();
-      })();
-    }
     
     registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
     
@@ -797,6 +790,10 @@ function delete_db(){
     let token;
     let experienceId = undefined;
     
+    if (Platform.OS === 'ios') {
+      const { status } = await requestTrackingPermissionsAsync();
+    }
+
     if (Device.isDevice) {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;

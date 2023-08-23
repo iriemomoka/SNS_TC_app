@@ -25,8 +25,8 @@ const screenWidth = Dimensions.get('window').width;
 let domain = "https://www.total-cloud.net/";
 
 // const adUnitId = Platform.OS === 'ios'
-//   ? 'ca-app-pub-1369937549147272~9208246342'  // ios
-//   : 'ca-app-pub-1369937549147272~4339063045'; // android
+//   ? 'ca-app-pub-1369937549147272/4726650514'  // ios
+//   : 'ca-app-pub-1369937549147272/4674679628'; // android
 
 // const rewardedInterstitial = RewardedInterstitialAd.createForAdRequest(adUnitId, {
 //   requestNonPersonalizedAdsOnly: true,

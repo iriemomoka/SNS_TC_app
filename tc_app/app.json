@@ -2,7 +2,7 @@
   "expo": {
     "name": "TC",
     "slug": "totalcloud",
-    "version": "2.1.7",
+    "version": "2.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -23,7 +23,7 @@
     "ios": {
       "bundleIdentifier": "com.totalcloud.totalcloud",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "2.1.7",
+      "buildNumber": "2.2.0",
       "infoPlist": {
         "UIRequiresFullScreen": "YES",
         "CFBundleDevelopmentRegion": "ja_JP",
@@ -35,7 +35,7 @@
       "supportsTablet": true
     },
     "android": {
-      "versionCode": 34,
+      "versionCode": 35,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
@@ -71,7 +71,12 @@
     },
     "plugins": [
       "expo-localization",
-      "expo-tracking-transparency",
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "This identifier will be used to deliver personalized ads to you."
+        }
+      ],
       [
         "expo-build-properties",
         {
