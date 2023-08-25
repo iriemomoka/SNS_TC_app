@@ -917,7 +917,6 @@ function logout() {
           onPress: () => {
             
             Delete_staff_db();
-            // route.websocket.close()
             
             if(global.sp_token && global.sp_id){
               

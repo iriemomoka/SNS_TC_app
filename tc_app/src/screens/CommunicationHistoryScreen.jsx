@@ -277,7 +277,6 @@ export default function CommunicationHistoryScreen(props) {
     })
       .then((response) => response.json())
       .then((json) => {
-        console.log("19:" + json.bell_count.cnt);
         if (json.bell_count.cnt != "0") {
           setBellcount(json.bell_count.cnt);
         } else {
@@ -1346,6 +1345,152 @@ export default function CommunicationHistoryScreen(props) {
     setA(false);
   }
 
+  function Delete_staff_db(){
+    
+    new Promise((resolve, reject)=>{
+      db.transaction((tx) => {
+      
+        // スタッフ
+        tx.executeSql(
+          `delete from staff_mst;`,  
+          [],
+          () => {console.log("delete staff_mst OK");},
+          () => {console.log("delete staff_mst 失敗");}
+        );
+        // スタッフ一覧
+        tx.executeSql(
+          `delete from staff_list;`,
+          [],
+          () => {console.log("staff_list 削除");},
+          () => {console.log("失敗");}
+        );
+        // お客様
+        tx.executeSql(
+          `delete from customer_mst;`,
+          [],
+          () => {console.log("customer_mst 削除");},
+          () => {console.log("失敗");}
+        );
+        // コミュニケーション履歴
+        tx.executeSql(
+          `delete from communication_mst;`,
+          [],
+          () => {console.log("communication_mst 削除");},
+          () => {console.log("失敗");}
+        );
+        // 定型文
+        tx.executeSql(
+          `delete from fixed_mst;`,
+          [],
+          () => {console.log("fixed_mst 削除");},
+          () => {console.log("失敗");}
+        );
+  
+        // スタッフプロフィール
+        tx.executeSql(
+          `drop table staff_profile;`,
+          [],
+          () => {console.log("staff_profile テーブル削除");},
+          () => {console.log("staff_profile テーブル削除失敗");}
+        );
+        
+        // ランキング
+        tx.executeSql(
+          `drop table ranking_mst;`,
+          [],
+          () => {console.log("ranking_mst テーブル削除");},
+          () => {console.log("ranking_mst テーブル削除失敗");}
+        );
+        
+        // 売上グラフ
+        tx.executeSql(
+          `drop table black_sales_mst;`,
+          [],
+          () => {console.log("black_sales_mst テーブル削除");},
+          () => {console.log("black_sales_mst テーブル削除失敗");}
+        );
+  
+      // →→→ 駅・沿線、エリアは残す
+      
+        resolve();
+      })
+      
+    });
+  
+  }
+    
+  function logout() {
+    
+    Alert.alert(
+        "ログアウトしますか？",
+        "",
+        [
+          {
+            text: "はい",
+            onPress: () => {
+              
+              Delete_staff_db();
+              // route.websocket.close()
+              
+              if(global.sp_token && global.sp_id){
+                
+                // サーバーに情報送信して、DBから削除
+                fetch(domain+'app/app_system/set_staff_app_token.php', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    id: global.sp_id,
+                    token: global.sp_token,
+                    del_flg:1,
+                    fc_flg: global.fc_flg
+                  }),
+                })
+                
+              }
+              
+              if(global.fc_flg){
+                
+                let formData = new FormData();
+                formData.append('fc_logout',1);
+                
+                fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+                {
+                  method: 'POST',
+                  header: {
+                    'content-type': 'multipart/form-data',
+                  },
+                  body: formData
+                })
+                .then((response) => response.json())
+                .then((json) => {
+                  console.log(json);
+                })
+                .catch((error) => {
+                  console.log(error)
+                })
+                
+              }
+              
+              global.sp_token = ''; // スマホトークン
+              global.sp_id = '';    // ログインID
+              global.fc_flg = '';   // fcフラグ
+              
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'LogIn' }],
+              });
+            }
+          },
+          {
+            text: "いいえ",
+          },
+        ]
+      );
+    
+  }
+  
   function headerRight() {
     return (
       <View style={{backgroundColor:'#fff',flex:1,paddingTop:25}}>
@@ -1426,6 +1571,17 @@ export default function CommunicationHistoryScreen(props) {
           />
           <Text style={styles.menutext}>売上順位</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menulist}
+          onPress={() => logout()}
+        >
+          <MaterialCommunityIcons
+            name="logout"
+            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            size={35}
+          />
+          <Text style={styles.menutext}>ログアウト</Text>
+        </TouchableOpacity>
       </View>
     )
   }
@@ -1441,7 +1597,6 @@ export default function CommunicationHistoryScreen(props) {
       openMenuOffset={deviceScreen.width * 0.5}
     >
       <View style={styles.container}>
-        <View style={menu&&styles.container2}></View>
         <Loading isLoading={isLoading} />
         <View style={styles.search}>
           <View style={styles.searchinner}>
@@ -1459,87 +1614,90 @@ export default function CommunicationHistoryScreen(props) {
             </TouchableOpacity>
           </View>
         </View>
-        <DropDownPicker
-          style={styles.DropDown}
-          dropDownContainerStyle={styles.dropDownContainer}
-          open={open}
-          value={staff_value}
-          items={items}
-          setOpen={setOpen}
-          setValue={setStaff_Value}
-          placeholder="▼　担当者"
-          zIndex={999}
-          onClose={() => {
-            setA("a");
-          }}
-        />
-        <FlatList
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          initialNumToRender={10}
-          data={memos}
-          renderItem={({ item }) => {
-            if (!item.del_flg) {
-              return (
-                <TouchableOpacity
-                  style={styles.ListItem}
-                  onPress={() => {
-                    navigation.reset({
-                      index: 0,
-                      routes: [
-                        {
-                          name: "TalkScreen",
-                          params: route.params,
-                          customer: item.customer_id,
-                          websocket: route.websocket,
-                          station: route.station,
-                          address: route.address,
-                          profile: route.profile,
-                          staff: staffs,
-                          fixed: fixed,
-                          cus_name: item.name,
-                        },
-                      ],
-                    });
-                  }}
-                >
-                  <View style={styles.ListInner}>
-                    <View style={{ flexDirection: "row" }}>
-                      <Text
-                        style={
-                          item.status == "未対応"
-                            ? { color: "red", fontSize: 18 }
-                            : { display: "none" }
-                        }
-                      >
-                        ●
+        <View style={{zIndex: 500}}>
+          <DropDownPicker
+            style={styles.DropDown}
+            dropDownContainerStyle={styles.dropDownContainer}
+            open={open}
+            value={staff_value}
+            items={items}
+            setOpen={setOpen}
+            setValue={setStaff_Value}
+            placeholder="▼　担当者"
+            onClose={() => {
+              setA("a");
+            }}
+          />
+        </View>
+        <View style={{zIndex: 100}}>
+          <FlatList
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            initialNumToRender={10}
+            data={memos}
+            renderItem={({ item }) => {
+              if (!item.del_flg) {
+                return (
+                  <TouchableOpacity
+                    style={styles.ListItem}
+                    onPress={() => {
+                      navigation.reset({
+                        index: 0,
+                        routes: [
+                          {
+                            name: "TalkScreen",
+                            params: route.params,
+                            customer: item.customer_id,
+                            websocket: route.websocket,
+                            station: route.station,
+                            address: route.address,
+                            profile: route.profile,
+                            staff: staffs,
+                            fixed: fixed,
+                            cus_name: item.name,
+                          },
+                        ],
+                      });
+                    }}
+                  >
+                    <View style={styles.ListInner}>
+                      <View style={{ flexDirection: "row" }}>
+                        <Text
+                          style={
+                            item.status == "未対応"
+                              ? { color: "red", fontSize: 18 }
+                              : { display: "none" }
+                          }
+                        >
+                          ●
+                        </Text>
+                        <Text style={styles.name} numberOfLines={1}>
+                          {item.name
+                            ? item.name.length < 10
+                              ? item.name
+                              : item.name.substring(0, 10) + "..."
+                            : ""}
+                        </Text>
+                      </View>
+                      <Text style={styles.date}>
+                        {item.time ? item.time.slice(0, -3) : ""}
                       </Text>
-                      <Text style={styles.name} numberOfLines={1}>
-                        {item.name
-                          ? item.name.length < 10
-                            ? item.name
-                            : item.name.substring(0, 10) + "..."
-                          : ""}
+                      <Text style={styles.message} numberOfLines={1}>
+                        {item.title === "スタンプ"
+                          ? "スタンプを送信しました"
+                          : !item.note
+                          ? item.title
+                          : item.note}
                       </Text>
                     </View>
-                    <Text style={styles.date}>
-                      {item.time ? item.time.slice(0, -3) : ""}
-                    </Text>
-                    <Text style={styles.message} numberOfLines={1}>
-                      {item.title === "スタンプ"
-                        ? "スタンプを送信しました"
-                        : !item.note
-                        ? item.title
-                        : item.note}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            }
-          }}
-          keyExtractor={(item) => `${item.customer_id}`}
-        />
+                  </TouchableOpacity>
+                );
+              }
+            }}
+            keyExtractor={(item) => `${item.customer_id}`}
+          />
+        </View>
       </View>
     </SideMenu>
   );
@@ -1554,24 +1712,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor:'#f1f1f1'
   },
-  container2: {
-    flex: 1,
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    zIndex: 1000,
-  },
   search: {
-    zIndex: 100,
     backgroundColor: "#f1f1f1",
-    height: 120,
   },
   searchinner: {
     margin: 10,
@@ -1581,24 +1723,20 @@ const styles = StyleSheet.create({
     width: "75%",
     height: 48,
     paddingHorizontal: 10,
-    marginBottom: 10,
     borderColor: "#dddddd",
     borderWidth: 1,
     backgroundColor: "#ffffff",
   },
   DropDown: {
-    position: "absolute",
-    top: -60,
     width: 200,
     fontSize: 16,
     height: 40,
-    margin: 10,
+    marginLeft: 10,
+    marginBottom:20
   },
   dropDownContainer: {
     width: 200,
-    position: "absolute",
-    top: -22,
-    margin: 10,
+    marginLeft: 10,
   },
   buttonContainer: {
     backgroundColor: "#b3b3b3",

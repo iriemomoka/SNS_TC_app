@@ -105,6 +105,7 @@ export default function Ranking(props) {
   const [rankdata, setRankdata] = useState([]);
   
   const [barChart, setBarChart] = useState([0,0,0,0,0,0,0,0,0,0,0,0]);
+  const [barChart_flg, setBarChart_flg] = useState(false);
   
   const [kaishi, setKaishi] = useState(false);
 
@@ -231,7 +232,7 @@ export default function Ranking(props) {
       const dbRanking = await getDBRanking(month_);
       const dbBarChart = await getDBBarChart(month_);
       
-      if (dbRanking && dbBarChart) {
+      if (dbRanking) {
         console.log('DBデータあり');
         setLoading(false);
         return;
@@ -275,8 +276,6 @@ export default function Ranking(props) {
     scopeData_C = DATA["gwp"]["customer"];           // 業務進捗データ(顧客情報)
     scopeData_O = await get_other_data(DATA["god"]); // 他業者付け等その他売上データ
     scopeData_R = DATA["grc"]&&DATA["grc"]["data"];  // 反響数
-    scopeData_B = DATA["all_gwp"];                   // 売上月間データ
-    scopeData_A = DATA["all_god"];                   // 他業者付け等その他売上月別データ
 
     var staff_id = route.params.account;
 
@@ -348,11 +347,8 @@ export default function Ranking(props) {
         );
       });
     }
-
-    // 売上月間データを集計する
-    await black_Count(staff_id);
     
-    setLoading(false);
+    if (!flg) setLoading(false);
 
     return result;
   }
@@ -370,7 +366,7 @@ export default function Ranking(props) {
               resolve(false); // 空だった場合
             } else {
               const data = rows._array[0];
-
+              setBarChart_flg(true);
               setBarChart([
                 data["Jan"],
                 data["Feb"],
@@ -636,7 +632,7 @@ export default function Ranking(props) {
           resolve(json);
         })
         .catch((error) => {
-          // console.log(error);
+          console.log(error);
           resolve(false);
         });
       })
@@ -651,6 +647,12 @@ export default function Ranking(props) {
       setLoading(false);
       return;
     }
+
+    scopeData_B = DATA["all_gwp"]; // 売上月間データ
+    scopeData_A = DATA["all_god"]; // 他業者付け等その他売上月別データ
+
+    // 売上月間データを集計する
+    await black_Count(staff_id);
 
     var staff_id = route.params.account;
     const gwdRank =  await getWorkDataRanking(DATA,rankData,month_);
@@ -1146,6 +1148,8 @@ export default function Ranking(props) {
 
       Object.keys(list).forEach(function (i) {
         var v = list[i];
+
+        if (other_total[v["staff"]] == undefined) return;
 
         // 種別が数値になっているので文字に変換 & 売上金額の編集
         var reform_type = "";
@@ -2019,7 +2023,7 @@ export default function Ranking(props) {
   function rev_Count(key){
 
     if (!scopeData_R) return 0;
-
+    
     // 反響数
     var countArray = {
       rev: 0,
@@ -2033,19 +2037,23 @@ export default function Ranking(props) {
 
     var salesArray = scopeData_C[key];
     Object.keys(salesArray).forEach(function (sales_type) {
-      var customerArray = salesArray[sales_type];
-      Object.keys(customerArray).forEach(function (i) {
-        if (sales_type == "coming") {
+      if (sales_type == "coming") {
+        var customerArray = salesArray[sales_type];
+        Object.keys(customerArray).forEach(function (i) {
           var v = customerArray[i];
           if (v["campany_device"] == '反響') {
             countArray["comrev"] += 1;
           }
-        }
-      });
+        });
+      }
     });
 
-		let rate = Number(Math.round((countArray["comrev"] / countArray["rev"]) * 1000) / 10);
-		rate = rate ? rate : 0;
+    let rate = 0;
+
+    if (countArray["rev"] !== 0) {
+      rate = Number(Math.round((countArray["comrev"] / countArray["rev"]) * 1000) / 10);
+      rate = rate ? rate : 0;
+    }
 
     return rate;
 
@@ -2086,6 +2094,7 @@ export default function Ranking(props) {
     }
 
     setBarChart(obj);
+    setBarChart_flg(true);
 
     // DBに登録
     db.transaction(tx => {
@@ -2341,6 +2350,10 @@ export default function Ranking(props) {
                         });
                         setKaishi(true);
                         setLoading(true);
+                        
+                        const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+                        await _sleep(1500);
+
                         // rewardedInterstitial.show();
                         const getR = await getRanking(true);
                         await getRankingAll(getR);
@@ -2371,110 +2384,120 @@ export default function Ranking(props) {
             }}
             style={{ flex: 1 }}
           >
-            <View style={styles.total}>
-              <View style={styles.overall}>
-                <Text style={styles.overall_text}>店舗売上順位</Text>
+            <TouchableOpacity activeOpacity={1}>
+              <View style={styles.total}>
+                <View style={styles.overall}>
+                  <Text style={styles.overall_text}>店舗売上順位</Text>
+                </View>
+                <Text style={styles.overallRank}>{overall}位 /</Text>
+                <Text style={styles.overallRank2}> {all}人中</Text>
               </View>
-              <Text style={styles.overallRank}>{overall}位 /</Text>
-              <Text style={styles.overallRank2}> {all}人中</Text>
-            </View>
-            <View style={{marginTop:10}}>
-              <Text style={styles.made}> {made}</Text>
-            </View>
-            <View style={{width:'80%',alignSelf:'center',marginBottom:20}}>
-              <FlatList
-                initialNumToRender={7}
-                data={rank}
-                renderItem={rankItem}
-              />
-            </View>
-            <View style={{ flexDirection: "row",alignItems:'center' }}>
-              <Text style={styles.title}>売上年間推移</Text>
-              <Text style={styles.sub_title}>総入金(税抜)</Text>
-              <Text style={styles.year}>{year}年</Text>
-            </View>
-            <Modal
-              isVisible={isVisible}
-              swipeDirection={['up']}
-              onSwipeComplete={() => { setVisible(false) }}
-              animationInTiming={300}
-              animationOutTiming={500}
-              animationIn={'slideInDown'}
-              animationOut={'slideOutUp'}
-              propagateSwipe={true}
-              style={{alignItems: 'center'}}
-              backdropOpacity={0.5}
-              onBackdropPress={() => { setVisible(false); }}
-            >
-              <View style={styles.modal}>
-                <TouchableOpacity
-                  style={styles.close}
-                  onPress={() => { setVisible(false); }}
-                >
-                  <Feather name="x-circle" color="gray" size={35} />
-                </TouchableOpacity>
-                <View style={{justifyContent: "center"}}>
-                  <Text style={styles.title2}>{record.label}</Text>
-                  {rankdata.length==0?
+              <View style={{marginTop:10}}>
+                <Text style={styles.made}> {made}</Text>
+              </View>
+              <View style={{width:'80%',alignSelf:'center',marginBottom:20}}>
+                <FlatList
+                  initialNumToRender={7}
+                  data={rank}
+                  renderItem={rankItem}
+                />
+              </View>
+              <View style={{ flexDirection: "row",alignItems:'center' }}>
+                <Text style={styles.title}>売上年間推移</Text>
+                <Text style={styles.sub_title}>総入金(税抜)</Text>
+                <Text style={styles.year}>{year}年</Text>
+              </View>
+              <Modal
+                isVisible={isVisible}
+                swipeDirection={['up']}
+                onSwipeComplete={() => { setVisible(false) }}
+                animationInTiming={300}
+                animationOutTiming={500}
+                animationIn={'slideInDown'}
+                animationOut={'slideOutUp'}
+                propagateSwipe={true}
+                style={{alignItems: 'center'}}
+                backdropOpacity={0.5}
+                onBackdropPress={() => { setVisible(false); }}
+              >
+                <View style={styles.modal}>
+                  <TouchableOpacity
+                    style={styles.close}
+                    onPress={() => { setVisible(false); }}
+                  >
+                    <Feather name="x-circle" color="gray" size={35} />
+                  </TouchableOpacity>
+                  <View style={{justifyContent: "center"}}>
+                    <Text style={styles.title2}>{record.label}</Text>
+                    {rankdata.length==0?
+                    (
+                      <View style={styles.notdata}>
+                        <Text style={styles.notdatatxt}>集計データがありません</Text>
+                      </View>
+                    ):(
+                      <>
+                      <View style={styles.rankdataListTop}>
+                        <Text style={[styles.rankdataLabel1,styles.rankdataTop]}>取得日</Text>
+                        <Text style={[styles.rankdataLabel2,styles.rankdataTop]}>対象月</Text>
+                        <Text style={[styles.rankdataData,styles.rankdataTop]}>{record.label}</Text>
+                        <Text style={[styles.rankdataRank,styles.rankdataTop]}>順位</Text>
+                      </View>
+                      <FlatList
+                        initialNumToRender={5}
+                        data={rankdata}
+                        renderItem={rankdataItem}
+                      />
+                      </>
+                    )
+                    }
+                  </View>
+                </View>
+              </Modal>
+              <View style={{marginBottom:30}}>
+                {barChart_flg?
                   (
-                    <View style={styles.notdata}>
+                    <BarChart
+                      data={{
+                        labels: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+                        datasets: [
+                          {
+                            data: barChart,
+                            color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})` // optional
+                          },
+                        ],
+                      }}
+                      width={screenWidth*0.9}
+                      height={220}
+                      yAxisLabel={'¥'}
+                      chartConfig={{
+                        backgroundColor: '#fff',
+                        backgroundGradientFrom: "#fff",
+                        backgroundGradientTo: "#fff",
+                        decimalPlaces: 0, 
+                        color: (opacity = 1) => `rgba(255, 100, 100, 1)`,
+                        labelColor:(opacity = 1) => '#373737',
+                        style: {
+                          borderRadius: 16
+                        },
+                        fillShadowGradientOpacity: 1,
+                        decimalPlaces: 0, // 左の小数点以下の桁数
+                        barPercentage:0.5,
+                        paddingVertical:50
+                      }}
+                      style={{
+                        marginVertical: 8,
+                        borderRadius: 0,
+                      }}
+                      // verticalLabelRotation={-45}
+                    />
+                  ):(
+                    <View style={styles.notdata2}>
                       <Text style={styles.notdatatxt}>集計データがありません</Text>
                     </View>
-                  ):(
-                    <>
-                    <View style={styles.rankdataListTop}>
-                      <Text style={[styles.rankdataLabel1,styles.rankdataTop]}>取得日</Text>
-                      <Text style={[styles.rankdataLabel2,styles.rankdataTop]}>対象月</Text>
-                      <Text style={[styles.rankdataData,styles.rankdataTop]}>{record.label}</Text>
-                      <Text style={[styles.rankdataRank,styles.rankdataTop]}>順位</Text>
-                    </View>
-                    <FlatList
-                      initialNumToRender={5}
-                      data={rankdata}
-                      renderItem={rankdataItem}
-                    />
-                    </>
                   )
-                  }
-                </View>
+                }
               </View>
-            </Modal>
-            <View style={{marginBottom:30}}>
-              <BarChart
-                data={{
-                  labels: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
-                  datasets: [
-                    {
-                      data: barChart,
-                      color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})` // optional
-                    },
-                  ],
-                }}
-                width={screenWidth*0.9}
-                height={220}
-                yAxisLabel={'¥'}
-                chartConfig={{
-                  backgroundColor: '#fff',
-                  backgroundGradientFrom: "#fff",
-                  backgroundGradientTo: "#fff",
-                  decimalPlaces: 0, 
-                  color: (opacity = 1) => `rgba(255, 100, 100, 1)`,
-                  labelColor:(opacity = 1) => '#373737',
-                  style: {
-                    borderRadius: 16
-                  },
-                  fillShadowGradientOpacity: 1,
-                  decimalPlaces: 0, // 左の小数点以下の桁数
-                  barPercentage:0.5,
-                  paddingVertical:50
-                }}
-                style={{
-                  marginVertical: 8,
-                  borderRadius: 0,
-                }}
-                // verticalLabelRotation={-45}
-              />
-            </View>
+            </TouchableOpacity>
           </GestureRecognizer>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -2660,6 +2683,12 @@ const styles = StyleSheet.create({
   notdata: {
     width:'100%',
     height:200,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  notdata2: {
+    width:'100%',
+    height:100,
     justifyContent: "center",
     alignItems: "center",
   },
