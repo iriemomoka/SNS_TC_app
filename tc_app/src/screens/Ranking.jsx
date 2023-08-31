@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  StyleSheet, Text, View, LogBox, TouchableOpacity, Alert, BackHandler, AppState, KeyboardAvoidingView, ScrollView, Image, Dimensions, Platform, FlatList } from "react-native";
+  StyleSheet, Text, View, LogBox, TouchableOpacity, Alert, BackHandler, AppState, KeyboardAvoidingView, ScrollView, Image, Dimensions, Platform, FlatList, TextInput } from "react-native";
 import Modal from "react-native-modal";
 import * as Notifications from "expo-notifications";
 import { Feather } from "@expo/vector-icons";
@@ -24,9 +24,15 @@ const screenWidth = Dimensions.get('window').width;
 
 let domain = "https://www.total-cloud.net/";
 
+// // 本番
 // const adUnitId = Platform.OS === 'ios'
 //   ? 'ca-app-pub-1369937549147272/4726650514'  // ios
 //   : 'ca-app-pub-1369937549147272/4674679628'; // android
+
+// // テスト
+// // const adUnitId = Platform.OS === 'ios'
+// //   ? 'ca-app-pub-3940256099942544/6978759866'  // ios
+// //   : 'ca-app-pub-3940256099942544/5354046379'; // android
 
 // const rewardedInterstitial = RewardedInterstitialAd.createForAdRequest(adUnitId, {
 //   requestNonPersonalizedAdsOnly: true,
@@ -230,7 +236,7 @@ export default function Ranking(props) {
 
     if (!flg) {
       const dbRanking = await getDBRanking(month_);
-      const dbBarChart = await getDBBarChart(month_);
+      await getDBBarChart(month_);
       
       if (dbRanking) {
         console.log('DBデータあり');
@@ -594,7 +600,7 @@ export default function Ranking(props) {
     var shop_id = route.params.shop_id;
 
     if(testShopIdArray.includes(shop_id)){
-      Alert.alert('エラー','テスト店舗は順位取得できません');
+      Alert.alert('エラーコード：1','テスト店舗は順位取得できません');
       setLoading(false);
       setKaishi(false);
       return;
@@ -638,27 +644,108 @@ export default function Ranking(props) {
       })
     }
 
+    var startTime = Date.now(); // 開始時間
     console.log('-----getRankingALL-----')
 
     const DATA = await getAPI();
 
+    var endTime = Date.now(); // 終了時間
+    var time = (endTime - startTime)/1000;
+    console.log('データ取得①：' + time + '秒')
+
     if (!DATA) {
-      Alert.alert('エラー','売上順位取得に失敗しました');
+      Alert.alert('エラーコード：5','売上順位取得に失敗しました');
+      setKaishi(false);
       setLoading(false);
       return;
     }
 
-    scopeData_B = DATA["all_gwp"]; // 売上月間データ
-    scopeData_A = DATA["all_god"]; // 他業者付け等その他売上月別データ
-
-    // 売上月間データを集計する
-    await black_Count(staff_id);
-
-    var staff_id = route.params.account;
+    var startTime = Date.now(); // 開始時間
     const gwdRank =  await getWorkDataRanking(DATA,rankData,month_);
 
     setLoading(false);
     setKaishi(false);
+
+    var endTime = Date.now(); // 終了時間
+    var time = (endTime - startTime)/1000;
+    console.log('順位：' + time + '秒')
+
+  }
+
+  //********************************************************
+  // 
+  // 年間売上データを取得する（バックグラウンド）
+  // 
+  //********************************************************
+  async function getBlackyear() {
+    
+    var date = new Date();
+    var month_ = (date.getFullYear()).toString() + "-" + addZero((date.getMonth() + 1).toString(),2);
+
+    if (month) {
+      month_ = (date.getFullYear()).toString() + "-" + addZero(month,2);
+    }
+
+    const getAPI = () => {
+
+      return new Promise((resolve, reject)=>{
+        fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: JSON.stringify({
+            ID: route.params.account,
+            pass: route.params.password,
+            act: "ranking",
+            month: month_,
+            fc_flg: global.fc_flg,
+            flg:"1",
+          }),
+        })
+        .then((response) => response.json())
+        .then((json) => {
+          resolve(json);
+        })
+        .catch((error) => {
+          console.log(error);
+          resolve(false);
+        });
+      })
+    }
+
+    var startTime = Date.now(); // 開始時間
+    console.log('-----getBlackyear-----')
+
+    const DATA = await getAPI();
+
+    var endTime = Date.now(); // 終了時間
+    var time = (endTime - startTime)/1000;
+    console.log('データ取得②：' + time + '秒')
+
+    if (!DATA) {
+      Alert.alert('エラー','年間売上データ取得に失敗しました');
+      setLoading(false);
+      setKaishi(false);
+      return;
+    }
+
+    var startTime = Date.now(); // 開始時間
+    scopeData_B = DATA["all_gwp"]; // 売上月間データ
+    scopeData_A = DATA["all_god"]; // 他業者付け等その他売上月別データ
+
+    // 売上月間データを集計する
+    var staff_id = route.params.account;
+    await black_Count(staff_id);
+    var endTime = Date.now(); // 終了時間
+    var time = (endTime - startTime)/1000;
+    console.log('年間データ：' + time + '秒')
+
+    setLoading(false);
+    setKaishi(false);
+
+    return
 
   }
 
@@ -2284,7 +2371,7 @@ export default function Ranking(props) {
   //   const unsubscribeEarned = rewardedInterstitial.addAdEventListener(
   //     RewardedAdEventType.EARNED_REWARD,
   //     reward => {
-  //       console.log('広告が終了したらここに来ます')
+  //       setKaishi(true);
   //     },
   //   );
 
@@ -2305,17 +2392,17 @@ export default function Ranking(props) {
         keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 70}
       >
         <Loading isLoading={isLoading} />
-        {/* <Toast
+        <Toast
           position={0}
           shadow={true}
           animation={true}
           backgroundColor={'#333333'}
           visible={kaishi}
         >
-          売上順位集計中{"\n"}1～2分程度かかります
-        </Toast> */}
+          集計中
+        </Toast>
         <View style={{width:'90%',alignSelf: "center",marginBottom:20,zIndex:999 }} >
-          <View style={{ flexDirection: "row",alignItems:'center' }}>
+          <View style={{ flexDirection: "row",alignItems:'center',marginVertical:20 }}>
             <Text style={styles.title}>売上順位</Text>
             <Text style={styles.sub_title}>{date?date+' 時点':''}</Text>
           </View>
@@ -2348,15 +2435,41 @@ export default function Ranking(props) {
                           backgroundColor:'#333333',
                           opacity:0.6,
                         });
-                        setKaishi(true);
                         setLoading(true);
                         
                         const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                         await _sleep(1500);
 
-                        // rewardedInterstitial.show();
+                        // if (rewardedInterstitial.loaded) {
+                        //   rewardedInterstitial.show();
+                        // } else {
+                        //   await rewardedInterstitial.load();
+
+                        //   let isLoaded = false;
+
+                        //   let interval = setInterval(async () => {
+                        //     if (rewardedInterstitial.loaded) {
+                        //       rewardedInterstitial.show();
+                        //       clearInterval(interval);
+                        //       isLoaded = true;
+                        //     }
+                        //   }, 1000);
+
+                        //   // 15秒経過したらクリア
+                        //   setTimeout(() => {
+                        //     clearInterval(interval);
+                        //     if (!isLoaded) {
+                        //       Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
+                        //       setLoading(false);
+                        //       return
+                        //     }
+                        //   }, 15000);
+
+                        // }
+
                         const getR = await getRanking(true);
                         await getRankingAll(getR);
+
                       }
                     },
                     {
@@ -2402,11 +2515,75 @@ export default function Ranking(props) {
                   renderItem={rankItem}
                 />
               </View>
-              <View style={{ flexDirection: "row",alignItems:'center' }}>
+              <View style={{ flexDirection: "row",alignItems:'center',marginTop:20 }}>
                 <Text style={styles.title}>売上年間推移</Text>
                 <Text style={styles.sub_title}>総入金(税抜)</Text>
                 <Text style={styles.year}>{year}年</Text>
               </View>
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert(
+                    '確認',
+                    '売上年間推移を集計しますか？',
+                    [
+                      {
+                        text: "はい",
+                        onPress: async() => {
+                          Toast.show('集計処理中は広告が流れます\nそのままお待ちください', {
+                            duration: Toast.durations.LONG,
+                            position: 0,
+                            shadow: true,
+                            animation: true,
+                            backgroundColor:'#333333',
+                            opacity:0.6,
+                          });
+                          setLoading(true);
+                          
+                          const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+                          await _sleep(1500);
+
+                          // if (rewardedInterstitial.loaded) {
+                          //   rewardedInterstitial.show();
+                          // } else {
+                          //   await rewardedInterstitial.load();
+
+                          //   let isLoaded = false;
+
+                          //   let interval = setInterval(async () => {
+                          //     if (rewardedInterstitial.loaded) {
+                          //       rewardedInterstitial.show();
+                          //       clearInterval(interval);
+                          //       isLoaded = true;
+                          //     }
+                          //   }, 1000);
+
+                          //   // 15秒経過したらクリア
+                          //   setTimeout(() => {
+                          //     clearInterval(interval);
+                          //     if (!isLoaded) {
+                          //       Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
+                          //       setLoading(false);
+                          //       return
+                          //     }
+                          //   }, 15000);
+
+                          // }
+
+                          await getRanking(true);
+                          await getBlackyear();
+
+                        }
+                      },
+                      {
+                        text: "いいえ",
+                      },
+                    ]
+                  )
+                }}
+                style={[styles.btn,{marginVertical:10}]}
+              >
+                <Text style={styles.btn_text}>集 計</Text>
+              </TouchableOpacity>
               <Modal
                 isVisible={isVisible}
                 swipeDirection={['up']}
@@ -2523,7 +2700,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "#1d449a",
     fontWeight: "bold",
-    marginVertical: 20,
   },
   title2: {
     fontSize: 20,
@@ -2535,7 +2711,6 @@ const styles = StyleSheet.create({
   sub_title: {
     fontSize: 12,
     color: "#9B9B9B",
-    marginVertical: 20,
     marginLeft:10
   },
   dropDown: {

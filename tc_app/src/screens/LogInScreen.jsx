@@ -39,7 +39,7 @@ let domain = 'https://www.total-cloud.net/';
 export default function LogInScreen(props) {
 
   // アプリの最新バージョンを取得する実装
-  const latestAppVersion = '2.2.1';
+  const latestAppVersion = '2.2.2';
   
   // 現在利用しているアプリのバージョンを取得する
   const appVersion = VersionCheck.getCurrentVersion();
@@ -354,7 +354,7 @@ export default function LogInScreen(props) {
             ];
             console.log("profile_data02");
             Insert_profile_db(staff.account,profile_data);
-            
+
             navigation.reset({
               index: 0,
               routes: [{
@@ -662,12 +662,11 @@ function delete_db(){
           profile[0].staff_photo4,
         ];
 
-          // console.log(profile_data);
+        // console.log(profile_data);
 
-          console.log("profile_data01");
-          Insert_profile_db(staff.account,profile_data);
+        console.log("profile_data01");
+        Insert_profile_db(staff.account,profile_data);
 
-        
         navigation.reset({
           index: 0,
           routes: [{

@@ -2,8 +2,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
-  useRef,
-  useLayoutEffect,
+  useRef
 } from "react";
 import {
   StyleSheet,
@@ -54,8 +53,6 @@ export default function CommunicationHistoryScreen(props) {
 
   const [bell_count, setBellcount] = useState(null);
 
-  const responseListener = useRef();
-
   const [menu, setMenu] = useState(false);
   const deviceScreen = Dimensions.get('window');
 
@@ -67,6 +64,8 @@ export default function CommunicationHistoryScreen(props) {
   const [fixed, setFixed] = useState(false);
 
   const [cus_list, setCus_list] = useState([]);
+  
+  const listRef = useRef([]);
 
   var items = staffs.map((item) => {
     return {
@@ -1261,6 +1260,9 @@ export default function CommunicationHistoryScreen(props) {
           (_, { rows }) => {
             if (rows._array.length) {
               setMemos(rows._array);
+              listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
+            } else {
+              setMemos([]);
             }
           },
           () => {
@@ -1291,6 +1293,7 @@ export default function CommunicationHistoryScreen(props) {
           (_, { rows }) => {
             if (rows._array.length) {
               setMemos(rows._array);
+              listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
             } else {
               setMemos([]);
             }
@@ -1315,6 +1318,9 @@ export default function CommunicationHistoryScreen(props) {
           (_, { rows }) => {
             if (rows._array.length) {
               setMemos(rows._array);
+              listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
+            } else {
+              setMemos([]);
             }
           },
           () => {
@@ -1343,6 +1349,7 @@ export default function CommunicationHistoryScreen(props) {
 
     setLoading(false);
     setA(false);
+    
   }
 
   function Delete_staff_db(){
@@ -1629,8 +1636,9 @@ export default function CommunicationHistoryScreen(props) {
             }}
           />
         </View>
-        <View style={{zIndex: 100}}>
+        <View style={{zIndex: 100,paddingBottom:128}}>
           <FlatList
+            ref={listRef}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
