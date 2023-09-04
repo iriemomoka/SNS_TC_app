@@ -39,7 +39,7 @@ let domain = 'https://www.total-cloud.net/';
 export default function LogInScreen(props) {
 
   // アプリの最新バージョンを取得する実装
-  const latestAppVersion = '2.2.2';
+  const latestAppVersion = '2.2.3';
   
   // 現在利用しているアプリのバージョンを取得する
   const appVersion = VersionCheck.getCurrentVersion();

@@ -415,7 +415,6 @@ export default function CommunicationHistoryScreen(props) {
     })
       .then((response) => response.json())
       .then((json) => {
-        setRefreshing(false);
 
         console.log(json.search[1].tel1);
         // ローカルDB用スタッフリスト
@@ -424,6 +423,7 @@ export default function CommunicationHistoryScreen(props) {
         // ローカルDB用お客様情報＋最新のコミュニケーション
         Insert_customer_db(json.search);
 
+        setRefreshing(false);
         // ローカルDB用定型文
         const fixed_mst_data = Object.entries(json.fixed_array).map(
           ([key, value]) => {
@@ -459,7 +459,6 @@ export default function CommunicationHistoryScreen(props) {
         Insert_fixed_db(fixed_mst);
       })
       .catch((error) => {
-        setRefreshing(false);
 
         // オフラインの場合ローカルDBを使用
         db.transaction((tx) => {
@@ -520,6 +519,8 @@ export default function CommunicationHistoryScreen(props) {
             }
           );
         });
+        
+        setRefreshing(false);
       });
 
     // 20220613 新着件数を変数に格納
@@ -821,6 +822,7 @@ export default function CommunicationHistoryScreen(props) {
                     [],
                     (_, { rows }) => {
                       setMemos(rows._array);
+                      setA('a');
                     }
                   );
                 });
@@ -889,15 +891,6 @@ export default function CommunicationHistoryScreen(props) {
                             cus.customer_user_id,
                           ],
                           () => {
-                            tx.executeSql(
-                              `select * from customer_mst order by time desc;`,
-                              [],
-                              (_, { rows }) => {
-                                if (rows._array.length) {
-                                  setMemos(rows._array);
-                                }
-                              }
-                            );
                           }
                           // () => {console.log(cus.name+"のデータ更新 失敗");}
                         );
@@ -974,15 +967,6 @@ export default function CommunicationHistoryScreen(props) {
                           status,
                         ],
                         () => {
-                          tx.executeSql(
-                            `select * from customer_mst order by time desc;`,
-                            [],
-                            (_, { rows }) => {
-                              if (rows._array.length) {
-                                setMemos(rows._array);
-                              }
-                            }
-                          );
                         },
                         () => {
                           // console.log(cus.name+"のデータ追加 失敗");
@@ -1024,30 +1008,18 @@ export default function CommunicationHistoryScreen(props) {
                   }
                 });
               });
+              
+              setA("a");
             }
           },
           () => {
             console.log("失敗1");
           }
         );
+      } else {
+        setA("a");
       }
 
-      tx.executeSql(
-        `select * from customer_mst order by time desc;`,
-        // `select * from customer_mst where ( customer_id = ? );`,
-        // `delete from customer_mst;`,
-        // ['27'],
-        [],
-        (_, { rows }) => {
-          if (rows._array.length) {
-            setMemos(rows._array);
-            setA("a");
-          }
-        },
-        () => {
-          console.log("失敗");
-        }
-      );
     });
   }
 
@@ -1227,17 +1199,28 @@ export default function CommunicationHistoryScreen(props) {
   }
 
   function onSubmit() {
+
     setLoading(true);
+
+    var sql = `select * from customer_mst where (name||kana)  like '%${name}%' `;
+
+    if (staff_value != "all" && staff_value != null && staff_value != "") {
+      sql += ` and ((reverberation_user_id = '${staff_value}') or (coming_user_id = '${staff_value}')) `
+    } else if (staff_value == "") {
+      sql += ` and ((reverberation_user_id = '' or reverberation_user_id is null) and (coming_user_id = '' or coming_user_id is null)) `
+    }
+
+    sql += ` order by time desc;`
 
     db.transaction((tx) => {
       tx.executeSql(
-        `select * from customer_mst where (name||kana)  like '%` +
-          name +
-          `%' order by time desc;`,
+        sql,
         [],
         (_, { rows }) => {
           if (rows._array.length) {
             setMemos(rows._array);
+          } else {
+            setMemos([]);
           }
         },
         () => {
@@ -1253,9 +1236,9 @@ export default function CommunicationHistoryScreen(props) {
     setLoading(true);
 
     db.transaction((tx) => {
-      if (staff_value == "all") {
+      if (staff_value == "all" || staff_value == null) {
         tx.executeSql(
-          `select * from customer_mst order by time desc;`,
+          `select * from customer_mst where (name||kana)  like '%${name}%' order by time desc;`,
           [],
           (_, { rows }) => {
             if (rows._array.length) {
@@ -1270,25 +1253,27 @@ export default function CommunicationHistoryScreen(props) {
           }
         );
 
-        tx.executeSql(
-          `update staff_list set "check" = null;`,
-          [],
-          (_, { rows }) => {},
-          () => {
-            console.log("失敗1");
-          }
-        );
-        tx.executeSql(
-          `update staff_list set "check" = '1' where ( account = 'all' );`,
-          [],
-          (_, { rows }) => {},
-          () => {
-            console.log("失敗1");
-          }
-        );
+        if (staff_value == "all") {
+          tx.executeSql(
+            `update staff_list set "check" = null;`,
+            [],
+            (_, { rows }) => {},
+            () => {
+              console.log("失敗1");
+            }
+          );
+          tx.executeSql(
+            `update staff_list set "check" = '1' where ( account = 'all' );`,
+            [],
+            (_, { rows }) => {},
+            () => {
+              console.log("失敗1");
+            }
+          );
+        }
       } else if (staff_value == "") {
         tx.executeSql(
-          `select * from customer_mst where (reverberation_user_id = '' or reverberation_user_id is null) and (coming_user_id = '' or coming_user_id is null) order by time desc;`,
+          `select * from customer_mst where (name||kana)  like '%${name}%' and ((reverberation_user_id = '' or reverberation_user_id is null) and (coming_user_id = '' or coming_user_id is null)) order by time desc;`,
           [],
           (_, { rows }) => {
             if (rows._array.length) {
@@ -1313,7 +1298,7 @@ export default function CommunicationHistoryScreen(props) {
         );
       } else {
         tx.executeSql(
-          `select * from customer_mst where (reverberation_user_id = ?) or (coming_user_id = ?) order by time desc;`,
+          `select * from customer_mst where (name||kana)  like '%${name}%' and ((reverberation_user_id = ?) or (coming_user_id = ?)) order by time desc;`,
           [staff_value],
           (_, { rows }) => {
             if (rows._array.length) {

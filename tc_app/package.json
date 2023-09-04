@@ -71,7 +71,9 @@
     "react-native-web": "~0.18.11",
     "react-native-webview": "11.26.0",
     "react-navigation": "^4.4.4",
-    "expo-device": "~5.2.1"
+    "expo-device": "~5.2.1",
+    "expo-camera": "~13.2.1",
+    "expo-av": "~13.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

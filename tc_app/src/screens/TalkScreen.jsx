@@ -5,9 +5,10 @@ import Feather from 'react-native-vector-icons/Feather';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Notifications from 'expo-notifications';
-import * as Permissions from "expo-permissions";
 import GestureRecognizer from 'react-native-swipe-gestures';
 import RenderHtml from 'react-native-render-html';
+import { Camera } from 'expo-camera';
+import { Audio } from 'expo-av';
 
 import Loading from '../components/Loading';
 import {MyModal0,MyModal1,MyModal2,MyModal3,MyModal4,MyModal5,MyModal6} from '../components/Modal';
@@ -811,33 +812,50 @@ export default function TalkScreen(props) {
   if(menu){
     Keyboard.dismiss() // キーボード隠す
   }
+
+  const LibraryPermissionsCheck = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+       `カメラロールへのアクセスが無効になっています`,
+       "設定画面へ移動しますか？",
+       [
+         {
+           text: "キャンセル",
+           style: "cancel",
+           onPress:() => {resolve(false)}
+         },
+         {
+           text: "設定する",
+           onPress: () => {
+             Linking.openSettings();
+             resolve(false)
+           }
+         }
+       ]
+     );
+    });
+
+	  // カメラロールのアクセス許可を付与
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+         await AsyncAlert();
+         return false;
+      } else {
+        return true;
+      }
+    }
+
+  }
   
   // カメラロールから画像またはビデオを選択
   const pickImage = async (item) => {
     
-	  // カメラロールのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-      const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-      
-      if (status !== 'granted') {
-         Alert.alert(
-          `カメラロールへのアクセスが無効になっています`,
-          "設定画面へ移動しますか？",
-          [
-            {
-              text: "キャンセル",
-              style: "cancel",
-              onPress:() => {return}
-            },
-            {
-              text: "設定する",
-              onPress: () => {
-                Linking.openURL("app-settings:");
-              }
-            }
-          ]
-        );
-      }
+    if (!await LibraryPermissionsCheck()) {
+      setModal0(false);
+      return
     }
     
     if(!customer.line){
@@ -901,6 +919,7 @@ export default function TalkScreen(props) {
         })
         .catch((error) => {
           console.log(error)
+          setLoading(false);
           const errorMsg = "ファイルをアップできませんでした";
           Alert.alert(errorMsg);
         })
@@ -981,56 +1000,89 @@ export default function TalkScreen(props) {
     setModal0(false)
   };
 	
+  const [c_permission, c_requestPermission] = Camera.useCameraPermissions();
+
+  const CameraPermissionsCheck = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+       `カメラへのアクセスが無効になっています`,
+       "設定画面へ移動しますか？",
+       [
+         {
+           text: "キャンセル",
+           style: "cancel",
+           onPress:() => {resolve(false)}
+         },
+         {
+           text: "設定する",
+           onPress: () => {
+             Linking.openSettings();
+             resolve(false)
+           }
+         }
+       ]
+     );
+    });
+
+    const { status } = await c_requestPermission();
+    
+	  // カメラのアクセス許可を付与
+    if (Platform.OS !== 'web') {
+      if (status !== 'granted') {
+        await AsyncAlert();
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+  }
+
+  const [a_permissionResponse, a_requestPermission] = Audio.usePermissions();
+
+  const AudioPermissionsCheck = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+       `マイクへのアクセスが無効になっています`,
+       "設定画面へ移動しますか？",
+       [
+         {
+           text: "キャンセル",
+           style: "cancel",
+           onPress:() => {resolve(false)}
+         },
+         {
+           text: "設定する",
+           onPress: () => {
+             Linking.openSettings();
+             resolve(false)
+           }
+         }
+       ]
+     );
+    });
+
+    const { status } = await a_requestPermission();
+    
+	  // マイクのアクセス許可を付与
+    if (Platform.OS !== 'web') {
+      if (status !== 'granted') {
+        await AsyncAlert();
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+  }
+
   // オンライン通話URL挿入
 	const online_call = async (id) => {
 	  
-	  // カメラのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-        const { status } = await Permissions.askAsync(Permissions.CAMERA);
-      if (status !== 'granted') {
-         Alert.alert(
-          `カメラへのアクセスが無効になっています`,
-          "設定画面へ移動しますか？",
-          [
-            {
-              text: "キャンセル",
-              style: "cancel",
-              onPress:() => {return}
-            },
-            {
-              text: "設定する",
-              onPress: () => {
-                Linking.openURL("app-settings:");
-              }
-            }
-          ]
-        );
-      }
-    }
-    
-    // マイクのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-        const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
-      if (status !== 'granted') {
-         Alert.alert(
-          `マイクへのアクセスが無効になっています`,
-          "設定画面へ移動しますか？",
-          [
-            {
-              text: "キャンセル",
-              style: "cancel",
-              onPress:() => {return}
-            },
-            {
-              text: "設定する",
-              onPress: () => {
-                Linking.openURL("app-settings:");
-              }
-            }
-          ]
-        );
-      }
-    }
+	  if (!await CameraPermissionsCheck()) return;
+	  if (!await AudioPermissionsCheck()) return;
 	  
 	  Alert.alert(
       "通話画面を開きますか？",

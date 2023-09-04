@@ -16,6 +16,8 @@ import axios from 'axios';
 import RadioButtonRN from 'radio-buttons-react-native';
 import * as SQLite from "expo-sqlite";
 import * as Permissions from "expo-permissions";
+import { Camera } from 'expo-camera';
+import { Audio } from 'expo-av';
 
 // DB接続
 import { db } from './Databace';
@@ -240,27 +242,89 @@ export function MyModal1(props){
   const openFixed = () => {
     setFixed(!Fixed);
   };
-  
+  const [c_permission, c_requestPermission] = Camera.useCameraPermissions();
+
+  const CameraPermissionsCheck = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+       `カメラへのアクセスが無効になっています`,
+       "設定画面へ移動しますか？",
+       [
+         {
+           text: "キャンセル",
+           style: "cancel",
+           onPress:() => {resolve(false)}
+         },
+         {
+           text: "設定する",
+           onPress: () => {
+             Linking.openSettings();
+             resolve(false)
+           }
+         }
+       ]
+     );
+    });
+
+    const { status } = await c_requestPermission();
+    
+	  // カメラのアクセス許可を付与
+    if (Platform.OS !== 'web') {
+      if (status !== 'granted') {
+        await AsyncAlert();
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+  }
+
+  const [a_permissionResponse, a_requestPermission] = Audio.usePermissions();
+
+  const AudioPermissionsCheck = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+       `マイクへのアクセスが無効になっています`,
+       "設定画面へ移動しますか？",
+       [
+         {
+           text: "キャンセル",
+           style: "cancel",
+           onPress:() => {resolve(false)}
+         },
+         {
+           text: "設定する",
+           onPress: () => {
+             Linking.openSettings();
+             resolve(false)
+           }
+         }
+       ]
+     );
+    });
+
+    const { status } = await a_requestPermission();
+    
+	  // マイクのアクセス許可を付与
+    if (Platform.OS !== 'web') {
+      if (status !== 'granted') {
+        await AsyncAlert();
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+  }
+
   // オンライン通話
 	const openOnline_call = async (id) => {
 	  
-	  // カメラのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-        const { status } = await Permissions.askAsync(Permissions.CAMERA);
-      if (status !== 'granted') {
-        Alert.alert('カメラへのアクセスを許可してください');
-        return
-      }
-    }
-    
-    // マイクのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-        const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
-      if (status !== 'granted') {
-        Alert.alert('マイクへのアクセスを許可してください');
-        return
-      }
-    }
+	  if (!await CameraPermissionsCheck()) return;
+	  if (!await AudioPermissionsCheck()) return;
 	  
 	  Alert.alert(
       "通話画面を開きますか？",
@@ -330,34 +394,46 @@ export function MyModal1(props){
 	  }
   };
   
+  const LibraryPermissionsCheck = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+       `カメラロールへのアクセスが無効になっています`,
+       "設定画面へ移動しますか？",
+       [
+         {
+           text: "キャンセル",
+           style: "cancel",
+           onPress:() => {resolve(false)}
+         },
+         {
+           text: "設定する",
+           onPress: () => {
+             Linking.openSettings();
+             resolve(false)
+           }
+         }
+       ]
+     );
+    });
+
+	  // カメラロールのアクセス許可を付与
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+         await AsyncAlert();
+         return false;
+      } else {
+        return true;
+      }
+    }
+
+  }
+
   // 画像選択
 	const pickImage = async () => {
 	  
-    // カメラロールのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-      const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-      
-      if (status !== 'granted') {
-         Alert.alert(
-          `カメラロールへのアクセスが無効になっています`,
-          "設定画面へ移動しますか？",
-          [
-            {
-              text: "キャンセル",
-              style: "cancel",
-              onPress:() => {return}
-            },
-            {
-              text: "設定する",
-              onPress: () => {
-                Linking.openURL("app-settings:");
-              }
-            }
-          ]
-        );
-      }
-    }
-    
+    if (!await LibraryPermissionsCheck()) return;
     
 	  let result = await ImagePicker.launchImageLibraryAsync({
 		  mediaTypes: ImagePicker.MediaTypeOptions.Images,

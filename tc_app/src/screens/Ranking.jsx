@@ -9,11 +9,11 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { BarChart } from "react-native-chart-kit";
 // import { AdMobRewarded } from 'expo-ads-admob';
 import Toast from 'react-native-root-toast';
-// import {
-//   RewardedInterstitialAd,
-//   RewardedAdEventType,
-//   TestIds,
-// } from 'react-native-google-mobile-ads';
+import {
+  RewardedInterstitialAd,
+  RewardedAdEventType,
+  TestIds,
+} from 'react-native-google-mobile-ads';
 
 import Loading from "../components/Loading";
 import { db } from '../components/Databace';
@@ -24,19 +24,19 @@ const screenWidth = Dimensions.get('window').width;
 
 let domain = "https://www.total-cloud.net/";
 
-// // 本番
+// 本番
+const adUnitId = Platform.OS === 'ios'
+  ? 'ca-app-pub-1369937549147272/4726650514'  // ios
+  : 'ca-app-pub-1369937549147272/4674679628'; // android
+
+// テスト
 // const adUnitId = Platform.OS === 'ios'
-//   ? 'ca-app-pub-1369937549147272/4726650514'  // ios
-//   : 'ca-app-pub-1369937549147272/4674679628'; // android
+//   ? 'ca-app-pub-3940256099942544/6978759866'  // ios
+//   : 'ca-app-pub-3940256099942544/5354046379'; // android
 
-// // テスト
-// // const adUnitId = Platform.OS === 'ios'
-// //   ? 'ca-app-pub-3940256099942544/6978759866'  // ios
-// //   : 'ca-app-pub-3940256099942544/5354046379'; // android
-
-// const rewardedInterstitial = RewardedInterstitialAd.createForAdRequest(adUnitId, {
-//   requestNonPersonalizedAdsOnly: true,
-// });
+const rewardedInterstitial = RewardedInterstitialAd.createForAdRequest(adUnitId, {
+  requestNonPersonalizedAdsOnly: true,
+});
 
 export default function Ranking(props) {
   
@@ -96,11 +96,11 @@ export default function Ranking(props) {
   const [all, setAll] = useState('-');
   const [overall, setOverall] = useState('-');
   const [rank, setRank] = useState([
-    { label: "売上総見込", rank: "-", data: '0' },
-    { label: "新規", rank: "-", data: '0' },
-    { label: "紹介", rank: "-", data: '0' },
-    { label: "決定", rank: "-", data: '0' },
-    { label: "反響来店率", rank: "-", data: '0' }
+    { label: "売上総見込", rank: "-", data: "-" },
+    { label: "新規", rank: "-", data: "-" },
+    { label: "紹介", rank: "-", data: "-" },
+    { label: "決定", rank: "-", data: "-" },
+    { label: "反響来店率", rank: "-", data: "-" }
   ]);
   
   // 〇位まで何円表示
@@ -308,12 +308,11 @@ export default function Ranking(props) {
       { label: "反響来店率", rank: "-", data: comrev+'%' }
     ]
     
-    setRank(result);
-
     if (!flg) {
       
-      // ランク無しデータをDBに入れる
+      setRank(result);
 
+      // ランク無しデータをDBに入れる
       var date = new Date();
       var date_ = (date.getFullYear()).toString() + "-" 
       + addZero((date.getMonth() + 1).toString(),2) + "-" 
@@ -411,7 +410,16 @@ export default function Ranking(props) {
           [],
           (_, { rows }) => {
             var len = rows._array.length;
+            console.log(len)
             if (len == 0) {
+              setRank([
+                { label: "売上総見込", rank: "-", data: "-" },
+                { label: "新規", rank: "-", data: "-" },
+                { label: "紹介", rank: "-", data: "-" },
+                { label: "決定", rank: "-", data: "-" },
+                { label: "反響来店率", rank: "-", data: "-" }
+              ])
+              setRankdata([]);
               resolve(false); // 空だった場合
             } else {
 
@@ -2361,28 +2369,28 @@ export default function Ranking(props) {
   //   };
   // }, []);
 
-  // useEffect(() => {
+  useEffect(() => {
     
-  //   const unsubscribeLoaded = rewardedInterstitial.addAdEventListener(
-  //     RewardedAdEventType.LOADED,
-  //     () => {},
-  //   );
+    const unsubscribeLoaded = rewardedInterstitial.addAdEventListener(
+      RewardedAdEventType.LOADED,
+      () => {},
+    );
 
-  //   const unsubscribeEarned = rewardedInterstitial.addAdEventListener(
-  //     RewardedAdEventType.EARNED_REWARD,
-  //     reward => {
-  //       setKaishi(true);
-  //     },
-  //   );
+    const unsubscribeEarned = rewardedInterstitial.addAdEventListener(
+      RewardedAdEventType.EARNED_REWARD,
+      reward => {
+        setKaishi(true);
+      },
+    );
 
-  //   rewardedInterstitial.load();
+    rewardedInterstitial.load();
 
-  //   return () => {
-  //     unsubscribeLoaded();
-  //     unsubscribeEarned();
-  //   };
+    return () => {
+      unsubscribeLoaded();
+      unsubscribeEarned();
+    };
 
-  // }, []);
+  }, []);
 
   return (
     <>
@@ -2417,6 +2425,11 @@ export default function Ranking(props) {
               setOpen={setOpen_month}
               setValue={setMonth}
               dropDownDirection={"BOTTOM"}
+              onSelectItem={(item)=>{
+                var date = new Date();
+                var month_ = (date.getFullYear()).toString() + "-" + addZero(item.value,2);
+                getDBRanking(month_);
+              }}
             />
             <TouchableOpacity
               onPress={() => {
@@ -2440,32 +2453,32 @@ export default function Ranking(props) {
                         const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                         await _sleep(1500);
 
-                        // if (rewardedInterstitial.loaded) {
-                        //   rewardedInterstitial.show();
-                        // } else {
-                        //   await rewardedInterstitial.load();
+                        if (rewardedInterstitial.loaded) {
+                          rewardedInterstitial.show();
+                        } else {
+                          await rewardedInterstitial.load();
 
-                        //   let isLoaded = false;
+                          let isLoaded = false;
 
-                        //   let interval = setInterval(async () => {
-                        //     if (rewardedInterstitial.loaded) {
-                        //       rewardedInterstitial.show();
-                        //       clearInterval(interval);
-                        //       isLoaded = true;
-                        //     }
-                        //   }, 1000);
+                          let interval = setInterval(async () => {
+                            if (rewardedInterstitial.loaded) {
+                              rewardedInterstitial.show();
+                              clearInterval(interval);
+                              isLoaded = true;
+                            }
+                          }, 1000);
 
-                        //   // 15秒経過したらクリア
-                        //   setTimeout(() => {
-                        //     clearInterval(interval);
-                        //     if (!isLoaded) {
-                        //       Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
-                        //       setLoading(false);
-                        //       return
-                        //     }
-                        //   }, 15000);
+                          // 15秒経過したらクリア
+                          setTimeout(() => {
+                            clearInterval(interval);
+                            if (!isLoaded) {
+                              Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
+                              setLoading(false);
+                              return
+                            }
+                          }, 15000);
 
-                        // }
+                        }
 
                         const getR = await getRanking(true);
                         await getRankingAll(getR);
@@ -2542,32 +2555,32 @@ export default function Ranking(props) {
                           const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                           await _sleep(1500);
 
-                          // if (rewardedInterstitial.loaded) {
-                          //   rewardedInterstitial.show();
-                          // } else {
-                          //   await rewardedInterstitial.load();
+                          if (rewardedInterstitial.loaded) {
+                            rewardedInterstitial.show();
+                          } else {
+                            await rewardedInterstitial.load();
 
-                          //   let isLoaded = false;
+                            let isLoaded = false;
 
-                          //   let interval = setInterval(async () => {
-                          //     if (rewardedInterstitial.loaded) {
-                          //       rewardedInterstitial.show();
-                          //       clearInterval(interval);
-                          //       isLoaded = true;
-                          //     }
-                          //   }, 1000);
+                            let interval = setInterval(async () => {
+                              if (rewardedInterstitial.loaded) {
+                                rewardedInterstitial.show();
+                                clearInterval(interval);
+                                isLoaded = true;
+                              }
+                            }, 1000);
 
-                          //   // 15秒経過したらクリア
-                          //   setTimeout(() => {
-                          //     clearInterval(interval);
-                          //     if (!isLoaded) {
-                          //       Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
-                          //       setLoading(false);
-                          //       return
-                          //     }
-                          //   }, 15000);
+                            // 15秒経過したらクリア
+                            setTimeout(() => {
+                              clearInterval(interval);
+                              if (!isLoaded) {
+                                Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
+                                setLoading(false);
+                                return
+                              }
+                            }, 15000);
 
-                          // }
+                          }
 
                           await getRanking(true);
                           await getBlackyear();

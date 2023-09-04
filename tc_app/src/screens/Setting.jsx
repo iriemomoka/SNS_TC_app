@@ -13,7 +13,6 @@ import { db } from '../components/Databace';
 import TagInput from 'react-native-tags-input';
 
 import * as ImagePicker from 'expo-image-picker';
-import * as Permissions from "expo-permissions";
 
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = 'https://www.total-cloud.net/';
@@ -384,32 +383,46 @@ export default function Setting(props) {
   //【2：プライベート1】
   //【3：プライベート2】
   ****************************************************************/
-	const pickImage = async (img_no) => {
-    // カメラロールのアクセス許可を付与
+  const LibraryPermissionsCheck = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+       `カメラロールへのアクセスが無効になっています`,
+       "設定画面へ移動しますか？",
+       [
+         {
+           text: "キャンセル",
+           style: "cancel",
+           onPress:() => {resolve(false)}
+         },
+         {
+           text: "設定する",
+           onPress: () => {
+             Linking.openSettings();
+             resolve(false)
+           }
+         }
+       ]
+     );
+    });
+
+	  // カメラロールのアクセス許可を付与
     if (Platform.OS !== 'web') {
-      const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
-         Alert.alert(
-          `カメラロールへのアクセスが無効になっています`,
-          "設定画面へ移動しますか？",
-          [
-            {
-              text: "キャンセル",
-              style: "cancel",
-              onPress:() => {return}
-            },
-            {
-              text: "設定する",
-              onPress: () => {
-                Linking.openURL("app-settings:");
-              }
-            }
-          ]
-        );
+         await AsyncAlert();
+         return false;
+      } else {
+        return true;
       }
     }
-    
+
+  }
+
+	const pickImage = async (img_no) => {
+
+    if (!await LibraryPermissionsCheck()) return;
     
 	  let result = await ImagePicker.launchImageLibraryAsync({
 		  mediaTypes: ImagePicker.MediaTypeOptions.Images,
