@@ -888,13 +888,13 @@ export default function TalkScreen(props) {
         formData.append('fc_flg',global.fc_flg);
         
         fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-      {
-        method: 'POST',
-        body: formData,
-        header: {
-          'content-type': 'multipart/form-data',
-        },
-      })
+        {
+          method: 'POST',
+          body: formData,
+          header: {
+            'content-type': 'multipart/form-data',
+          },
+        })
         .then((response) => response.json())
         .then((json) => {
           setLoading(false);
@@ -927,6 +927,7 @@ export default function TalkScreen(props) {
   	  }
   	  
 	  }
+    setLoading(false);
     setModal0(false)
 	};
 	
@@ -934,12 +935,13 @@ export default function TalkScreen(props) {
 	const pickDocument = async () => {
 	  
     let result = await DocumentPicker.getDocumentAsync({});
+    
     if(!customer.line){
       Alert.alert('LINE未連携です');
     } else {
   	  
       setLoading(true);
-  	  if (result) {
+  	  if (result.type != "cancel") {
         
         let filename = result.uri.split('/').pop();
   
@@ -958,13 +960,13 @@ export default function TalkScreen(props) {
         formData.append('fc_flg',global.fc_flg);
         
         fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-      {
-        method: 'POST',
-        body: formData,
-        header: {
-          'content-type': 'multipart/form-data',
-        },
-      })
+        {
+          method: 'POST',
+          body: formData,
+          header: {
+            'content-type': 'multipart/form-data',
+          },
+        })
         .then((response) => response.json())
         .then((json) => {
           
@@ -994,10 +996,15 @@ export default function TalkScreen(props) {
           Alert.alert(errorMsg);
         })
         
-  	  }
+        setLoading(false);
+        setModal0(false);
+
+  	  } else {
+        setLoading(false);
+        setModal0(false);
+      }
   	  
 	  }
-    setModal0(false)
   };
 	
   const [c_permission, c_requestPermission] = Camera.useCameraPermissions();
