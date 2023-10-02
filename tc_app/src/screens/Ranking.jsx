@@ -7,7 +7,6 @@ import { Feather } from "@expo/vector-icons";
 import GestureRecognizer from "react-native-swipe-gestures";
 import DropDownPicker from "react-native-dropdown-picker";
 import { BarChart } from "react-native-chart-kit";
-// import { AdMobRewarded } from 'expo-ads-admob';
 import Toast from 'react-native-root-toast';
 // import {
 //   RewardedInterstitialAd,
@@ -29,7 +28,7 @@ let domain = "https://www.total-cloud.net/";
 //   ? 'ca-app-pub-1369937549147272/4726650514'  // ios
 //   : 'ca-app-pub-1369937549147272/4674679628'; // android
 
-// // テスト
+// // // テスト
 // // const adUnitId = Platform.OS === 'ios'
 // //   ? 'ca-app-pub-3940256099942544/6978759866'  // ios
 // //   : 'ca-app-pub-3940256099942544/5354046379'; // android
@@ -615,6 +614,7 @@ export default function Ranking(props) {
     }
 
     setLoading(true);
+    setKaishi(true);
 
     var date = new Date();
     var month_ = (date.getFullYear()).toString() + "-" + addZero((date.getMonth() + 1).toString(),2);
@@ -687,6 +687,8 @@ export default function Ranking(props) {
   //********************************************************
   async function getBlackyear() {
     
+    setKaishi(true);
+
     var date = new Date();
     var month_ = (date.getFullYear()).toString() + "-" + addZero((date.getMonth() + 1).toString(),2);
 
@@ -2347,28 +2349,6 @@ export default function Ranking(props) {
     )
   }
 
-  // const Reward = async () => {
-  //   if (Platform.OS === 'ios') {
-  //     AdMobRewarded.setAdUnitID('ca-app-pub-1369937549147272~9208246342'); // iOS
-  //   } else {
-  //     AdMobRewarded.setAdUnitID('ca-app-pub-1369937549147272~4339063045'); // android
-  //   }
-  //   await AdMobRewarded.requestAdAsync();
-  //   await AdMobRewarded.showAdAsync();
-  // };
-  
-  // const rewardedListener = () => {
-  //   console.log('広告が終了したらここに来ます')
-  // };
-  
-  // useEffect(() => {
-  //   AdMobRewarded.addEventListener('rewardedVideoDidDismiss', rewardedListener);
-
-  //   return () => {
-  //     AdMobRewarded.removeAllListeners();
-  //   };
-  // }, []);
-
   // useEffect(() => {
     
   //   const unsubscribeLoaded = rewardedInterstitial.addAdEventListener(
@@ -2379,7 +2359,6 @@ export default function Ranking(props) {
   //   const unsubscribeEarned = rewardedInterstitial.addAdEventListener(
   //     RewardedAdEventType.EARNED_REWARD,
   //     reward => {
-  //       setKaishi(true);
   //     },
   //   );
 
@@ -2441,7 +2420,7 @@ export default function Ranking(props) {
                       text: "はい",
                       onPress: async() => {
                         Toast.show('集計処理中は広告が流れます\nそのままお待ちください', {
-                          duration: Toast.durations.LONG,
+                          duration: Toast.durations.SHORT,
                           position: 0,
                           shadow: true,
                           animation: true,
@@ -2474,6 +2453,7 @@ export default function Ranking(props) {
                         //     if (!isLoaded) {
                         //       Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
                         //       setLoading(false);
+                        //       setKaishi(false);
                         //       return
                         //     }
                         //   }, 15000);
@@ -2543,7 +2523,7 @@ export default function Ranking(props) {
                         text: "はい",
                         onPress: async() => {
                           Toast.show('集計処理中は広告が流れます\nそのままお待ちください', {
-                            duration: Toast.durations.LONG,
+                            duration: Toast.durations.SHORT,
                             position: 0,
                             shadow: true,
                             animation: true,
@@ -2576,6 +2556,7 @@ export default function Ranking(props) {
                           //     if (!isLoaded) {
                           //       Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
                           //       setLoading(false);
+                          //       setKaishi(false);
                           //       return
                           //     }
                           //   }, 15000);

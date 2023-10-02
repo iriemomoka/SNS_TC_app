@@ -28,9 +28,12 @@ import { Feather } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Permissions from "expo-permissions";
 import SideMenu from 'react-native-side-menu-updated';
+import * as SQLite from "expo-sqlite";
 
 import Loading from "../components/Loading";
-import { db } from '../components/Databace';
+// import { db } from '../components/Databace';
+
+const db = SQLite.openDatabase("db");
 
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = "https://www.total-cloud.net/";
@@ -398,6 +401,7 @@ export default function CommunicationHistoryScreen(props) {
   };
 
   const onRefresh = useCallback(() => {
+
     setRefreshing(true);
 
     fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
@@ -413,115 +417,112 @@ export default function CommunicationHistoryScreen(props) {
         fc_flg: global.fc_flg,
       }),
     })
-      .then((response) => response.json())
-      .then((json) => {
+    .then((response) => response.json())
+    .then((json) => {
 
-        console.log(json.search[1].tel1);
-        // ローカルDB用スタッフリスト
-        Insert_staff_list_db(json.staff);
+      // ローカルDB用スタッフリスト
+      Insert_staff_list_db(json.staff);
 
-        // ローカルDB用お客様情報＋最新のコミュニケーション
-        Insert_customer_db(json.search);
+      // ローカルDB用お客様情報＋最新のコミュニケーション
+      Insert_customer_db(json.search);
 
-        setRefreshing(false);
-        // ローカルDB用定型文
-        const fixed_mst_data = Object.entries(json.fixed_array).map(
-          ([key, value]) => {
-            return { key, value };
+      // ローカルDB用定型文
+      const fixed_mst_data = Object.entries(json.fixed_array).map(
+        ([key, value]) => {
+          return { key, value };
+        }
+      );
+
+      // 登録用に一つ一つ配列化
+      const fixed_mst = [];
+
+      fixed_mst_data.map((f) => {
+        if (!f.value.length) {
+          fixed_mst.push({
+            fixed_id: "",
+            category: f.key,
+            title: "",
+            mail_title: "",
+            note: "",
+          });
+        } else {
+          f.value.map((v) => {
+            fixed_mst.push({
+              fixed_id: v.fixed_id,
+              category: f.key,
+              title: v.title,
+              mail_title: v.note.substring(0, v.note.indexOf("<[@]>")),
+              note: v.note.substr(v.note.indexOf("<[@]>") + 5),
+            });
+          });
+        }
+      });
+
+      Insert_fixed_db(fixed_mst);
+    })
+    .catch((error) => {
+
+      // オフラインの場合ローカルDBを使用
+      db.transaction((tx) => {
+        tx.executeSql(
+          `select * from staff_list;`,
+          [],
+          (_, { rows }) => {
+            setStaffs(rows._array);
+          },
+          () => {
+            console.log("失敗");
           }
         );
 
-        // 登録用に一つ一つ配列化
-        const fixed_mst = [];
-
-        fixed_mst_data.map((f) => {
-          if (!f.value.length) {
-            fixed_mst.push({
-              fixed_id: "",
-              category: f.key,
-              title: "",
-              mail_title: "",
-              note: "",
-            });
-          } else {
-            f.value.map((v) => {
-              fixed_mst.push({
-                fixed_id: v.fixed_id,
-                category: f.key,
-                title: v.title,
-                mail_title: v.note.substring(0, v.note.indexOf("<[@]>")),
-                note: v.note.substr(v.note.indexOf("<[@]>") + 5),
-              });
-            });
+        tx.executeSql(
+          `select * from fixed_mst;`,
+          [],
+          (_, { rows }) => {
+            setFixed(rows._array);
+          },
+          () => {
+            console.log("失敗");
           }
-        });
+        );
 
-        Insert_fixed_db(fixed_mst);
-      })
-      .catch((error) => {
+        // コミュニケーション履歴が保存されているお客様のみ表示
+        tx.executeSql(
+          `select distinct customer_id from communication_mst;`,
+          [],
+          (_, { rows }) => {
+            const cus_offline_list = rows._array.map((r) => {
+              return r.customer_id;
+            });
+            const cus_offline_list_id = cus_offline_list.join();
 
-        // オフラインの場合ローカルDBを使用
-        db.transaction((tx) => {
-          tx.executeSql(
-            `select * from staff_list;`,
-            [],
-            (_, { rows }) => {
-              setStaffs(rows._array);
-            },
-            () => {
-              console.log("失敗");
-            }
-          );
+            tx.executeSql(
+              `select * from customer_mst where customer_id in (` +
+                cus_offline_list_id +
+                `) order by time desc;`,
+              [],
+              (_, { rows }) => {
+                setMemos(rows._array);
+              },
+              () => {
+                console.log("失敗");
+              }
+            );
 
-          tx.executeSql(
-            `select * from fixed_mst;`,
-            [],
-            (_, { rows }) => {
-              setFixed(rows._array);
-            },
-            () => {
-              console.log("失敗");
-            }
-          );
+            const cus_count = cus_offline_list.length;
 
-          // コミュニケーション履歴が保存されているお客様のみ表示
-          tx.executeSql(
-            `select distinct customer_id from communication_mst;`,
-            [],
-            (_, { rows }) => {
-              const cus_offline_list = rows._array.map((r) => {
-                return r.customer_id;
-              });
-              const cus_offline_list_id = cus_offline_list.join();
-
-              tx.executeSql(
-                `select * from customer_mst where customer_id in (` +
-                  cus_offline_list_id +
-                  `) order by time desc;`,
-                [],
-                (_, { rows }) => {
-                  setMemos(rows._array);
-                },
-                () => {
-                  console.log("失敗");
-                }
-              );
-
-              const cus_count = cus_offline_list.length;
-
-              const errTitle = "ネットワークの接続に失敗しました";
-              const errMsg =
-                "端末に保存された" + cus_count + "件のメッセージのみ表示します";
-              Alert.alert(errTitle, errMsg);
-            },
-            () => {
-              console.log("失敗");
-            }
-          );
-        });
-        
-        setRefreshing(false);
+            const errTitle = "ネットワークの接続に失敗しました";
+            const errMsg =
+              "端末に保存された" + cus_count + "件のメッセージのみ表示します";
+            Alert.alert(errTitle, errMsg);
+          },
+          () => {
+            console.log("失敗");
+          }
+        );
       });
+      
+    });
 
     // 20220613 新着件数を変数に格納
     fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
@@ -537,18 +538,21 @@ export default function CommunicationHistoryScreen(props) {
         fc_flg: global.fc_flg,
       }),
     })
-      .then((response) => response.json())
-      .then((json) => {
-        //      console.log("2:"+json.bell_count.cnt);
-        if (json.bell_count.cnt != "0") {
-          setBellcount(json.bell_count.cnt);
-        } else {
-          setBellcount("");
-        }
-      })
-      .catch((error) => {
+    .then((response) => response.json())
+    .then((json) => {
+      //      console.log("2:"+json.bell_count.cnt);
+      if (json.bell_count.cnt != "0") {
+        setBellcount(json.bell_count.cnt);
+      } else {
         setBellcount("");
-      });
+      }
+      setRefreshing(false);
+    })
+    .catch((error) => {
+      setBellcount("");
+      setRefreshing(false);
+    });
+
   }, []);
 
   // スタッフリストデータベース登録
@@ -1243,7 +1247,9 @@ export default function CommunicationHistoryScreen(props) {
           (_, { rows }) => {
             if (rows._array.length) {
               setMemos(rows._array);
-              listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
+              if (listRef.current != null) {
+                listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
+              }
             } else {
               setMemos([]);
             }
@@ -1278,7 +1284,9 @@ export default function CommunicationHistoryScreen(props) {
           (_, { rows }) => {
             if (rows._array.length) {
               setMemos(rows._array);
-              listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
+              if (listRef.current != null) {
+                listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
+              }
             } else {
               setMemos([]);
             }
@@ -1303,7 +1311,9 @@ export default function CommunicationHistoryScreen(props) {
           (_, { rows }) => {
             if (rows._array.length) {
               setMemos(rows._array);
-              listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
+              if (listRef.current != null) {
+                listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
+              }
             } else {
               setMemos([]);
             }

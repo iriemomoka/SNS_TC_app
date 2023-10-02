@@ -516,7 +516,7 @@ export default function TalkScreen(props) {
                 
                 if (!c.del_flg) {
                   tx.executeSql(
-                    `insert into communication_mst values (?,?,?,?,?,?,?,?,?,?);`,
+                    `insert or replace into communication_mst values (?,?,?,?,?,?,?,?,?,?);`,
                     [c.communication_id,c.customer_id,c.speaker,c.time,c.title,c.note,c.line_note,c.file_path,c.status,c.html_flg],
                     () => {
                       // console.log("insert staff_list");
