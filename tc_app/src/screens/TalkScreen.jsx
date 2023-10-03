@@ -1,5 +1,7 @@
-import React, { useState,useEffect } from 'react';
-import { Platform,StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity,TextInput,Linking,LogBox,BackHandler,AppState, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  Platform, StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity, TextInput, Linking, LogBox, BackHandler, AppState, FlatList
+} from 'react-native';
 import { GiftedChat, Actions, Send, InputToolbar, Bubble, Time, Composer, Message  } from 'react-native-gifted-chat';
 import Feather from 'react-native-vector-icons/Feather';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,7 +13,7 @@ import { Camera } from 'expo-camera';
 import { Audio } from 'expo-av';
 
 import Loading from '../components/Loading';
-import {MyModal0,MyModal1,MyModal2,MyModal3,MyModal4,MyModal5,MyModal6} from '../components/Modal';
+import { MyModal0, MyModal1, MyModal2, MyModal3, MyModal4, MyModal5, MyModal6 } from '../components/Modal';
 import { db } from '../components/Databace';
 
 LogBox.ignoreAllLogs()
@@ -324,17 +326,17 @@ export default function TalkScreen(props) {
       console.log('closed');
       const WS_URL = 'ws://54.168.20.149:8080/ws/'+route.params.shop_id+'/'
       navigation.reset({
-                      index: 0,
-                      routes: [{
-                        name: 'TalkScreen' ,
-                        params: route.params ,
-                        customer:route.customer,
-                        websocket:new WebSocket(WS_URL),
-                        station:route.station,
-                        address:route.address,
-                        profile:route.profile,
-                      }],
-                    });
+        index: 0,
+        routes: [{
+          name: 'TalkScreen' ,
+          params: route.params ,
+          customer:route.customer,
+          websocket:new WebSocket(WS_URL),
+          station:route.station,
+          address:route.address,
+          profile:route.profile,
+        }],
+      });
     }
     
   }
@@ -406,7 +408,7 @@ export default function TalkScreen(props) {
       const i_data = i.article_name+' '+i.room_no+"\n"+i.address+"\n"+i.line_name1+' '+i.station_name1+' '+(i.station_how_to1 == "徒歩"?i.station_how_to1+i.station_time1:i.station_how_to1 == "バス"?i.station_how_to1+i.bus_time1:'')+"分\n"+"賃料："+i.rent/10000+"万円\n"+"間取り："+i.layout+"\n"+"https://www.total-cloud.net/show/"+route.customer+"/1/"+i.article_id+"\n";
         return i_data;
       })
-      setInquiry_text(inquiry_data)
+      setInquiry_text(inquiry_data);
     }
     
   }, [inquiry])
@@ -468,29 +470,29 @@ export default function TalkScreen(props) {
         {...props}
         position={message_sender_id == 2 ? 'left' : 'right'}
         textStyle={{
-            right: {
-              fontSize: 12,
-            },
-            left: {
-              fontSize: 12
-            },
+          right: {
+            fontSize: 12,
+          },
+          left: {
+            fontSize: 12
+          },
         }}
         wrapperStyle={{
-            right: {
-                backgroundColor: 'white',
-                borderWidth: 1.5,
-                borderColor: '#346cb8',
-                marginRight: 5,
-                marginVertical: 5,
-                maxWidth: '75%',
-            },
-            left: {
-                backgroundColor: (stamp==='スタンプ'||image!==''?'transparent':'#346cb8'),
-                marginLeft: 5,
-                marginVertical: 5,
-                borderBottomLeftRadius: 1,
-                maxWidth: '75%',
-            },
+          right: {
+            backgroundColor: 'white',
+            borderWidth: 1.5,
+            borderColor: '#346cb8',
+            marginRight: 5,
+            marginVertical: 5,
+            maxWidth: '75%',
+          },
+          left: {
+            backgroundColor: (stamp==='スタンプ'||image!==''?'transparent':'#346cb8'),
+            marginLeft: 5,
+            marginVertical: 5,
+            borderBottomLeftRadius: 1,
+            maxWidth: '75%',
+          },
         }}
       />
     );
@@ -563,13 +565,13 @@ export default function TalkScreen(props) {
               
               // 追加
               const local_communication_list = rocal.map((r) => {
-                            return (r.communication_id);
-                          });
-                          
+                return (r.communication_id);
+              });
+              
               const server_communication_list = communication.map((c) => {
-                            return (c.communication_id);
-                          });
-                          
+                return (c.communication_id);
+              });
+              
               const add_communication_list = server_communication_list.filter(c => local_communication_list.indexOf(c) == -1)
               
               // 最大20件に制御するため古いものを削除する
@@ -586,7 +588,7 @@ export default function TalkScreen(props) {
                   }
                 );
               }
-                      
+              
               communication.map((c) => {
                 add_communication_list.map((add) => {
                   
@@ -639,17 +641,17 @@ export default function TalkScreen(props) {
     
     let newMessage = [];
     newMessage[0] = {
-                      _id: '',
-                      text: '',
-                      image: '',
-                      createdAt: '',
-                      user: {
-                        _id: 1,
-                        name: '店舗',
-                        status: '',
-                        title: '',
-                      }
-                    }
+      _id: '',
+      text: '',
+      image: '',
+      createdAt: '',
+      user: {
+        _id: 1,
+        name: '店舗',
+        status: '',
+        title: '',
+      }
+    }
     
     newMessage[0]._id = String(Number(messages[0]._id)+1);
     
@@ -803,37 +805,37 @@ export default function TalkScreen(props) {
         })
         .catch((error) => {
           setLoading(false);
-          console.log(error)
+          console.log(error);
           Alert.alert("送信に失敗しました");
         })
     }
   }
   
   if(menu){
-    Keyboard.dismiss() // キーボード隠す
+    Keyboard.dismiss(); // キーボード隠す
   }
 
   const LibraryPermissionsCheck = async() => {
 
     const AsyncAlert = async () => new Promise((resolve) => {
       Alert.alert(
-       `カメラロールへのアクセスが無効になっています`,
-       "設定画面へ移動しますか？",
-       [
-         {
-           text: "キャンセル",
-           style: "cancel",
-           onPress:() => {resolve(false)}
-         },
-         {
-           text: "設定する",
-           onPress: () => {
-             Linking.openSettings();
-             resolve(false)
-           }
-         }
-       ]
-     );
+        `カメラロールへのアクセスが無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {resolve(false)}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openSettings();
+              resolve(false)
+            }
+          }
+        ]
+      );
     });
 
 	  // カメラロールのアクセス許可を付与
@@ -841,8 +843,8 @@ export default function TalkScreen(props) {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
-         await AsyncAlert();
-         return false;
+        await AsyncAlert();
+        return false;
       } else {
         return true;
       }
@@ -873,7 +875,7 @@ export default function TalkScreen(props) {
   	  if (!result.cancelled) {
         
         let filename = result.uri.split('/').pop();
-  
+
         let match = /\.(\w+)$/.exec(filename);
         let type = match ? `image/${match[1]}` : `image`;
         
@@ -944,7 +946,7 @@ export default function TalkScreen(props) {
   	  if (result.type != "cancel") {
         
         let filename = result.uri.split('/').pop();
-  
+
         let match = /\.(\w+)$/.exec(filename);
         let type = match ? `image/${match[1]}` : `image`;
         
@@ -1013,23 +1015,23 @@ export default function TalkScreen(props) {
 
     const AsyncAlert = async () => new Promise((resolve) => {
       Alert.alert(
-       `カメラへのアクセスが無効になっています`,
-       "設定画面へ移動しますか？",
-       [
-         {
-           text: "キャンセル",
-           style: "cancel",
-           onPress:() => {resolve(false)}
-         },
-         {
-           text: "設定する",
-           onPress: () => {
-             Linking.openSettings();
-             resolve(false)
-           }
-         }
-       ]
-     );
+        `カメラへのアクセスが無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {resolve(false)}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openSettings();
+              resolve(false)
+            }
+          }
+        ]
+      );
     });
 
     const { status } = await c_requestPermission();
@@ -1052,23 +1054,23 @@ export default function TalkScreen(props) {
 
     const AsyncAlert = async () => new Promise((resolve) => {
       Alert.alert(
-       `マイクへのアクセスが無効になっています`,
-       "設定画面へ移動しますか？",
-       [
-         {
-           text: "キャンセル",
-           style: "cancel",
-           onPress:() => {resolve(false)}
-         },
-         {
-           text: "設定する",
-           onPress: () => {
-             Linking.openSettings();
-             resolve(false)
-           }
-         }
-       ]
-     );
+        `マイクへのアクセスが無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {resolve(false)}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openSettings();
+              resolve(false)
+            }
+          }
+        ]
+      );
     });
 
     const { status } = await a_requestPermission();
@@ -1148,17 +1150,13 @@ export default function TalkScreen(props) {
         setModal0(true);
       }
       
-    }
-    else if (name === 2) {
+    } else if (name === 2) {
       setModal1(true);
-    }
-    else if (name === 3) {
+    } else if (name === 3) {
       setModal2(true);
-    }
-    else if (name === 4) {
+    } else if (name === 4) {
       setModal3(true);
-    }
-    else if (name === 5) {
+    } else if (name === 5) {
       setModal4(true);
     }
   }
@@ -1167,9 +1165,9 @@ export default function TalkScreen(props) {
   const getHeight = (e) => {
     const height = e.nativeEvent.layout.height;
     if (height > 40) {
-      setMenu_height(height-40)
+      setMenu_height(height-40);
     } else {
-      setMenu_height(0)
+      setMenu_height(0);
     }
   }
   
@@ -1283,14 +1281,14 @@ export default function TalkScreen(props) {
           })
           :null,
       ]}
-          
+      
       onLayout={(e) => getHeight(e)}
       maxComposerHeight={150}
       
       // 入力欄の下のスペース
       bottomOffset={Platform.select({ios: 35})} // 入力欄下の謎のすき間埋める(iosのみ)
       renderInputToolbar={(props) => (
-          <InputToolbar {...props} 
+          <InputToolbar {...props}
           editable={false}
             containerStyle={[{
               backgroundColor:!global.fc_flg?'#47a9ce':'#fe95bb'},
@@ -1301,7 +1299,7 @@ export default function TalkScreen(props) {
         )
       }
       // ↑の中身
-      renderAccessory={(props) => 
+      renderAccessory={(props) =>
         <View
           style={[
             styles.border,
@@ -1337,20 +1335,20 @@ export default function TalkScreen(props) {
               setModal1={setModal1}
               reservation={reservation}
               shop_mail={[
-                          staff.system_mail,
-                          staff.yahoomail,
-                          staff.gmail,
-                          staff.hotmail,
-                          staff.outlook,
-                          staff.softbank,
-                          staff.icloud,
-                          staff.original_mail
-                        ]}
+                staff.system_mail,
+                staff.yahoomail,
+                staff.gmail,
+                staff.hotmail,
+                staff.outlook,
+                staff.softbank,
+                staff.icloud,
+                staff.original_mail
+              ]}
               cus_mail={customer?[
-                          customer.main.mail1,
-                          customer.main.mail2,
-                          customer.main.mail3
-                        ]:[]}
+                customer.main.mail1,
+                customer.main.mail2,
+                customer.main.mail3
+              ]:[]}
               setMail={setMail}
               subject={subject}
               route={route}
@@ -1361,19 +1359,19 @@ export default function TalkScreen(props) {
               c_d={conditions_date}
               fixed={route.fixed}
               hensu={customer.main?[
-                      // 定型文で使うもの
-                      customer.main.name,
-                      staff.corporations_name,
-                      staff.name,
-                      customer.reverberation.staff_name,
-                      route.params.name_1+' '+route.params.name_2,
-                      customer.reverberation.media,
-                      inquiry_text,
-                      staff.tel,
-                      staff.fax,
-                      inquiry_name,
-                      customer.reverberation.inquiry_day,
-                    ]:[]}
+                // 定型文で使うもの
+                customer.main.name,
+                staff.corporations_name,
+                staff.name,
+                customer.reverberation.staff_name,
+                route.params.name_1+' '+route.params.name_2,
+                customer.reverberation.media,
+                inquiry_text,
+                staff.tel,
+                staff.fax,
+                inquiry_name,
+                customer.reverberation.inquiry_day,
+              ]:[]}
               mail_set={customer.main?{
                 brower_mail:customer.main.brower_mail,
                 mail_select:staff.mail_select,
@@ -1383,13 +1381,13 @@ export default function TalkScreen(props) {
             <MyModal2
               isVisible={modal2}
               setModal2={setModal2}
-              onClose={()=>{ 
-                        if(add[1]){
-                          setModal2(false);
-                        } else {
-                          Alert.alert('確定を押してください');
-                        }
-                      }}
+              onClose={()=>{
+                if(add[1]){
+                  setModal2(false);
+                } else {
+                  Alert.alert('確定を押してください');
+                }
+              }}
               setAdd={setAdd}
               onSend={onSend}
             />
@@ -1404,7 +1402,7 @@ export default function TalkScreen(props) {
               <Text style={styles.iconText}>定型文</Text>
             </TouchableOpacity>
             
-            <MyModal3 {...props} 
+            <MyModal3 {...props}
               isVisible={modal3}
               onSwipeComplete={() => { setModal3(false) }}
               onClose={()=>{ setModal3(false) }}
@@ -1426,18 +1424,18 @@ export default function TalkScreen(props) {
               setMsgtext={setMsgtext}
               setSubject={setSubject}
               hensu={customer.main?[
-                      customer.main.name,
-                      staff.corporations_name,
-                      staff.name,
-                      customer.reverberation.staff_name,
-                      route.params.name_1+' '+route.params.name_2,
-                      customer.reverberation.media,
-                      inquiry_text,
-                      staff.tel,
-                      staff.fax,
-                      inquiry_name,
-                      customer.reverberation.inquiry_day,
-                    ]:[]}
+                customer.main.name,
+                staff.corporations_name,
+                staff.name,
+                customer.reverberation.staff_name,
+                route.params.name_1+' '+route.params.name_2,
+                customer.reverberation.media,
+                inquiry_text,
+                staff.tel,
+                staff.fax,
+                inquiry_name,
+                customer.reverberation.inquiry_day,
+              ]:[]}
             />
           </View>
         </View>

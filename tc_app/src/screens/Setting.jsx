@@ -1,5 +1,7 @@
 import React, { useState,useEffect } from "react";
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, BackHandler, AppState, KeyboardAvoidingView, ScrollView, Image,Linking,Platform, Button } from "react-native";
+import {
+  StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, BackHandler, AppState, KeyboardAvoidingView, ScrollView, Image, Linking, Platform, Button
+} from "react-native";
 import RadioButtonRN from 'radio-buttons-react-native';
 import * as Notifications from 'expo-notifications';
 import { Feather } from '@expo/vector-icons';
@@ -38,7 +40,7 @@ export default function Setting(props) {
   navigation.setOptions({
     headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
     headerTitleAlign: 'center',
-    headerTitle: () => 
+    headerTitle: () =>
       !global.fc_flg?
       (<Image source={require('../../assets/logo.png')} />):
       (<Image source={require('../../assets/logo_onetop.png')} style={styles.header_img} />)
@@ -387,23 +389,23 @@ export default function Setting(props) {
 
     const AsyncAlert = async () => new Promise((resolve) => {
       Alert.alert(
-       `カメラロールへのアクセスが無効になっています`,
-       "設定画面へ移動しますか？",
-       [
-         {
-           text: "キャンセル",
-           style: "cancel",
-           onPress:() => {resolve(false)}
-         },
-         {
-           text: "設定する",
-           onPress: () => {
-             Linking.openSettings();
-             resolve(false)
-           }
-         }
-       ]
-     );
+        `カメラロールへのアクセスが無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {resolve(false)}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openSettings();
+              resolve(false)
+            }
+          }
+        ]
+      );
     });
 
 	  // カメラロールのアクセス許可を付与
@@ -411,8 +413,8 @@ export default function Setting(props) {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
-         await AsyncAlert();
-         return false;
+        await AsyncAlert();
+        return false;
       } else {
         return true;
       }
@@ -601,7 +603,7 @@ console.log("3:"+photoData4);
           formData.append('act','del_staff_img');
           formData.append('formdata_flg',1);
           formData.append('fc_flg',global.fc_flg);
-  
+
           // ローディング開始
           setLoading(true);
 
@@ -839,11 +841,11 @@ console.log("3:"+photoData4);
   
 function sleep(waitMsec) {
   var startMsec = new Date();
- 
+
   // 指定ミリ秒間だけループさせる（CPUは常にビジー状態）
   while (new Date() - startMsec < waitMsec);
 }
- 
+
   
 function Delete_staff_db(){
     
@@ -852,7 +854,7 @@ function Delete_staff_db(){
     
       // スタッフ
       tx.executeSql(
-        `delete from staff_mst;`,  
+        `delete from staff_mst;`,
         [],
         () => {console.log("delete staff_mst OK");},
         () => {console.log("delete staff_mst 失敗");}
@@ -1638,7 +1640,7 @@ function replaceElement(array, before, after) {
   return (
   
     <>
-    <KeyboardAvoidingView style={{ flex: 1 }} 
+    <KeyboardAvoidingView style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'position' : null}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 70}
     >
@@ -2247,7 +2249,6 @@ function replaceElement(array, before, after) {
             
             <TextInput
               value={staff_birthday_month}
-              onChangeText={(text) => {setstaff_birthday_month(text)}}
               style={styles.inputInnerbirthday}
               editable={true}
               keyboardType={"number-pad"}
@@ -2270,11 +2271,11 @@ function replaceElement(array, before, after) {
           <Text style={styles.label}>タグ</Text>
     
           <TagInput
-              updateState={updateTagState}
-              tags={profile_tag.tags}
-              style={styles.tagArea}
-              tagStyle={styles.tagData}
-              tagTextStyle={styles.tagTextArea}
+            updateState={updateTagState}
+            tags={profile_tag.tags}
+            style={styles.tagArea}
+            tagStyle={styles.tagData}
+            tagTextStyle={styles.tagTextArea}
           />
     
           <Text onPress={() => desplayTag('')} style={styles.labeltag}>人気のタグ</Text>
@@ -2445,7 +2446,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderColor: '#191970',
     fontSize:16,
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     borderRadius: 8,
     color:'#000000'
   },
@@ -2455,7 +2456,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderColor: '#191970',
     fontSize:16,
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     borderRadius: 8,
     textAlign: 'right',
     width:'20%',
@@ -2469,7 +2470,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderColor: '#191970',
     fontSize:16,
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     borderRadius: 8,
     color:'#000000'
   },
@@ -2513,7 +2514,7 @@ const styles = StyleSheet.create({
   photoAdd: {
     height:35,
     marginTop: 15,
-    borderWidth: 1, 
+    borderWidth: 1,
     borderRadius: 8,
     borderColor: '#47a9ce',
     backgroundColor: '#47a9ce',
@@ -2522,7 +2523,7 @@ const styles = StyleSheet.create({
   photoDel: {
     height:35,
     marginTop: 5,
-    borderWidth: 1, 
+    borderWidth: 1,
     borderRadius: 8,
     borderColor: '#696969',
     backgroundColor: '#696969',
@@ -2578,13 +2579,13 @@ const styles = StyleSheet.create({
     width:160,
     backgroundColor: '#fff',
     borderColor: '#191970',
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     borderRadius: 8,
   },
   dropDownContainer: {
     width:160,
     borderColor: '#191970',
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     zIndex:998,
   },
   dropDownlabel: {

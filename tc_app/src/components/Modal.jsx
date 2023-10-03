@@ -1,5 +1,6 @@
-import React,{useState, useEffect, useLayoutEffect} from 'react';
-import { StyleSheet,TouchableOpacity, Text, View, TextInput, Switch, Alert,Platform,Button,Image,ScrollView,FlatList,LogBox,KeyboardAvoidingView,Linking
+import React,{ useState, useEffect, useLayoutEffect } from 'react';
+import {
+  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, Linking,
 } from 'react-native';
 import Modal from "react-native-modal";
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -7,7 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import Moment from 'moment';
 import * as ImagePicker from 'expo-image-picker';
 import Feather from 'react-native-vector-icons/Feather';
-import {Collapse,CollapseHeader, CollapseBody} from 'accordion-collapse-react-native';
+import { Collapse, CollapseHeader, CollapseBody } from 'accordion-collapse-react-native';
 import { CheckBox } from 'react-native-elements';
 import MaterialChip from "react-native-material-chip"
 import Autocomplete from 'react-native-autocomplete-input';
@@ -45,11 +46,12 @@ export function MyModal0(props){
     >
       <View  style={styles.line}>
         <TouchableOpacity
-          style={{position: 'absolute',
-                  top:8,
-                  right:10,
-                  zIndex:999
-                }}
+          style={{
+            position: 'absolute',
+            top:8,
+            right:10,
+            zIndex:999
+          }}
           onPress={onPress}
         >
           <Feather name='x-circle' color='gray' size={35} />
@@ -69,7 +71,7 @@ export function MyModal0(props){
   );
 }
 
-export function MyModal1(props){
+export function MyModal1(props) {
   
   const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_set,options } = props;
   
@@ -88,28 +90,28 @@ export function MyModal1(props){
   const [cus_value, setCus_Value] = useState('');
   
   const items1 = cus_mail.filter(Boolean).map((item) => {
-                    return ({
-                      label: item,
-                      value: item,
-                    });
-                });
-                
+    return ({
+      label: item,
+      value: item,
+    });
+  });
+  
   const [open2, setOpen2] = useState(false);
   const [shop_value, setShop_Value] = useState('');
   
   const items2 = shop_mail.filter(Boolean).map((item,key) => {
-                    return ({
-                      label: key==0?item.replace('@','_s@'):item,
-                      value: item,
-                    });
-                });
+    return ({
+      label: key==0?item.replace('@','_s@'):item,
+      value: item,
+    });
+  });
   
   const [option, setOption] = useState(false);
   
   useEffect(() => {
     
     if (options) {
-      setOption(options)
+      setOption(options);
     }
     
   }, [options])
@@ -118,11 +120,10 @@ export function MyModal1(props){
     
     // 宛先
     if (cus_mail.length>0) {
-      setCus_Value(cus_mail[0])
+      setCus_Value(cus_mail[0]);
     }
     
     // 送信元セット
-    
     if (mail_set) {
       
       // 閲覧や返信があった場合、最後に登録された送信元を選択
@@ -130,34 +131,34 @@ export function MyModal1(props){
         var brower_mail = mail_set.brower_mail.split(',');
         
         brower_mail = brower_mail.map((b) => {
-                    return b.replace('_s@','@')
-                });
+          return b.replace('_s@','@')
+        });
         
-        setShop_Value(brower_mail[brower_mail.length-1])
+        setShop_Value(brower_mail[brower_mail.length-1]);
         
       } else {
         
         // 閲覧や返信がない場合、既存のメールアドレス
-        setShop_Value(mail_set.mail_select?mail_set.mail_select:shop_mail[0])
+        setShop_Value(mail_set.mail_select?mail_set.mail_select:shop_mail[0]);
         
         // 送信元メールアドレスをアドレスによってGmailに自動変更
         if(shop_mail[2] && cus_mail.length>0) {
           if (cus_mail[0].indexOf('@yahoo.co.jp') != -1) {
-            setShop_Value(shop_mail[2])
+            setShop_Value(shop_mail[2]);
           } else if (cus_mail[0].indexOf('@gmail.com') != -1) {
-            setShop_Value(shop_mail[2])
+            setShop_Value(shop_mail[2]);
           } else if (cus_mail[0].indexOf('@au.com') != -1) {
-            setShop_Value(shop_mail[2])
+            setShop_Value(shop_mail[2]);
           } else if (cus_mail[0].indexOf('@ezweb.ne.jp') != -1) {
-            setShop_Value(shop_mail[2])
+            setShop_Value(shop_mail[2]);
           } else if (cus_mail[0].indexOf('@icloud.com') != -1) {
-            setShop_Value(shop_mail[2])
+            setShop_Value(shop_mail[2]);
           } else if (cus_mail[0].indexOf('@hotmail') != -1) {
-            setShop_Value(shop_mail[2])
+            setShop_Value(shop_mail[2]);
           } else if (cus_mail[0].indexOf('@outlook') != -1) {
-            setShop_Value(shop_mail[2])
+            setShop_Value(shop_mail[2]);
           } else if (cus_mail[0].indexOf('@live.jp') != -1) {
-            setShop_Value(shop_mail[2])
+            setShop_Value(shop_mail[2]);
           }
           
         }
@@ -176,21 +177,21 @@ export function MyModal1(props){
     if(shop_mail[2] && cus_mail.length>0) {
       
       if (cus_value.indexOf('@yahoo.co.jp') != -1) {
-        setShop_Value(shop_mail[2])
+        setShop_Value(shop_mail[2]);
       } else if (cus_value.indexOf('@gmail.com') != -1) {
-        setShop_Value(shop_mail[2])
+        setShop_Value(shop_mail[2]);
       } else if (cus_value.indexOf('@au.com') != -1) {
-        setShop_Value(shop_mail[2])
+        setShop_Value(shop_mail[2]);
       } else if (cus_value.indexOf('@ezweb.ne.jp') != -1) {
-        setShop_Value(shop_mail[2])
+        setShop_Value(shop_mail[2]);
       } else if (cus_value.indexOf('@icloud.com') != -1) {
-        setShop_Value(shop_mail[2])
+        setShop_Value(shop_mail[2]);
       } else if (cus_value.indexOf('@hotmail') != -1) {
-        setShop_Value(shop_mail[2])
+        setShop_Value(shop_mail[2]);
       } else if (cus_value.indexOf('@outlook') != -1) {
-        setShop_Value(shop_mail[2])
+        setShop_Value(shop_mail[2]);
       } else if (cus_value.indexOf('@live.jp') != -1) {
-        setShop_Value(shop_mail[2])
+        setShop_Value(shop_mail[2]);
       }
       
     }
@@ -248,23 +249,23 @@ export function MyModal1(props){
 
     const AsyncAlert = async () => new Promise((resolve) => {
       Alert.alert(
-       `カメラへのアクセスが無効になっています`,
-       "設定画面へ移動しますか？",
-       [
-         {
-           text: "キャンセル",
-           style: "cancel",
-           onPress:() => {resolve(false)}
-         },
-         {
-           text: "設定する",
-           onPress: () => {
-             Linking.openSettings();
-             resolve(false)
-           }
-         }
-       ]
-     );
+        `カメラへのアクセスが無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {resolve(false)}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openSettings();
+              resolve(false)
+            }
+          }
+        ]
+      );
     });
 
     const { status } = await c_requestPermission();
@@ -287,23 +288,23 @@ export function MyModal1(props){
 
     const AsyncAlert = async () => new Promise((resolve) => {
       Alert.alert(
-       `マイクへのアクセスが無効になっています`,
-       "設定画面へ移動しますか？",
-       [
-         {
-           text: "キャンセル",
-           style: "cancel",
-           onPress:() => {resolve(false)}
-         },
-         {
-           text: "設定する",
-           onPress: () => {
-             Linking.openSettings();
-             resolve(false)
-           }
-         }
-       ]
-     );
+        `マイクへのアクセスが無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {resolve(false)}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openSettings();
+              resolve(false)
+            }
+          }
+        ]
+      );
     });
 
     const { status } = await a_requestPermission();
@@ -323,10 +324,10 @@ export function MyModal1(props){
   // オンライン通話
 	const openOnline_call = async (id) => {
 	  
-	  if (!await CameraPermissionsCheck()) return;
-	  if (!await AudioPermissionsCheck()) return;
+    if (!await CameraPermissionsCheck()) return;
+    if (!await AudioPermissionsCheck()) return;
 	  
-	  Alert.alert(
+    Alert.alert(
       "通話画面を開きますか？",
       "",
       [
@@ -355,7 +356,7 @@ export function MyModal1(props){
                   });
                 })
                 .catch((error) => {
-                  console.log(error)
+                  console.log(error);
                   Alert.alert("接続に失敗しました");
                 })
           }
@@ -379,10 +380,9 @@ export function MyModal1(props){
   const [del_file,setDel_file] = useState('');
   
 	const pickDocument = async () => {
-	  
     var result = await DocumentPicker.getDocumentAsync({});
   	  
-	  if (result) {
+    if (result) {
 	    
       if(result.size > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
@@ -391,38 +391,38 @@ export function MyModal1(props){
         setFiledata(result);
       }
       
-	  }
+    }
   };
   
   const LibraryPermissionsCheck = async() => {
 
     const AsyncAlert = async () => new Promise((resolve) => {
       Alert.alert(
-       `カメラロールへのアクセスが無効になっています`,
-       "設定画面へ移動しますか？",
-       [
-         {
-           text: "キャンセル",
-           style: "cancel",
-           onPress:() => {resolve(false)}
-         },
-         {
-           text: "設定する",
-           onPress: () => {
-             Linking.openSettings();
-             resolve(false)
-           }
-         }
-       ]
-     );
+        `カメラロールへのアクセスが無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {resolve(false)}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openSettings();
+              resolve(false)
+            }
+          }
+        ]
+      );
     });
 
 	  // カメラロールのアクセス許可を付与
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-         await AsyncAlert();
-         return false;
+        await AsyncAlert();
+        return false;
       } else {
         return true;
       }
@@ -435,22 +435,22 @@ export function MyModal1(props){
 	  
     if (!await LibraryPermissionsCheck()) return;
     
-	  let result = await ImagePicker.launchImageLibraryAsync({
-		  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-		  allowsEditing: true,
-		  quality: 1,
-	  });
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
 	  
-	  if (result) {
+    if (result) {
       if(result.size > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
       }else{
-        result.name = result.uri.split('/').pop()
+        result.name = result.uri.split('/').pop();
         setFilename(result.name);
         setFiledata(result);
       }
       
-	  }
+    }
   };
   
   const onDraft = () => {
@@ -460,19 +460,19 @@ export function MyModal1(props){
       return
     }
     
-    const formatDate = (current_datetime)=>{
-        let formatted_date = 
-          current_datetime.getFullYear() + "-" + 
-          (current_datetime.getMonth() + 1) + "-" + 
-          current_datetime.getDate() + " " + 
-          current_datetime.getHours() + ":" + 
-          current_datetime.getMinutes() + ":" + "0";
-        return formatted_date;
+    const formatDate = (current_datetime) => {
+      let formatted_date = 
+        current_datetime.getFullYear() + "-" + 
+        (current_datetime.getMonth() + 1) + "-" + 
+        current_datetime.getDate() + " " + 
+        current_datetime.getHours() + ":" + 
+        current_datetime.getMinutes() + ":" + "0";
+      return formatted_date;
     }
     
     setCon_flg(true);
     props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,checked,checked?formatDate(date):'',res_id,1,true,filedata,del_file]],'mail');
-    props.setModal1(false)
+    props.setModal1(false);
     setNote('');
     setCus_Value(cus_mail[0]);
     setShop_Value(shop_mail[0]);
@@ -493,14 +493,14 @@ export function MyModal1(props){
     setDraft("");
     setCon_flg(true);
     
-    const formatDate = (current_datetime)=>{
-        let formatted_date = 
-          current_datetime.getFullYear() + "-" + 
-          (current_datetime.getMonth() + 1) + "-" + 
-          current_datetime.getDate() + " " + 
-          current_datetime.getHours() + ":" + 
-          current_datetime.getMinutes() + ":" + "0";
-        return formatted_date;
+    const formatDate = (current_datetime) => {
+      let formatted_date = 
+        current_datetime.getFullYear() + "-" + 
+        (current_datetime.getMonth() + 1) + "-" + 
+        current_datetime.getDate() + " " + 
+        current_datetime.getHours() + ":" + 
+        current_datetime.getMinutes() + ":" + "0";
+      return formatted_date;
     }
     
     // 本文入力チェック
@@ -515,7 +515,7 @@ export function MyModal1(props){
               onPress: () => {
                 
                 props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata]],'mail');
-                props.setModal1(false)
+                props.setModal1(false);
                 setNote('');
                 setCus_Value(cus_mail[0]);
                 setShop_Value(shop_mail[0]);
@@ -533,9 +533,8 @@ export function MyModal1(props){
           ]
         );
       } else {
-        
         props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata]],'mail');
-        props.setModal1(false)
+        props.setModal1(false);
         setNote('');
         setCus_Value(cus_mail[0]);
         setShop_Value(shop_mail[0]);
@@ -603,7 +602,7 @@ export function MyModal1(props){
   }
   
   const onClose = () => {
-    props.setModal1(false)
+    props.setModal1(false);
     setNote('');
     setCus_Value(cus_mail[0]);
     setShop_Value(shop_mail[0]);
@@ -627,18 +626,16 @@ export function MyModal1(props){
   
   function rrr(){
     
-    
     if (a){
       
       axios.get(val.file_path)
-         .then(res => {
-            
-            setFilename(val.file_path?'添付ファイル':'');
-            setFiledata({uri:res.config.url});
-         })
-         .catch((error) => {
-           console.log(error);
-          })
+        .then(res => {
+          setFilename(val.file_path?'添付ファイル':'');
+          setFiledata({uri:res.config.url});
+        })
+        .catch((error) => {
+          console.log(error);
+        })
       
       setNote(val.note);
       setCus_Value(val.receive_mail);
@@ -652,68 +649,68 @@ export function MyModal1(props){
         setCheck(true);
         
         const res_time = new Date(
-            val.time.substr(0,4),
-            val.time.substr(5,2),
-            val.time.substr(8,2),
-            val.time.substr(11,2),
-            val.time.substr(14,2),
-            "00"
-            )
+          val.time.substr(0,4),
+          val.time.substr(5,2),
+          val.time.substr(8,2),
+          val.time.substr(11,2),
+          val.time.substr(14,2),
+          "00"
+        )
         res_time.setMonth(res_time.getMonth() - 1);
         setDate(res_time);
       }else{
         setDate(new Date());
       }
       
-      setRes_id(val.reservation_id)
-        
+      setRes_id(val.reservation_id);
+      
       setA(false);
     }
     
     if (res){
       const it = res.filter(Boolean).map((item) => {
-          if(item.draft_flg) {
-            return ({
-              label: '【下書き】'+item.title,
-              value: item,
-            });
-          } else {
-            return ({
-              label: '【予約】'+item.time+"\n"+item.title,
-              value: item,
-            });
-          }
+        if(item.draft_flg) {
+          return ({
+            label: '【下書き】'+item.title,
+            value: item,
+          });
+        } else {
+          return ({
+            label: '【予約】'+item.time+"\n"+item.title,
+            value: item,
+          });
+        }
       });
       
       it.unshift({label:'----------------',value:''});
       
       return(
-            <>
-            <Text style={styles.label}>予約・下書き</Text>
-            <DropDownPicker
-              open={op}
-              value={val}
-              items={it}
-              setOpen={setOp}
-              setValue={setVal}
-              style={styles.inputInner}
-              placeholder = {'----------------'}
-              onClose={() => {setA('a')}}
-              zIndex={5000}
-              translation={{
-                NOTHING_TO_SHOW: "予約・下書きはありません"
-              }}
-            />
-            
-            <TouchableOpacity onPress={onDelete} 
-              style={[val? '':{display: 'none'},styles.delete]}>
-              <Text>削　除</Text>
-            </TouchableOpacity>
-            </>
-            )
+        <>
+        <Text style={styles.label}>予約・下書き</Text>
+        <DropDownPicker
+          open={op}
+          value={val}
+          items={it}
+          setOpen={setOp}
+          setValue={setVal}
+          style={styles.inputInner}
+          placeholder = {'----------------'}
+          onClose={() => {setA('a')}}
+          zIndex={5000}
+          translation={{
+            NOTHING_TO_SHOW: "予約・下書きはありません"
+          }}
+        />
+        
+        <TouchableOpacity onPress={onDelete}
+          style={[val? '':{display: 'none'},styles.delete]}>
+          <Text>削　除</Text>
+        </TouchableOpacity>
+        </>
+      )
     }
   }
- 
+
   function mail_reservation() {
     
     if (Platform.OS === 'ios') {
@@ -849,7 +846,7 @@ export function MyModal1(props){
               setOpen={setOpen}
               setValue={setCus_Value}
               style={styles.inputInner}
-              placeholder = {'----------------'}
+              placeholder={'----------------'}
               zIndex={101}
               translation={{
                 NOTHING_TO_SHOW: "メールアドレスが登録されていません"
@@ -889,7 +886,7 @@ export function MyModal1(props){
               </TouchableOpacity>
               <Text>{filename}</Text>
             </View>
-            <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text> 
+            <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
             <View zIndex={99}>{mail_reservation()}</View>
             <View style={styles.input}>
               <Text style={styles.label}>内容詳細</Text>
@@ -922,7 +919,7 @@ export function MyModal2(props){
   
   const { isVisible,onSwipeComplete,onSend } = props;
   
-  const [con_flg,setCon_flg] = useState(false);
+  const [con_flg, setCon_flg] = useState(false);
   
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState(null);
@@ -935,7 +932,7 @@ export function MyModal2(props){
     {label: 'その他', value: 'その他'}
   ]);
   
-  const [action_text,setAction_text] = useState(null)
+  const [action_text, setAction_text] = useState(null);
   
   const [date, setDate] = useState(new Date());
   const [mode, setMode] = useState('date');
@@ -944,7 +941,6 @@ export function MyModal2(props){
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
     setShow(Platform.OS === 'ios');
-    
     setDate(currentDate);
   };
 
@@ -968,7 +964,6 @@ export function MyModal2(props){
     if(!status) {
       Alert.alert('行動を選択してください');
     } else {
-      
       const formatDate = (current_datetime)=>{
         let formatted_date = 
           current_datetime.getFullYear() + "-" + 
@@ -978,18 +973,18 @@ export function MyModal2(props){
           current_datetime.getMinutes() + ":" + "0";
         return formatted_date;
       }
-    
+
       setCon_flg(true);
-      props.setModal2(false)
+      props.setModal2(false);
       props.onSend([formatDate(date),status,action_text],'edit');
     }
     
   }
   
   const onClose = () => {
-    props.setModal2(false)
+    props.setModal2(false);
   }
- 
+
   function action_date() {
     if (Platform.OS === 'ios') {
       return (
@@ -1045,15 +1040,15 @@ export function MyModal2(props){
       animationOut={'slideOutUp'}
       onModalHide={() => {setCon_flg(false)}}
     >
-    <KeyboardAvoidingView  behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <View style={[{height:500},styles.bottom,styles.modalInner]}>
-        <TouchableOpacity
-          style={styles.close}
-          onPress={onClose}
-        >
-          <Feather name='x-circle' color='gray' size={35} />
-        </TouchableOpacity>
-        <View style={styles.form}>
+      <KeyboardAvoidingView  behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <View style={[{height:500},styles.bottom,styles.modalInner]}>
+          <TouchableOpacity
+            style={styles.close}
+            onPress={onClose}
+          >
+            <Feather name='x-circle' color='gray' size={35} />
+          </TouchableOpacity>
+          <View style={styles.form}>
             <View style={styles.input}>{action_date()}</View>
             <DropDownPicker
               open={open}
@@ -1081,8 +1076,8 @@ export function MyModal2(props){
             <TouchableOpacity onPress={onSubmit} style={styles.submit}>
               <Text style={styles.submitText}>登　録</Text>
             </TouchableOpacity>
+          </View>
         </View>
-      </View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -1247,7 +1242,7 @@ export function MyModal3(props){
     if (query) {
       const regex = new RegExp(`${query.trim()}`, 'i');
       setFilteredStations(
-          station_list.filter((station) => station.name.search(regex) >= 0)
+        station_list.filter((station) => station.name.search(regex) >= 0)
       );
     } else {
       setFilteredStations([]);
@@ -1281,7 +1276,7 @@ export function MyModal3(props){
       const regex = new RegExp(`${query.trim()}`, 'i');
       if(address) {
         setFilteredAddress(
-            address.filter((area) => area.name.search(regex) >= 0)
+          address.filter((area) => area.name.search(regex) >= 0)
         );
       }
     } else {
@@ -1452,24 +1447,24 @@ export function MyModal3(props){
   
   useEffect(() => {
     if(c_d) {
-    setArticle_name(c_d.article_name?c_d.article_name:'');
-    setValue_Rent_from(c_d.rent_from?c_d.rent_from:false);
-    setValue_Rent_to(c_d.rent_to?c_d.rent_to:false);
-    setGeneral(c_d.general?true:false);
-    setDeposit(c_d.deposit?true:false);
-    setValue_layout(c_d.layout?c_d.layout.split(','):null);
-    setStations(c_d.station?c_d.station:false);
-    setStation_time(c_d.station_time?c_d.station_time:'');
-    setArea(c_d.area?c_d.area:false);
-    setValue_Exclusive_from(c_d.exclusive_from?c_d.exclusive_from:null);
-    setValue_Exclusive_to(c_d.exclusive_to?c_d.exclusive_to:null);
-    setArticle_id(c_d.article_id?c_d.article_id:'');
-    setValue_Category(c_d.category?c_d.category.split(','):null);
-    setValue_Constructure(c_d.constructure?c_d.constructure.split(','):null);
-    setValue_Built(c_d.built?c_d.built:null);
-    setValue_Setubi(c_d.setubi?c_d.setubi.split(','):null);
-    setValue_Stove(c_d.stove?c_d.stove:null);
-    setValue_Direction(c_d.direction?c_d.direction.split(','):null);
+      setArticle_name(c_d.article_name?c_d.article_name:'');
+      setValue_Rent_from(c_d.rent_from?c_d.rent_from:false);
+      setValue_Rent_to(c_d.rent_to?c_d.rent_to:false);
+      setGeneral(c_d.general?true:false);
+      setDeposit(c_d.deposit?true:false);
+      setValue_layout(c_d.layout?c_d.layout.split(','):null);
+      setStations(c_d.station?c_d.station:false);
+      setStation_time(c_d.station_time?c_d.station_time:'');
+      setArea(c_d.area?c_d.area:false);
+      setValue_Exclusive_from(c_d.exclusive_from?c_d.exclusive_from:null);
+      setValue_Exclusive_to(c_d.exclusive_to?c_d.exclusive_to:null);
+      setArticle_id(c_d.article_id?c_d.article_id:'');
+      setValue_Category(c_d.category?c_d.category.split(','):null);
+      setValue_Constructure(c_d.constructure?c_d.constructure.split(','):null);
+      setValue_Built(c_d.built?c_d.built:null);
+      setValue_Setubi(c_d.setubi?c_d.setubi.split(','):null);
+      setValue_Stove(c_d.stove?c_d.stove:null);
+      setValue_Direction(c_d.direction?c_d.direction.split(','):null);
     }
   }, [c_d])
   
@@ -1486,39 +1481,35 @@ export function MyModal3(props){
   const [save, setSave] = useState(true); // 条件保存
   
   if (selectedStations.length){
-    var station = selectedStations.map(sv => 
-        sv.id
-      )
+    var station = selectedStations.map(sv => sv.id)
   }
   
   if (selectedAddress.length){
-    var areas = selectedAddress.map(sv => 
-        sv.id
-      )
+    var areas = selectedAddress.map(sv => sv.id)
   }
   
   const onSubmit = () => {
-    
     const search_entry = {
-    article_name:article_name,
-    rent_from:value_rent_from,
-    rent_to:value_rent_to,
-    general:general,
-    deposit:deposit,
-    layout:value_layout?`${value_layout}`:null,
-    station:station?`${station}`:null,
-    station_time:station_time,
-    area:areas?`${areas}`:null,
-    exclusive_from:value_exclusive_from,
-    exclusive_to:value_exclusive_to,
-    article_id:article_id,
-    category:value_category?`${value_category}`:null,
-    constructure:value_constructure?`${value_constructure}`:null,
-    built:value_built,
-    setubi:value_setubi?`${value_setubi}`:null,
-    stove:value_stove,
-    direction:direction===null?`${value_direction}`:null,
-  }
+      article_name:article_name,
+      rent_from:value_rent_from,
+      rent_to:value_rent_to,
+      general:general,
+      deposit:deposit,
+      layout:value_layout?`${value_layout}`:null,
+      station:station?`${station}`:null,
+      station_time:station_time,
+      area:areas?`${areas}`:null,
+      exclusive_from:value_exclusive_from,
+      exclusive_to:value_exclusive_to,
+      article_id:article_id,
+      category:value_category?`${value_category}`:null,
+      constructure:value_constructure?`${value_constructure}`:null,
+      built:value_built,
+      setubi:value_setubi?`${value_setubi}`:null,
+      stove:value_stove,
+      direction:direction===null?`${value_direction}`:null,
+    }
+
     setSearch(search_entry);
     setRecommended(!isRecommended);
   }
@@ -1569,9 +1560,7 @@ export function MyModal3(props){
               console.log(error)
               Alert.alert(errorMsg);
             })
-          }
-          
-      
+      }
     }, [search])
   
   const onDelete = () => {
@@ -1659,10 +1648,10 @@ export function MyModal3(props){
             >
               <Feather name='x-circle' color='gray' size={35} />
             </TouchableOpacity>
-              <View style={styles.form}>
-                <ScrollView 
-                  style={{height:400}}
-                >
+            <View style={styles.form}>
+              <ScrollView 
+                style={{height:400}}
+              >
                 <View>
                   <View style={styles.input}>
                     <Text style={styles.label}>物件名</Text>
@@ -1746,7 +1735,7 @@ export function MyModal3(props){
                       inputContainerStyle={{borderWidth:0}}
                       flatListProps={{
                         keyExtractor: (item) => `${item.id}`,
-                        renderItem: ({ item }) => 
+                        renderItem: ({ item }) =>
                         <TouchableOpacity
                           onPress={() => {
                             setSelectedStations((prevArray)=>[...prevArray, item]);
@@ -1762,7 +1751,7 @@ export function MyModal3(props){
                   <View style={{flexDirection: 'row'}}>
                     <FlatList 
                       data={selectedStations}
-                      renderItem={({ item }) => 
+                      renderItem={({ item }) =>
                         (
                           <MaterialChip
                             text={item.name}
@@ -1794,7 +1783,7 @@ export function MyModal3(props){
                       inputContainerStyle={{borderWidth:0}}
                       flatListProps={{
                         keyExtractor: (item) => `${item.id}`,
-                        renderItem: ({ item }) => 
+                        renderItem: ({ item }) =>
                         <TouchableOpacity
                           onPress={() => {
                             setSelectedAddress((prevArray)=>[...prevArray, item]);
@@ -1810,7 +1799,7 @@ export function MyModal3(props){
                   <View style={{flexDirection: 'row'}}>
                     <FlatList 
                       data={selectedAddress}
-                      renderItem={({ item }) => 
+                      renderItem={({ item }) =>
                         (
                           <MaterialChip
                             text={item.name}
@@ -2002,51 +1991,51 @@ export function MyModal3(props){
                   <Text style={styles.submitText}>検　索</Text>
                 </TouchableOpacity>
               </View>
-              </View>
+            </View>
           </View>
         </Modal>
         <FlatList 
-        horizontal
-        data={search_results?search_results:property}
-        renderItem={({ item }) => 
-          (
-            <TouchableOpacity
-              activeOpacity={1}
-              style={styles.property}
-            >
-              <View style={styles.propertyInner}>
-                <Text style={styles.propertyTitle}>{item.article_name}{"\n"}
-                <Text style={{fontSize:12}}>{item.floor}階</Text></Text>
-                <View style={styles.propertyInfo}>
-                  <Text>沿線：</Text><Text>{item.line_name1}</Text>
-                </View>
-                <View style={styles.propertyInfo}>
-                  <Text>駅名：</Text><Text>{item.station_name1}駅</Text>
-                </View>
-                <View style={styles.propertyInfo}>
-                  <Image
-                    style={styles.propertyPhoto}
-                    source={{
-                              uri: item.img_gaikan,
-                            }}
-                  />
-                  <View>
-                    <Text><Text style={{color:'red'}}>{item.rent/10000}</Text>万({item.general}円)</Text>
-                    <Text>徒歩{item.station_time1}分</Text>
-                    <Text>{item.layout}/{item.category}</Text>
-                    <Text>{item.exclusive}㎡</Text>
+          horizontal
+          data={search_results?search_results:property}
+          renderItem={({ item }) =>
+            (
+              <TouchableOpacity
+                activeOpacity={1}
+                style={styles.property}
+              >
+                <View style={styles.propertyInner}>
+                  <Text style={styles.propertyTitle}>{item.article_name}{"\n"}
+                  <Text style={{fontSize:12}}>{item.floor}階</Text></Text>
+                  <View style={styles.propertyInfo}>
+                    <Text>沿線：</Text><Text>{item.line_name1}</Text>
                   </View>
+                  <View style={styles.propertyInfo}>
+                    <Text>駅名：</Text><Text>{item.station_name1}駅</Text>
+                  </View>
+                  <View style={styles.propertyInfo}>
+                    <Image
+                      style={styles.propertyPhoto}
+                      source={{
+                        uri: item.img_gaikan,
+                      }}
+                    />
+                    <View>
+                      <Text><Text style={{color:'red'}}>{item.rent/10000}</Text>万({item.general}円)</Text>
+                      <Text>徒歩{item.station_time1}分</Text>
+                      <Text>{item.layout}/{item.category}</Text>
+                      <Text>{item.exclusive}㎡</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.propertyInner}
+                    onPress={() => proInsert(item)}
+                  >
+                    <Image
+                      source={require('../../assets/btn_app.png')}
+                    />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  style={styles.propertyInner}
-                  onPress={() => proInsert(item)}
-                >
-                  <Image
-                    source={require('../../assets/btn_app.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
             )
           }
           keyExtractor={(item) => `${item.article_id}`}
@@ -2061,19 +2050,21 @@ export function MyModal4(props){
   const { isVisible,onSwipeComplete,onPress,fixed,msgtext,subject,hensu } = props;
   
   // カテゴリーの重複を検出したものを重複しないでリスト
-  const f_c = fixed.map((c) =>{
+  const f_c = fixed.map((c) => {
     return c.category
   })
-  const [fixed_category,setFixed_Category] = useState(Array.from(new Set(f_c)));
+  const [fixed_category, setFixed_Category] = useState(Array.from(new Set(f_c)));
   
   // カテゴリ内をリスト化
   function list(category) {
     
     const l = fixed.map((f) => {
       if (category == f.category) {
-        return (<TouchableOpacity onPress={() => tmp_send(f)} key={f.fixed_id}>
-                <Text style={styles.CollapseBodyText}>{f.title}</Text>
-              </TouchableOpacity>)
+        return (
+          <TouchableOpacity onPress={() => tmp_send(f)} key={f.fixed_id}>
+            <Text style={styles.CollapseBodyText}>{f.title}</Text>
+          </TouchableOpacity>
+        )
       }
     })
     
@@ -2103,7 +2094,7 @@ export function MyModal4(props){
       let bukken = '';
       for (let i = 0; i < hensu[6].length; i++) {
         bukken += hensu[6][i];
-        bukken += '\n'
+        bukken += '\n';
       }
       title = title.join(bukken);
     }else{
@@ -2117,9 +2108,9 @@ export function MyModal4(props){
     title = title.split("%物件名%");
     title = title.join(hensu[9]);
     title = title.split("%問合わせ日付%");
+
     let date = '';
     if (hensu[10]) {
-      
       let month = new Date(hensu[10].substr(0,10)).getMonth()+1
       let day   = new Date(hensu[10].substr(0,10)).getDate()
       date  = month+'月'+day+'日'
@@ -2131,7 +2122,7 @@ export function MyModal4(props){
       let bukken = '';
       for (let i = 0; i < hensu[6].length; i++) {
         bukken += hensu[6][i];
-        bukken += '\n'
+        bukken += '\n';
       }
       title = title.join(bukken);
     }else{
@@ -2162,7 +2153,7 @@ export function MyModal4(props){
       let bukken = '';
       for (let i = 0; i < hensu[6].length; i++) {
         bukken += hensu[6][i];
-        bukken += '\n'
+        bukken += '\n';
       }
       note = note.join(bukken);
     }else{
@@ -2183,7 +2174,7 @@ export function MyModal4(props){
       let bukken = '';
       for (let i = 0; i < hensu[6].length; i++) {
         bukken += hensu[6][i];
-        bukken += '\n'
+        bukken += '\n';
       }
       note = note.join(bukken);
     }else{
@@ -2247,7 +2238,7 @@ export function MyModal4(props){
       animationOutTiming={500}
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
-      propagateSwipe={true} 
+      propagateSwipe={true}
     >
       <View  style={[{height:300},styles.template]}>
         <TouchableOpacity
@@ -2257,14 +2248,14 @@ export function MyModal4(props){
           <Feather name='x-circle' color='gray' size={35} />
         </TouchableOpacity>
         <Text style={styles.templateText}>
-        定型文をクリックすると送信内容に反映されます。{"\n"}
-        先にテキストを入力している状態で、定型文を選択すると内容が上書きされます。{"\n"}
-        ご注意ください。
+          定型文をクリックすると送信内容に反映されます。{"\n"}
+          先にテキストを入力している状態で、定型文を選択すると内容が上書きされます。{"\n"}
+          ご注意ください。
         </Text>
           <FlatList 
             data={fixed_category}
-            renderItem={({ item }) => 
-               (
+            renderItem={({ item }) =>
+              (
                 <Collapse>
                   <CollapseHeader>
                     <View>
@@ -2297,13 +2288,13 @@ export function MyModal5(props){
   const [staff_value, setStaff_Value] = useState(null);
   const [staffs, setStaffs] = useState([]);
   const items = staffs.map((item) => {
-                  return ({
-                    label: item.name_1+'　'+(item.name_2?item.name_2:''),
-                    value: item.account,
-                    key: item.account
-                  });
-                });
-                
+    return ({
+      label: item.name_1+'　'+(item.name_2?item.name_2:''),
+      value: item.account,
+      key: item.account
+    });
+  });
+  
   const [name,setName] = useState('');
   const [tel,setTel] = useState('');
   const [suumo,setSuumo] = useState(false);
@@ -2338,7 +2329,7 @@ export function MyModal5(props){
     
     staff.map((s) => {
       if (route.params.account == s.account) {
-        setStaff_Value(s.account)
+        setStaff_Value(s.account);
       }
     })
     
@@ -2380,34 +2371,34 @@ export function MyModal5(props){
                 
           } else {
             setText('こちらの反響は、問い合わせ物件の情報がTCにないため自動追客できません\n手動対応お願い致します');
-              setPattern(2)
+            setPattern(2);
           }
           
         } else {
           setText('この反響はメールアドレスがないため\n自動追客は設定できません\n手動対応お願い致します');
-          setPattern(2)
+          setPattern(2);
         }
       } else {
         setText(`${tantou}`+'担当者が割り振られていません\n担当者を選択してください');
-        setPattern(2)
+        setPattern(2);
       }
     }  else {
       setText(`${tantou}`+'担当者が割り振られていません\n担当者を選択してください');
-      setPattern(2)
+      setPattern(2);
     }
     
     if (cus) {
       
-      setName(cus.main.name)
+      setName(cus.main.name);
       
       if (cus.reverberation.media == 'SUUMO' && !cus.main.tel1 && !cus.main.tel2 && (cus.main.tel3).substring(0,3) == '050') {
-        setTel(cus.main.tel3)
-        setSuumo(true)
+        setTel(cus.main.tel3);
+        setSuumo(true);
       } else {
-        setTel(cus.main.tel1)
+        setTel(cus.main.tel1);
       }
-      setTitle(cus.beginning_communication.title)
-      setNote(cus.beginning_communication.note)
+      setTitle(cus.beginning_communication.title);
+      setNote(cus.beginning_communication.note);
       
     }
     
@@ -2439,13 +2430,13 @@ export function MyModal5(props){
           f_d.map((fd) => {
             
             if (fd.key == 1) {
-              setFollow_item1(fd.value)
+              setFollow_item1(fd.value);
             } else if (fd.key == 2) {
-              setFollow_item2(fd.value)
+              setFollow_item2(fd.value);
             } else if (fd.key == 3) {
-              setFollow_item3(fd.value)
+              setFollow_item3(fd.value);
             } else if (fd.key == 4) {
-              setFollow_item4(fd.value)
+              setFollow_item4(fd.value);
             }
             
           })
@@ -2562,8 +2553,10 @@ export function MyModal5(props){
             <TouchableOpacity onPress={() => {openCondition(1)}} style={styles.follow_item_btn}>
               <Text>設定</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {follow_check(follow_item1)}}
-             style={follow_item1?styles.follow_item_btn:{display:'none'}}>
+            <TouchableOpacity
+              onPress={() => {follow_check(follow_item1)}}
+              style={follow_item1?styles.follow_item_btn:{display:'none'}}
+            >
               <Text>確認</Text>
             </TouchableOpacity>
           </View>
@@ -2572,18 +2565,25 @@ export function MyModal5(props){
             <TouchableOpacity onPress={() => {openCondition(2)}} style={styles.follow_item_btn}>
               <Text>設定</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {follow_check(follow_item2)}}
-             style={follow_item2?styles.follow_item_btn:{display:'none'}}>
+            <TouchableOpacity
+              onPress={() => {follow_check(follow_item2)}}
+              style={follow_item2?styles.follow_item_btn:{display:'none'}}
+            >
               <Text>確認</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.follow_item}>
             <Text style={[styles.cus_label,{marginHorizontal:20}]}>希望条件3</Text>
-            <TouchableOpacity onPress={() => {openCondition(3)}} style={styles.follow_item_btn}>
+            <TouchableOpacity
+              onPress={() => {openCondition(3)}}
+              style={styles.follow_item_btn}
+            >
               <Text>設定</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {follow_check(follow_item3)}}
-             style={follow_item3?styles.follow_item_btn:{display:'none'}}>
+            <TouchableOpacity
+              onPress={() => {follow_check(follow_item3)}}
+              style={follow_item3?styles.follow_item_btn:{display:'none'}}
+            >
               <Text>確認</Text>
             </TouchableOpacity>
           </View>
@@ -2592,14 +2592,16 @@ export function MyModal5(props){
             <TouchableOpacity onPress={() => {openCondition(4)}} style={styles.follow_item_btn}>
               <Text>設定</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {follow_check(follow_item4)}}
-             style={follow_item4?styles.follow_item_btn:{display:'none'}}>
+            <TouchableOpacity
+              onPress={() => {follow_check(follow_item4)}}
+              style={follow_item4?styles.follow_item_btn:{display:'none'}}
+            >
               <Text>確認</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
         </>
-        )
+      )
     } else if (pattern == 2) {
       return (
         <ScrollView style={{height:230}}>
@@ -2623,7 +2625,7 @@ export function MyModal5(props){
             {note}
           </Text>
         </ScrollView>
-        )
+      )
     }
   }
   
@@ -2651,14 +2653,14 @@ export function MyModal5(props){
       }
       
       if (err) {
-        Alert.alert('下記エラーが出ています',err)
+        Alert.alert('下記エラーが出ています',err);
         return
       } else {
         
         if (contact_tel && contact_tel != '電話で会話した') {
           
           let formData = new FormData();
-    
+
           formData.append('app_flg',1);
           formData.append('customer_id',route.customer);
           formData.append('shop_id',route.params.shop_id);
@@ -2729,7 +2731,7 @@ export function MyModal5(props){
         });
       })
     
-    setClose(false)
+    setClose(false);
     navigation.reset({
       index: 0,
       routes: [{
@@ -2819,7 +2821,7 @@ export function MyModal5(props){
     }
     
     setCheck_text(text);
-    setCheck_modal(true)
+    setCheck_modal(true);
   }
   
   
@@ -2891,7 +2893,7 @@ export function MyModal5(props){
         <Text style={styles.templateText}>{text}</Text>
         <Text style={[styles.cus_label,{marginTop:20}]}>【担当者】</Text>
         <DropDownPicker
-          style={styles.inputInner,{marginTop:5}}
+          style={[styles.inputInner,{marginTop:5}]}
           containerStyle={{width:'100%'}}
           dropDownContainerStyle={{marginTop:20}}
           open={open}
@@ -3101,7 +3103,7 @@ export function MyModal5_condition(props){
       const regex = new RegExp(`${query.trim()}`, 'i');
       if (s_list) {
         setFilteredStations(
-            s_list.filter((station) => station.name.search(regex) >= 0)
+          s_list.filter((station) => station.name.search(regex) >= 0)
         );
       }
     } else {
@@ -3116,7 +3118,7 @@ export function MyModal5_condition(props){
         return (v.id !== props.id);
       })
     )
-    setA('a')
+    setA('a');
   }
   
   const [open_station_time, setOpen_station_time] = useState(false); // 徒歩分数
@@ -3141,7 +3143,7 @@ export function MyModal5_condition(props){
       const regex = new RegExp(`${query.trim()}`, 'i');
       if(a_list) {
         setFilteredAddress(
-            a_list.filter((area) => area.name.search(regex) >= 0)
+          a_list.filter((area) => area.name.search(regex) >= 0)
         );
       }
     } else {
@@ -3156,7 +3158,7 @@ export function MyModal5_condition(props){
         return (v.id !== props.id);
       })
     )
-    setA('a')
+    setA('a');
   }
   
   const [open_exclusive_from, setOpen_Exclusive_from] = useState(false); // 面積下限
@@ -3253,7 +3255,6 @@ export function MyModal5_condition(props){
     {label: 'エレベータ', value: 'エレベータ', parent: 'building'},
     {label: 'オートロック', value: 'オートロック', parent: 'building'},
     {label: '宅配ボックス', value: '宅配ボックス', parent: 'building'},
-    
     {label: '部屋条件設備', value: 'room',},
     {label: 'コンロ2口以上', value: 'コンロ2口以上', parent: 'room'},
     {label: 'セパレート', value: 'セパレート', parent: 'room'},
@@ -3361,7 +3362,6 @@ export function MyModal5_condition(props){
             
           }
           
-          
         })
         .catch((error) => {
           const errorMsg = "失敗aaa";
@@ -3397,15 +3397,11 @@ export function MyModal5_condition(props){
   const get_article_cnt = () => {
     
     if (selectedStations.length){
-      var station = selectedStations.map(sv => 
-          sv.id
-        )
+      var station = selectedStations.map(sv => sv.id)
     }
     
     if (selectedAddress.length){
-      var areas = selectedAddress.map(sv => 
-          sv.id
-        )
+      var areas = selectedAddress.map(sv => sv.id)
     }
     
     let formData = new FormData();
@@ -3478,15 +3474,11 @@ export function MyModal5_condition(props){
   function onSubmit() {
     
     if (selectedStations.length){
-      var station = selectedStations.map(sv => 
-          sv.name
-        )
+      var station = selectedStations.map(sv => sv.name)
     }
     
     if (selectedAddress.length){
-      var area = selectedAddress.map(sv => 
-          sv.name
-        )
+      var area = selectedAddress.map(sv => sv.name)
     }
     
     const save = {
@@ -3510,21 +3502,21 @@ export function MyModal5_condition(props){
     
     if (!follow_item1&&!follow_item2&&!follow_item3&&!follow_item4) {
       
-      props.setFollow_item1(save)
-      props.setFollow_item2(save)
-      props.setFollow_item3(save)
-      props.setFollow_item4(save)
+      props.setFollow_item1(save);
+      props.setFollow_item2(save);
+      props.setFollow_item3(save);
+      props.setFollow_item4(save);
       
     } else {
       
       if (follow_item_num == 1) {
-        props.setFollow_item1(save)
+        props.setFollow_item1(save);
       } else if (follow_item_num == 2) {
-        props.setFollow_item2(save)
+        props.setFollow_item2(save);
       } else if (follow_item_num == 3) {
-        props.setFollow_item3(save)
+        props.setFollow_item3(save);
       } else if (follow_item_num == 4) {
-        props.setFollow_item4(save)
+        props.setFollow_item4(save);
       }
       
     }
@@ -3533,15 +3525,11 @@ export function MyModal5_condition(props){
     let formData = new FormData();
     
     if (selectedStations.length){
-      var station = selectedStations.map(sv => 
-          sv.id
-        )
+      var station = selectedStations.map(sv => sv.id)
     }
     
     if (selectedAddress.length){
-      var areas = selectedAddress.map(sv => 
-          sv.id
-        )
+      var areas = selectedAddress.map(sv => sv.id)
     }
     
     formData.append('app_flg',1);
@@ -3607,19 +3595,19 @@ export function MyModal5_condition(props){
         <TouchableOpacity
           style={styles.close}
           onPress={() => {
-            setClose(false)
-            onDelete()
+            setClose(false);
+            onDelete();
           }}
         >
           <Feather name='x-circle' color='gray' size={35} />
         </TouchableOpacity>
-          <View style={styles.form}>
-            <View style={{marginBottom:10}}>
-              <Text style={{color:'red',fontSize:18}}>検索件数：{count}件</Text>
-            </View>
-            <ScrollView 
-              style={{height:480,position: 'relative',bottom: 10}}
-            >
+        <View style={styles.form}>
+          <View style={{marginBottom:10}}>
+            <Text style={{color:'red',fontSize:18}}>検索件数：{count}件</Text>
+          </View>
+          <ScrollView 
+            style={{height:480,position: 'relative',bottom: 10}}
+          >
             <View>
               <Text style={styles.label}>賃料</Text>
               <View style={[{flexDirection: 'row'},Platform.OS === 'ios'?{zIndex:1000}:'']}>
@@ -3698,15 +3686,15 @@ export function MyModal5_condition(props){
                   inputContainerStyle={{borderWidth:0}}
                   flatListProps={{
                     keyExtractor: (item) => `${item.id}`,
-                    renderItem: ({ item }) => 
+                    renderItem: ({ item }) =>
                     <TouchableOpacity
                       onPress={() => {
                         setSelectedStations((prevArray)=>[...prevArray, item]);
                         setFilteredStations([]);
-                        setA('a')
+                        setA('a');
                       }}>
                       <Text style={styles.suggestText}>
-                          {item.name}
+                        {item.name}
                       </Text>
                     </TouchableOpacity>,
                   }}
@@ -3715,7 +3703,7 @@ export function MyModal5_condition(props){
               <View style={{flexDirection: 'row'}}>
                 <FlatList 
                   data={selectedStations}
-                  renderItem={({ item }) => 
+                  renderItem={({ item }) =>
                     (
                       <MaterialChip
                         text={item.name}
@@ -3753,15 +3741,15 @@ export function MyModal5_condition(props){
                   inputContainerStyle={{borderWidth:0}}
                   flatListProps={{
                     keyExtractor: (item) => `${item.id}`,
-                    renderItem: ({ item }) => 
+                    renderItem: ({ item }) =>
                     <TouchableOpacity
                       onPress={() => {
                         setSelectedAddress((prevArray)=>[...prevArray, item]);
                         setFilteredAddress([]);
-                        setA('a')
+                        setA('a');
                       }}>
                       <Text style={styles.suggestText}>
-                          {item.name}
+                        {item.name}
                       </Text>
                     </TouchableOpacity>,
                   }}
@@ -3770,7 +3758,7 @@ export function MyModal5_condition(props){
               <View style={{flexDirection: 'row'}}>
                 <FlatList 
                   data={selectedAddress}
-                  renderItem={({ item }) => 
+                  renderItem={({ item }) =>
                     (
                       <MaterialChip
                         text={item.name}
@@ -3924,16 +3912,16 @@ export function MyModal5_condition(props){
               </View>
             </View>
           </ScrollView>
-          </View>
-          
-          <View style={styles.overlap_btnwrap}>
-            <TouchableOpacity onPress={onDelete} style={[styles.draft]}>
-              <Text>リセット</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={onSubmit} style={[styles.submit]}>
-              <Text style={styles.submitText}>保　存</Text>
-            </TouchableOpacity>
-          </View>
+        </View>
+        
+        <View style={styles.overlap_btnwrap}>
+          <TouchableOpacity onPress={onDelete} style={[styles.draft]}>
+            <Text>リセット</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onSubmit} style={[styles.submit]}>
+            <Text style={styles.submitText}>保　存</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Modal>
   )
@@ -3956,8 +3944,8 @@ export function MyModal6(props){
   const [customer_id,setCustomer_id] = useState(false);
   const [user_id,setUser_id] = useState(false);
   
-  const [text,setText] = useState('')
-  const [num,setNum] = useState('')
+  const [text,setText] = useState('');
+  const [num,setNum] = useState('');
   
   const [open, setOpen] = useState(false);
   const [staffs, setStaffs] = useState([]);
@@ -3970,7 +3958,7 @@ export function MyModal6(props){
     
     if (overlap && overlap.list) {
 
-      setOL(overlap)
+      setOL(overlap);
       
       // スタッフ名
       const s = Object.entries(overlap.staff);
@@ -3982,12 +3970,12 @@ export function MyModal6(props){
       setCustomer_id(overlap.main.customer_id);
       
       overlap.list.map((val) => {
-        setID(val.customer_id)
-        setUser_id(val.user_id)
+        setID(val.customer_id);
+        setUser_id(val.user_id);
       })
       
       // 重複パターン振り分け
-      setNum(overlap.overlap)
+      setNum(overlap.overlap);
       if (overlap.overlap == '1') {    // 重複【既存あり(1件のみ)】
       
         setText(`${s[0][1].name_1+'　'+s[0][1].name_2}`+'さんが担当している\nお客様：'+`${overlap.list[0].name}`+'さんと連絡先が同一です。\nこのお客様にまとめますか？')
@@ -4007,7 +3995,7 @@ export function MyModal6(props){
           if(id_list){
             id_list += ","+cus.customer_id;
           } else {
-            id_list = cus.customer_id;	
+            id_list = cus.customer_id;
           }
           
           // customer_id古いもの取得処理
@@ -4023,11 +4011,10 @@ export function MyModal6(props){
         setID(id_list_min);
         setCustomer_id(id_list);
         
-        
         const items = s.map((item) => {
           
           if (route.params.account == item[0]) {
-            setUser_id(item[0])
+            setUser_id(item[0]);
           }
           
           return ({
@@ -4036,7 +4023,7 @@ export function MyModal6(props){
           });
         });
         
-        setStaffs(items)
+        setStaffs(items);
       }
       
     }
@@ -4065,7 +4052,7 @@ export function MyModal6(props){
             {overlap.main.note}
           </Text>
         </ScrollView>
-        )
+      )
     } else if (num == '2') {
       
       // スタッフ名
@@ -4144,7 +4131,7 @@ export function MyModal6(props){
           }}
         />
         </>
-        )
+      )
     }
     
   }
@@ -4192,8 +4179,8 @@ export function MyModal6(props){
           )
         })
         
-        Alert.alert('反響振分しました。')
-        setClose(false)
+        Alert.alert('反響振分しました。');
+        setClose(false);
         
         // お客様一覧に戻る
         navigation.reset({
@@ -4305,7 +4292,7 @@ const styles = StyleSheet.create({
     paddingHorizontal:5,
     borderColor: '#1f2d53',
     fontSize:16,
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     borderRadius: 8,
   },
   textarea: {
@@ -4314,7 +4301,7 @@ const styles = StyleSheet.create({
     paddingHorizontal:5,
     borderColor: '#1f2d53',
     fontSize:16,
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     borderRadius: 8,
     textAlignVertical: 'top'
   },
