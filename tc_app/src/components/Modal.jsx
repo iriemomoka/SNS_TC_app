@@ -629,13 +629,13 @@ export function MyModal1(props) {
     if (a){
       
       axios.get(val.file_path)
-        .then(res => {
-          setFilename(val.file_path?'添付ファイル':'');
-          setFiledata({uri:res.config.url});
-        })
-        .catch((error) => {
-          console.log(error);
-        })
+      .then(res => {
+        setFilename(val.file_path?'添付ファイル':'');
+        setFiledata({uri:res.config.url});
+      })
+      .catch((error) => {
+        console.log(error);
+      })
       
       setNote(val.note);
       setCus_Value(val.receive_mail);
@@ -687,20 +687,25 @@ export function MyModal1(props) {
       return(
         <>
         <Text style={styles.label}>予約・下書き</Text>
-        <DropDownPicker
-          open={op}
-          value={val}
-          items={it}
-          setOpen={setOp}
-          setValue={setVal}
-          style={styles.inputInner}
-          placeholder = {'----------------'}
-          onClose={() => {setA('a')}}
-          zIndex={5000}
-          translation={{
-            NOTHING_TO_SHOW: "予約・下書きはありません"
-          }}
-        />
+        <View style={{ zIndex: 102 }}>
+          <DropDownPicker
+            open={op}
+            value={val}
+            items={it}
+            setOpen={setOp}
+            setValue={setVal}
+            style={styles.inputInner}
+            placeholder = {'----------------'}
+            onClose={() => {setA('a')}}
+            translation={{
+              NOTHING_TO_SHOW: "予約・下書きはありません"
+            }}
+            onOpen={()=>{
+              setOpen(false);
+              setOpen2(false);
+            }}
+          />
+        </View>
         
         <TouchableOpacity onPress={onDelete}
           style={[val? '':{display: 'none'},styles.delete]}>
@@ -839,31 +844,41 @@ export function MyModal1(props) {
             >
             {rrr()}
             <Text style={styles.label}>宛先</Text>
-            <DropDownPicker
-              open={open}
-              value={cus_value}
-              items={items1}
-              setOpen={setOpen}
-              setValue={setCus_Value}
-              style={styles.inputInner}
-              placeholder={'----------------'}
-              zIndex={101}
-              translation={{
-                NOTHING_TO_SHOW: "メールアドレスが登録されていません"
-              }}
-              onClose={() => {setAuto_gmail(1)}}
-            />
+            <View style={{ zIndex: 101 }}>
+              <DropDownPicker
+                open={open}
+                value={cus_value}
+                items={items1}
+                setOpen={setOpen}
+                setValue={setCus_Value}
+                style={styles.inputInner}
+                placeholder={'----------------'}
+                translation={{
+                  NOTHING_TO_SHOW: "メールアドレスが登録されていません"
+                }}
+                onClose={() => {setAuto_gmail(1)}}
+                onOpen={()=>{
+                  setOpen2(false);
+                  setOp(false);
+                }}
+              />
+            </View>
             <Text style={styles.label}>送信元</Text>
-            <DropDownPicker
-              open={open2}
-              value={shop_value}
-              items={items2}
-              setOpen={setOpen2}
-              setValue={setShop_Value}
-              style={styles.inputInner}
-              placeholder={'----------------'}
-              zIndex={100}
-            />
+            <View style={{ zIndex: 100 }}>
+              <DropDownPicker
+                open={open2}
+                value={shop_value}
+                items={items2}
+                setOpen={setOpen2}
+                setValue={setShop_Value}
+                style={styles.inputInner}
+                placeholder={'----------------'}
+                onOpen={()=>{
+                  setOpen(false);
+                  setOp(false);
+                }}
+              />
+            </View>
             <View style={styles.input}>
               <Text style={styles.label}>件名</Text>
               <TextInput
@@ -1050,18 +1065,19 @@ export function MyModal2(props){
           </TouchableOpacity>
           <View style={styles.form}>
             <View style={styles.input}>{action_date()}</View>
-            <DropDownPicker
-              open={open}
-              value={status}
-              items={items1}
-              setOpen={setOpen}
-              setValue={setStatus}
-              setItems={setItems1}
-              style={styles.inputInner}
-              placeholder = "選択してください"
-              zIndex={1000}
-              maxHeight={300}
-            />
+            <View style={{ zIndex: 100 }}>
+              <DropDownPicker
+                open={open}
+                value={status}
+                items={items1}
+                setOpen={setOpen}
+                setValue={setStatus}
+                setItems={setItems1}
+                style={styles.inputInner}
+                placeholder = "選択してください"
+                maxHeight={300}
+              />
+            </View>
             <View style={styles.input}>
               <Text style={styles.label}>内容詳細</Text>
               <TextInput
@@ -1662,7 +1678,7 @@ export function MyModal3(props){
                     />
                   </View>
                     <Text style={styles.label}>賃料</Text>
-                    <View style={[{flexDirection: 'row'},Platform.OS === 'ios'?{zIndex:1000}:'']}>
+                    <View style={{flexDirection: 'row',zIndex:1000}}>
                       <DropDownPicker
                         placeholder="------------"
                         style={styles.inputInner}
@@ -1675,6 +1691,10 @@ export function MyModal3(props){
                         setItems={setRent_from}
                         zIndex={1000}
                         listMode={"SCROLLVIEW"}
+                        dropDownContainerStyle={[Platform.OS === 'android'&&{
+                          position: 'relative',
+                          top: 0,
+                        },{height:100}]}
                       />
                       <Text style={{marginTop:15}}>　～　</Text>
                       <DropDownPicker
@@ -1689,9 +1709,13 @@ export function MyModal3(props){
                         setItems={setRent_to}
                         zIndex={999}
                         listMode={"SCROLLVIEW"}
+                        dropDownContainerStyle={[Platform.OS === 'android'&&{
+                          position: 'relative',
+                          top: 0,
+                        },{height:100}]}
                       />
                     </View>
-                    <View style={{flexDirection: 'row'}}>
+                    <View style={{flexDirection: 'row',marginTop:10}}>
                       <View style={{width:'50%'}}>
                         <CheckBox
                           title='管理費込み'
@@ -1711,20 +1735,25 @@ export function MyModal3(props){
                     </View>
                     <Text style={styles.label}>間取り
                     <Text style={styles.inlabel}>　※複数選択可</Text></Text>
-                    <DropDownPicker
-                      placeholder="------------"
-                      dropDownContainerStyle={{height:150}}
-                      multiple={true}
-                      open={open_layout}
-                      value={value_layout}
-                      items={layout}
-                      setOpen={setOpen_layout}
-                      setValue={setValue_layout}
-                      setItems={setLayout}
-                      zIndex={998}
-                      listMode={"SCROLLVIEW"}
-                      translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
-                    />
+                    <View style={{zIndex:998}}>
+                      <DropDownPicker
+                        placeholder="------------"
+                        multiple={true}
+                        open={open_layout}
+                        value={value_layout}
+                        items={layout}
+                        setOpen={setOpen_layout}
+                        setValue={setValue_layout}
+                        setItems={setLayout}
+                        zIndex={998}
+                        listMode={"SCROLLVIEW"}
+                        translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
+                        dropDownContainerStyle={[Platform.OS === 'android'&&{
+                          position: 'relative',
+                          top: 0,
+                        },{height:150}]}
+                      />
+                    </View>
                   <View style={[styles.input,{zIndex:997}]}>
                     <Text style={styles.label}>沿線・駅名
                     <Text style={styles.inlabel}>　※検索語句を入力してください</Text></Text>
@@ -1815,11 +1844,10 @@ export function MyModal3(props){
                   </View>
                   <View style={[styles.input,{zIndex:995}]}>
                     <Text style={styles.label}>面積</Text>
-                    <View style={[{flexDirection: 'row'},Platform.OS === 'ios'?{zIndex:997}:'']}>
+                    <View style={{flexDirection: 'row',zIndex:997}}>
                       <DropDownPicker
                         placeholder="------------"
                         style={styles.inputInner}
-                        dropDownContainerStyle={{height:100}}
                         containerStyle={{width:'43%'}}
                         open={open_exclusive_from}
                         value={value_exclusive_from}
@@ -1829,12 +1857,15 @@ export function MyModal3(props){
                         setItems={setExclusive_from}
                         zIndex={995}
                         listMode={"SCROLLVIEW"}
+                        dropDownContainerStyle={[Platform.OS === 'android'&&{
+                          position: 'relative',
+                          top: 0,
+                        },{height:100}]}
                       />
                       <Text style={{marginTop:15}}>　～　</Text>
                       <DropDownPicker
                         placeholder="------------"
                         style={styles.inputInner}
-                        dropDownContainerStyle={{height:100}}
                         containerStyle={{width:'43%'}}
                         open={open_exclusive_to}
                         value={value_exclusive_to}
@@ -1844,6 +1875,10 @@ export function MyModal3(props){
                         setItems={setExclusive_to}
                         zIndex={994}
                         listMode={"SCROLLVIEW"}
+                        dropDownContainerStyle={[Platform.OS === 'android'&&{
+                          position: 'relative',
+                          top: 0,
+                        },{height:100}]}
                       />
                     </View>
                     <CheckBox
@@ -1863,7 +1898,7 @@ export function MyModal3(props){
                         style={styles.inputInner}
                       />
                     </View>
-                    <View style={[styles.input,Platform.OS === 'ios'?{zIndex:993}:'']}>
+                    <View style={[styles.input,{zIndex:993}]}>
                       <Text style={styles.label}>物件種別
                       <Text style={styles.inlabel}>　※複数選択可</Text></Text>
                       <DropDownPicker
@@ -1876,12 +1911,15 @@ export function MyModal3(props){
                         setOpen={setOpen_Category}
                         setValue={setValue_Category}
                         setItems={setCategory}
-                        zIndex={993}
                         listMode={"SCROLLVIEW"}
                         translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
+                        dropDownContainerStyle={Platform.OS === 'android'&&{
+                          position: 'relative',
+                          top: 0,
+                        }}
                       />
                     </View>
-                    <View style={[styles.input,Platform.OS === 'ios'?{zIndex:992}:'']}>
+                    <View style={[styles.input,{zIndex:992}]}>
                       <Text style={styles.label}>建物構造
                       <Text style={styles.inlabel}>　※複数選択可</Text></Text>
                       <DropDownPicker
@@ -1894,12 +1932,15 @@ export function MyModal3(props){
                         setOpen={setOpen_Constructure}
                         setValue={setValue_Constructure}
                         setItems={setConstructure}
-                        zIndex={992}
                         listMode={"SCROLLVIEW"}
                         translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
+                        dropDownContainerStyle={Platform.OS === 'android'&&{
+                          position: 'relative',
+                          top: 0,
+                        }}
                       />
                     </View>
-                    <View style={[styles.input,Platform.OS === 'ios'?{zIndex:991}:'']}>
+                    <View style={[styles.input,{zIndex:991}]}>
                       <Text style={styles.label}>築年数</Text>
                       <DropDownPicker
                         placeholder="------------"
@@ -1910,12 +1951,15 @@ export function MyModal3(props){
                         setOpen={setOpen_Built}
                         setValue={setValue_Built}
                         setItems={setBuilt}
-                        zIndex={991}
                         listMode={"SCROLLVIEW"}
+                        dropDownContainerStyle={Platform.OS === 'android'&&{
+                          position: 'relative',
+                          top: 0,
+                        }}
                       />
-                      <Text style={styles.inlabel}>※新築は築1年以内の物件が絞り込まれます</Text>
+                      <Text style={[styles.inlabel,{marginTop:10}]}>※新築は築1年以内の物件が絞り込まれます</Text>
                     </View>
-                    <View style={[styles.input,Platform.OS === 'ios'?{zIndex:990}:'']}>
+                    <View style={[styles.input,{zIndex:990}]}>
                       <Text style={styles.label}>条件・設備
                       <Text style={styles.inlabel}>　※複数選択可</Text></Text>
                       <DropDownPicker
@@ -1929,12 +1973,15 @@ export function MyModal3(props){
                         setOpen={setOpen_Setubi}
                         setValue={setValue_Setubi}
                         setItems={setSetubi}
-                        zIndex={990}
                         listMode={"SCROLLVIEW"}
                         translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
+                        dropDownContainerStyle={Platform.OS === 'android'&&{
+                          position: 'relative',
+                          top: 0,
+                        }}
                       />
                     </View>
-                    <View style={[{flexDirection: 'row',alignItems: 'center'},Platform.OS === 'ios'?{zIndex:889}:'']}>
+                    <View style={{flexDirection: 'row',alignItems: 'center',zIndex:889,marginTop:10}}>
                       <Text style={[styles.label,{width:'20%'}]}>コンロ：</Text>
                       <DropDownPicker
                         placeholder="------------"
@@ -1945,22 +1992,24 @@ export function MyModal3(props){
                         setOpen={setOpen_Stove}
                         setValue={setValue_Stove}
                         setItems={setStove}
-                        zIndex={889}
                         listMode={"SCROLLVIEW"}
+                        dropDownContainerStyle={Platform.OS === 'android'&&{
+                          position: 'relative',
+                          top: 0,
+                        }}
                       />
                     </View>
                     <View
                       style={[
                         styles.input,
-                        open_direction || open_setubi || open_stove === true?{marginBottom:120}:'',
-                        Platform.OS === 'ios'?{zIndex:888}:''
+                        (open_direction || open_setubi || open_stove === true)&&Platform.OS === 'ios'?{marginBottom:130}:'',
+                        {zIndex:888}
                       ]}>
                       <Text style={styles.label}>主要採光面
                       <Text style={styles.inlabel}>　※複数選択可</Text></Text>
                       <DropDownPicker
                         placeholder="------------"
                         multiple={true}
-                        dropDownContainerStyle={{height:120,zIndex:888}}
                         style={styles.inputInner}
                         open={open_direction}
                         value={value_direction}
@@ -1968,9 +2017,12 @@ export function MyModal3(props){
                         setOpen={setOpen_Direction}
                         setValue={setValue_Direction}
                         setItems={setDirection}
-                        zIndex={888}
                         listMode={"SCROLLVIEW"}
                         translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
+                        dropDownContainerStyle={[Platform.OS === 'android'&&{
+                          position: 'relative',
+                          top: 0,
+                        },{height:120,zIndex:888}]}
                       />
                     </View>
                   </View>
@@ -2872,7 +2924,7 @@ export function MyModal5(props){
         </View>
       </Modal>
       
-      <View  style={[{height:500},styles.template]}>
+      <View  style={[{height:530},styles.template]}>
         <TouchableOpacity
           style={styles.close}
           onPress={() => {
@@ -2892,18 +2944,23 @@ export function MyModal5(props){
         </TouchableOpacity>
         <Text style={styles.templateText}>{text}</Text>
         <Text style={[styles.cus_label,{marginTop:20}]}>【担当者】</Text>
-        <DropDownPicker
-          style={[styles.inputInner,{marginTop:5}]}
-          containerStyle={{width:'100%'}}
-          dropDownContainerStyle={{marginTop:20}}
-          open={open}
-          value={staff_value}
-          items={items}
-          setOpen={setOpen}
-          setValue={setStaff_Value}
-          placeholder = "▼　担当者"
-          zIndex={999}
-        />
+        <View style={{zIndex:999}}>
+          <DropDownPicker
+            style={[styles.inputInner,{marginTop:5}]}
+            containerStyle={{width:'100%'}}
+            open={open}
+            value={staff_value}
+            items={items}
+            setOpen={setOpen}
+            setValue={setStaff_Value}
+            placeholder = "▼　担当者"
+            listMode={"SCROLLVIEW"}
+            dropDownContainerStyle={[Platform.OS === 'android'&&{
+              position: 'relative',
+              top: 0,
+            },{height:150}]}
+          />
+        </View>
         <View style={{marginTop:10}}>
           {setView(cus,pattern)}
         </View>
@@ -3610,7 +3667,7 @@ export function MyModal5_condition(props){
           >
             <View>
               <Text style={styles.label}>賃料</Text>
-              <View style={[{flexDirection: 'row'},Platform.OS === 'ios'?{zIndex:1000}:'']}>
+              <View style={{flexDirection: 'row',zIndex:1000}}>
                 <DropDownPicker
                   placeholder="------------"
                   style={styles.inputInner}
@@ -3621,9 +3678,12 @@ export function MyModal5_condition(props){
                   setOpen={setOpen_Rent_from}
                   setValue={setValue_Rent_from}
                   setItems={setRent_from}
-                  zIndex={1000}
                   listMode={"SCROLLVIEW"}
                   onClose={() => {setA('a')}}
+                  dropDownContainerStyle={[Platform.OS === 'android'&&{
+                    position: 'relative',
+                    top: 0,
+                  },{height:100}]}
                 />
                 <Text style={{marginTop:15}}>　～　</Text>
                 <DropDownPicker
@@ -3636,12 +3696,15 @@ export function MyModal5_condition(props){
                   setOpen={setOpen_Rent_to}
                   setValue={setValue_Rent_to}
                   setItems={setRent_to}
-                  zIndex={999}
                   listMode={"SCROLLVIEW"}
                   onClose={() => {setA('a')}}
+                  dropDownContainerStyle={[Platform.OS === 'android'&&{
+                    position: 'relative',
+                    top: 0,
+                  },{height:100}]}
                 />
               </View>
-              <View style={{flexDirection: 'row'}}>
+              <View style={{flexDirection: 'row',marginTop:10}}>
                 <View style={{width:'50%'}}>
                   <CheckBox
                     title='管理費込み'
@@ -3661,21 +3724,25 @@ export function MyModal5_condition(props){
               </View>
               <Text style={styles.label}>間取り
               <Text style={styles.inlabel}>　※複数選択可</Text></Text>
-              <DropDownPicker
-                placeholder="------------"
-                dropDownContainerStyle={{height:150}}
-                multiple={true}
-                open={open_layout}
-                value={value_layout}
-                items={layout}
-                setOpen={setOpen_layout}
-                setValue={setValue_layout}
-                setItems={setLayout}
-                zIndex={998}
-                listMode={"SCROLLVIEW"}
-                translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
-                onClose={() => {setA('a')}}
-              />
+              <View style={{zIndex:998}}>
+                <DropDownPicker
+                  placeholder="------------"
+                  multiple={true}
+                  open={open_layout}
+                  value={value_layout}
+                  items={layout}
+                  setOpen={setOpen_layout}
+                  setValue={setValue_layout}
+                  setItems={setLayout}
+                  listMode={"SCROLLVIEW"}
+                  translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
+                  onClose={() => {setA('a')}}
+                  dropDownContainerStyle={[Platform.OS === 'android'&&{
+                    position: 'relative',
+                    top: 0,
+                  },{height:150}]}
+                />
+              </View>
               <View style={[styles.input,{zIndex:997}]}>
                 <Text style={styles.label}>沿線・駅名
                 <Text style={styles.inlabel}>　※検索語句を入力してください</Text></Text>
@@ -3718,19 +3785,24 @@ export function MyModal5_condition(props){
                 />
               </View>
               <Text style={styles.label}>徒歩分数</Text>
-              <DropDownPicker
-                placeholder="------------"
-                style={styles.inputInner}
-                open={open_station_time}
-                value={value_station_time}
-                items={station_time}
-                setOpen={setOpen_station_time}
-                setValue={setValue_station_time}
-                setItems={setStation_time}
-                zIndex={996}
-                listMode={"SCROLLVIEW"}
-                onClose={() => {setA('a')}}
-              />
+              <View style={{zIndex:998}}>
+                <DropDownPicker
+                  placeholder="------------"
+                  style={styles.inputInner}
+                  open={open_station_time}
+                  value={value_station_time}
+                  items={station_time}
+                  setOpen={setOpen_station_time}
+                  setValue={setValue_station_time}
+                  setItems={setStation_time}
+                  listMode={"SCROLLVIEW"}
+                  onClose={() => {setA('a')}}
+                  dropDownContainerStyle={Platform.OS === 'android'&&{
+                    position: 'relative',
+                    top: 0,
+                  }}
+                />
+              </View>
               <View style={[styles.input,{zIndex:995}]}>
                 <Text style={styles.label}>エリア名
                 <Text style={styles.inlabel}>　※検索語句を入力してください</Text></Text>
@@ -3773,11 +3845,10 @@ export function MyModal5_condition(props){
                 />
               </View>
               <Text style={styles.label}>面積</Text>
-              <View style={[{flexDirection: 'row'},Platform.OS === 'ios'?{zIndex:994}:'']}>
+              <View style={{flexDirection: 'row',zIndex:994}}>
                 <DropDownPicker
                   placeholder="------------"
                   style={styles.inputInner}
-                  dropDownContainerStyle={{height:100}}
                   containerStyle={{width:'43%'}}
                   open={open_exclusive_from}
                   value={value_exclusive_from}
@@ -3785,15 +3856,17 @@ export function MyModal5_condition(props){
                   setOpen={setOpen_Exclusive_from}
                   setValue={setValue_Exclusive_from}
                   setItems={setExclusive_from}
-                  zIndex={994}
                   listMode={"SCROLLVIEW"}
                   onClose={() => {setA('a')}}
+                  dropDownContainerStyle={[Platform.OS === 'android'&&{
+                    position: 'relative',
+                    top: 0,
+                  },{height:100}]}
                 />
                 <Text style={{marginTop:15}}>　～　</Text>
                 <DropDownPicker
                   placeholder="------------"
                   style={styles.inputInner}
-                  dropDownContainerStyle={{height:100}}
                   containerStyle={{width:'43%'}}
                   open={open_exclusive_to}
                   value={value_exclusive_to}
@@ -3801,12 +3874,15 @@ export function MyModal5_condition(props){
                   setOpen={setOpen_Exclusive_to}
                   setValue={setValue_Exclusive_to}
                   setItems={setExclusive_to}
-                  zIndex={993}
                   listMode={"SCROLLVIEW"}
                   onClose={() => {setA('a')}}
+                  dropDownContainerStyle={[Platform.OS === 'android'&&{
+                    position: 'relative',
+                    top: 0,
+                  },{height:100}]}
                 />
               </View>
-              <View style={[styles.input,Platform.OS === 'ios'?{zIndex:992}:'']}>
+              <View style={[styles.input,{zIndex:992}]}>
                 <Text style={styles.label}>物件種別
                 <Text style={styles.inlabel}>　※複数選択可</Text></Text>
                 <DropDownPicker
@@ -3819,13 +3895,16 @@ export function MyModal5_condition(props){
                   setOpen={setOpen_Category}
                   setValue={setValue_Category}
                   setItems={setCategory}
-                  zIndex={992}
                   listMode={"SCROLLVIEW"}
                   translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
                   onClose={() => {setA('a')}}
+                  dropDownContainerStyle={Platform.OS === 'android'&&{
+                    position: 'relative',
+                    top: 0,
+                  }}
                 />
               </View>
-              <View style={[styles.input,Platform.OS === 'ios'?{zIndex:991}:'']}>
+              <View style={[styles.input,{zIndex:991}]}>
                 <Text style={styles.label}>建物構造
                 <Text style={styles.inlabel}>　※複数選択可</Text></Text>
                 <DropDownPicker
@@ -3838,17 +3917,20 @@ export function MyModal5_condition(props){
                   setOpen={setOpen_Constructure}
                   setValue={setValue_Constructure}
                   setItems={setConstructure}
-                  zIndex={991}
                   listMode={"SCROLLVIEW"}
                   translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
                   onClose={() => {setA('a')}}
+                  dropDownContainerStyle={Platform.OS === 'android'&&{
+                    position: 'relative',
+                    top: 0,
+                  }}
                 />
               </View>
               <View
                 style={[
                   styles.input,
-                  open_built === true?{marginBottom:120}:'',
-                  Platform.OS === 'ios'?{zIndex:990}:''
+                  open_built === true && Platform.OS === 'ios'?{marginBottom:120}:'',
+                  {zIndex:990}
                 ]}>
                 <Text style={styles.label}>築年数</Text>
                 <DropDownPicker
@@ -3860,16 +3942,19 @@ export function MyModal5_condition(props){
                   setOpen={setOpen_Built}
                   setValue={setValue_Built}
                   setItems={setBuilt}
-                  zIndex={990}
                   listMode={"SCROLLVIEW"}
                   onClose={() => {setA('a')}}
+                  dropDownContainerStyle={Platform.OS === 'android'&&{
+                    position: 'relative',
+                    top: 0,
+                  }}
                 />
               </View>
               <View
                 style={[
                   styles.input,
-                  open_setubi === true?{marginBottom:120}:'',
-                  Platform.OS === 'ios'?{zIndex:889}:''
+                  open_setubi === true && Platform.OS === 'ios'?{marginBottom:120}:'',
+                  {zIndex:889}
                 ]}>
                 <Text style={styles.label}>条件・設備
                 <Text style={styles.inlabel}>　※複数選択可</Text></Text>
@@ -3884,17 +3969,20 @@ export function MyModal5_condition(props){
                   setOpen={setOpen_Setubi}
                   setValue={setValue_Setubi}
                   setItems={setSetubi}
-                  zIndex={889}
                   listMode={"SCROLLVIEW"}
                   translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
                   onClose={() => {setA('a')}}
+                  dropDownContainerStyle={Platform.OS === 'android'&&{
+                    position: 'relative',
+                    top: 0,
+                  }}
                 />
               </View>
               <View
                 style={[
                   styles.input,
-                  open_order_item === true?{marginBottom:200}:'',
-                  Platform.OS === 'ios'?{zIndex:888}:''
+                  open_order_item === true && Platform.OS === 'ios'?{marginBottom:210}:'',
+                  {zIndex:888}
                 ]}>
                 <Text style={styles.label}>物件の並び順</Text>
                 <DropDownPicker
@@ -3905,9 +3993,13 @@ export function MyModal5_condition(props){
                   setOpen={setOpen_order_item}
                   setValue={setValue_order_item}
                   setItems={setOrder_item}
-                  zIndex={888}
                   listMode={"SCROLLVIEW"}
                   onClose={() => {setA('a')}}
+                  dropDownContainerStyle={Platform.OS === 'android'&&{
+                    position: 'relative',
+                    top: 0,
+                  }}
+                  dropDownDirection={"BOTTOM"}
                 />
               </View>
             </View>
@@ -4345,7 +4437,7 @@ const styles = StyleSheet.create({
   delete:{
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop:5,
+    marginTop:10,
     borderRadius: 8,
     width:100,
     height:40,
@@ -4480,8 +4572,7 @@ const styles = StyleSheet.create({
   overlap_btnwrap: {
     flexDirection: 'row',
     alignSelf: 'center',
-    position: 'absolute',
-    bottom: 20
+    marginBottom:20
   },
   overlap3: {
     borderWidth:1,
