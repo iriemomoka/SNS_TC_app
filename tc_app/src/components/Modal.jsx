@@ -106,6 +106,14 @@ export function MyModal1(props) {
     });
   });
   
+  const [open3, setOpen3] = useState(false);
+  const [mail_format, setMail_Format] = useState('テキスト');
+  
+  const items3 = [
+    { label: 'テキスト', value: 'テキスト' },
+    { label: 'HTML', value: 'HTML' }
+  ];
+
   const [option, setOption] = useState(false);
   
   useEffect(() => {
@@ -809,6 +817,7 @@ export function MyModal1(props) {
         setMail_subject={setMail_subject}
         setNote={setNote}
         setFixed={setFixed}
+        mail_format={mail_format}
       />
       <View style={styles.sydemenu}>
         <TouchableOpacity
@@ -876,6 +885,22 @@ export function MyModal1(props) {
                 onOpen={()=>{
                   setOpen(false);
                   setOp(false);
+                }}
+              />
+            </View>
+            <Text style={styles.label}>形式</Text>
+            <View style={{ zIndex: 99 }}>
+              <DropDownPicker
+                open={open3}
+                value={mail_format}
+                items={items3}
+                setOpen={setOpen3}
+                setValue={setMail_Format}
+                style={[styles.inputInner,{width: 200}]}
+                dropDownContainerStyle={{width: 200}}
+                placeholder={'----------------'}
+                onOpen={()=>{
+                  setOpen3(!open3);
                 }}
               />
             </View>
@@ -2099,7 +2124,7 @@ export function MyModal3(props){
 
 export function MyModal4(props){
   
-  const { isVisible,onSwipeComplete,onPress,fixed,msgtext,subject,hensu } = props;
+  const { isVisible,onSwipeComplete,onPress,fixed,msgtext,subject,hensu,mail_format } = props;
   
   // カテゴリーの重複を検出したものを重複しないでリスト
   const f_c = fixed.map((c) => {
@@ -2121,6 +2146,22 @@ export function MyModal4(props){
     })
     
     return l;
+  }
+  
+  // HTML形式に変換
+  function convertToHTML(text) {
+    const htmlTemplate = `
+      <!DOCTYPE html>
+      <html lang="ja">
+        <head>
+          <meta charset="UTF-8">
+        </head>
+        <body>
+          ${text.replace(/\n/g, '<br>')}
+        </body>
+      </html>
+    `;
+    return htmlTemplate;
   }
   
   // 書き換え
@@ -2237,6 +2278,10 @@ export function MyModal4(props){
     note = note.join('');
     note = note.split("%LINE友達追加%");
     note = note.join('');
+
+    if (mail_format == 'HTML') {
+      note = convertToHTML(note);
+    }
     
     if(msgtext || subject || props.setNote || props.setMail_subject) {
       Alert.alert(
