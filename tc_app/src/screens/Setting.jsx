@@ -1904,9 +1904,9 @@ function replaceElement(array, before, after) {
           
           <Text style={styles.title}>個人ID 設定2</Text>
           
-          <View style={[styles.setting2,Platform.OS === 'ios'?{zIndex:999}:{}]}>
+          <View style={[styles.setting2,{zIndex:999}]}>
             <View style={{width:'70%'}}>
-              <View style={[{flexDirection:'row'},Platform.OS === 'ios'?{zIndex:999}:{}]}>
+              <View style={[{flexDirection:'row',zIndex:999,marginBottom:15}]}>
                 <Text style={styles.label2}>1.</Text>
                 <DropDownPicker
                   style={styles.dropDown}
@@ -1939,9 +1939,9 @@ function replaceElement(array, before, after) {
             />
           </View>
           
-          <View style={[styles.setting2,Platform.OS === 'ios'?{zIndex:998}:{}]}>
+          <View style={[styles.setting2,{zIndex:998}]}>
             <View style={{width:'70%'}}>
-              <View style={[{flexDirection:'row'},Platform.OS === 'ios'?{zIndex:999}:{}]}>
+              <View style={{flexDirection:'row',zIndex:998,marginBottom:15}}>
                 <Text style={styles.label2}>2.</Text>
                 <DropDownPicker
                   style={styles.dropDown}
@@ -1994,7 +1994,7 @@ function replaceElement(array, before, after) {
             />
           </View>
           
-          <View style={[styles.setting2,Platform.OS === 'ios'?{zIndex:997}:{}]}>
+          <View style={[styles.setting2,{zIndex:997}]}>
             <View style={{width:'70%',alignSelf:'center'}}>
               <Text style={styles.dropDownlabel}>4.TOPページの表示の初期設定</Text>
             </View>
@@ -2032,9 +2032,9 @@ function replaceElement(array, before, after) {
             />
           </View>
           
-          <View style={[styles.setting2,Platform.OS === 'ios'?{zIndex:996}:{}]}>
+          <View style={[styles.setting2,{zIndex:996}]}>
             <View style={{width:'70%',alignSelf:'center'}}>
-              <View style={[{flexDirection:'row'},Platform.OS === 'ios'?{zIndex:996}:{}]}>
+              <View style={{flexDirection:'row',zIndex:996,marginBottom:15}}>
                 <Text style={styles.label2}>6.AM</Text>
                 <DropDownPicker
                   style={styles.dropDown}
