@@ -2150,6 +2150,14 @@ export function MyModal4(props){
   
   // HTML形式に変換
   function convertToHTML(text) {
+    let mail_contents = text.replace(/\n/g, '<br>');
+
+    // URLはaタグで囲む
+    const extractedText = mail_contents.replace(
+      /((https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;/?:\@&=+$,%#]+))/g,
+      '<a href="$1">$1</a>'
+    );
+
     const htmlTemplate = `
       <!DOCTYPE html>
       <html lang="ja">
@@ -2157,10 +2165,11 @@ export function MyModal4(props){
           <meta charset="UTF-8">
         </head>
         <body>
-          ${text.replace(/\n/g, '<br>')}
+          ${extractedText.replace(/<br>/g, "<br>\n")}
         </body>
       </html>
     `;
+    
     return htmlTemplate;
   }
   
