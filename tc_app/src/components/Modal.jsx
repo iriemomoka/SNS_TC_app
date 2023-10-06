@@ -10,7 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Feather from 'react-native-vector-icons/Feather';
 import { Collapse, CollapseHeader, CollapseBody } from 'accordion-collapse-react-native';
 import { CheckBox } from 'react-native-elements';
-import MaterialChip from "react-native-material-chip"
+import MaterialChip from "react-native-material-chip";
 import Autocomplete from 'react-native-autocomplete-input';
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
@@ -26,7 +26,8 @@ import { db } from './Databace';
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = 'https://www.total-cloud.net/';
 
-LogBox.ignoreAllLogs()
+LogBox.ignoreAllLogs();
+
 export function MyModal0(props){
   
   const { isVisible,onSwipeComplete,onPress,send_image,pickDocument } = props;
@@ -237,7 +238,7 @@ export function MyModal1(props) {
   const showTimepicker = () => {
     showMode('time');
   };
-  
+
   // オススメ物件
   const [Property, setProperty] = useState(false);
 
@@ -389,7 +390,7 @@ export function MyModal1(props) {
   
 	const pickDocument = async () => {
     var result = await DocumentPicker.getDocumentAsync({});
-  	  
+
     if (result) {
 	    
       if(result.size > 7000000) {
@@ -521,7 +522,6 @@ export function MyModal1(props) {
             {
               text: "はい",
               onPress: () => {
-                
                 props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata]],'mail');
                 props.setModal1(false);
                 setNote('');
@@ -652,7 +652,6 @@ export function MyModal1(props) {
       setDraft(val.draft_flg);
       
       if (val.time) {
-        
         setIsEnabled(true);
         setCheck(true);
         
@@ -932,7 +931,7 @@ export function MyModal1(props) {
               <Text style={styles.label}>内容詳細</Text>
               <TextInput
                 onChangeText={(text) => {setNote(text)}}
-                value={note}
+                value={note && mail_format == 'HTML' ? note.replace(/<\/?[^>]+(>|$)/gi, "") : note}
                 style={styles.textarea}
                 multiline={true}
                 disableFullscreenUI={true}
@@ -1594,7 +1593,6 @@ export function MyModal3(props){
             .then((response) => response.json())
             .then((json) => {
               setSearch_results(json['article_search_list']);
-              
             })
             .catch((error) => {
               const errorMsg = "検索に失敗しました";
@@ -1629,7 +1627,6 @@ export function MyModal3(props){
   const [insertMsg,setInsertMsg] = useState(false);
   
   const proInsert = (item) => {
-    
     var msg = item.article_name+"／"+item.layout+"／"+item.category+"\n"+
               item.line_name1+"／"+item.station_name1+"駅／徒歩"+item.station_time1+"分／"+
               item.rent/10000+"万円("+item.general+"円)／"+item.exclusive+"㎡"+"\n\n"+
@@ -1682,7 +1679,6 @@ export function MyModal3(props){
           animationOut={'slideOutUp'}
         >
           <View style={[{height:600},styles.modalInner]}>
-            
             <TouchableOpacity
               style={styles.close}
               onPress={recommended}
@@ -2053,7 +2049,6 @@ export function MyModal3(props){
                   </View>
                 </View>
               </ScrollView>
-              
               <CheckBox
                 center
                 title='条件を保存する'
@@ -2150,7 +2145,7 @@ export function MyModal4(props){
   
   // HTML形式に変換
   function convertToHTML(text) {
-    let mail_contents = text.replace(/\n/g, '<br>');
+    let mail_contents = text.replace(/\n/g, '<br>\n');
 
     // URLはaタグで囲む
     const extractedText = mail_contents.replace(
@@ -2165,7 +2160,7 @@ export function MyModal4(props){
           <meta charset="UTF-8">
         </head>
         <body>
-          ${extractedText.replace(/<br>/g, "<br>\n")}
+          ${extractedText}
         </body>
       </html>
     `;
@@ -2464,11 +2459,11 @@ export function MyModal5(props){
                 .then((json) => {
                   if(!json) {
                     setText('こちらの反響は、問い合わせ物件の情報がTCにないため自動追客できません\n手動対応お願い致します');
-                    setPattern(2)
+                    setPattern(2);
                     
                   } else {
                     setText('自動追客の入力を行ってください');
-                    setPattern(1)
+                    setPattern(1);
                   }
                 })
                 .catch((error) => {
@@ -3679,13 +3674,13 @@ export function MyModal5_condition(props){
     .then((response) => response.json())
     .then((json) => {
       if (json) {
-        console.log('希望条件登録OK')
+        console.log('希望条件登録OK');
       }
     })
     .catch((error) => {
-      console.log(error)
+      console.log(error);
       Alert.alert('失敗');
-      console.log(error)
+      console.log(error);
     })
     
     setClose(false);
@@ -4123,14 +4118,11 @@ export function MyModal6(props){
       // 重複パターン振り分け
       setNum(overlap.overlap);
       if (overlap.overlap == '1') {    // 重複【既存あり(1件のみ)】
-      
-        setText(`${s[0][1].name_1+'　'+s[0][1].name_2}`+'さんが担当している\nお客様：'+`${overlap.list[0].name}`+'さんと連絡先が同一です。\nこのお客様にまとめますか？')
-        
+        setText(`${s[0][1].name_1+'　'+s[0][1].name_2}`+'さんが担当している\nお客様：'+`${overlap.list[0].name}`+'さんと連絡先が同一です。\nこのお客様にまとめますか？');
       } else if (overlap.overlap == '2') {    // 重複【既存あり(1件以上)】
-        setText('下記お客様たちと同一の連絡先をもっています。\nどれかのお客様にまとめますか？')
+        setText('下記お客様たちと同一の連絡先をもっています。\nどれかのお客様にまとめますか？');
       } else if (overlap.overlap == '3') {    // 重複【新規に既存有り】
-      
-        setText('下記反響は同じ連絡先を持っています。\n一人のお客様としてまとめますか？')
+        setText('下記反響は同じ連絡先を持っています。\n一人のお客様としてまとめますか？');
         
         let id_list = '';
         let id_list_min = '';
