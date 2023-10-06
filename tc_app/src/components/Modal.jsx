@@ -116,6 +116,7 @@ export function MyModal1(props) {
     { label: 'HTML', value: 'HTML' }
   ];
 
+  // 内容詳細の編集
   const noteEdit = (text) => {
     if (mail_format == 'HTML') {
       let mail_contents = text.replace(/\n/g, '<br>\n');
@@ -126,17 +127,7 @@ export function MyModal1(props) {
         '<a href="$1">$1</a>'
       );
 
-      const htmlTemplate = `
-        <!DOCTYPE html>
-        <html lang="ja">
-          <head>
-            <meta charset="UTF-8">
-          </head>
-          <body>
-            ${extractedText}
-          </body>
-        </html>
-      `;
+      const htmlTemplate = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"></head><body>${extractedText}</body></html>`;
       
       setNote(htmlTemplate);
     } else {
@@ -2184,17 +2175,7 @@ export function MyModal4(props){
       '<a href="$1">$1</a>'
     );
 
-    const htmlTemplate = `
-      <!DOCTYPE html>
-      <html lang="ja">
-        <head>
-          <meta charset="UTF-8">
-        </head>
-        <body>
-          ${extractedText}
-        </body>
-      </html>
-    `;
+    const htmlTemplate = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"></head><body>${extractedText}</body></html>`;
     
     return htmlTemplate;
   }
