@@ -19,6 +19,7 @@ import * as SQLite from "expo-sqlite";
 import * as Permissions from "expo-permissions";
 import { Camera } from 'expo-camera';
 import { Audio } from 'expo-av';
+import RenderHtml from 'react-native-render-html';
 
 // DB接続
 import { db } from './Databace';
@@ -115,6 +116,35 @@ export function MyModal1(props) {
     { label: 'HTML', value: 'HTML' }
   ];
 
+  const noteEdit = (text) => {
+    if (mail_format == 'HTML') {
+      let mail_contents = text.replace(/\n/g, '<br>\n');
+
+      // URLはaタグで囲む
+      const extractedText = mail_contents.replace(
+        /((https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;/?:\@&=+$,%#]+))/g,
+        '<a href="$1">$1</a>'
+      );
+
+      const htmlTemplate = `
+        <!DOCTYPE html>
+        <html lang="ja">
+          <head>
+            <meta charset="UTF-8">
+          </head>
+          <body>
+            ${extractedText}
+          </body>
+        </html>
+      `;
+      
+      setNote(htmlTemplate);
+    } else {
+      setNote(text);
+    }
+    
+  }
+
   const [option, setOption] = useState(false);
   
   useEffect(() => {
@@ -209,6 +239,7 @@ export function MyModal1(props) {
   }
   
   const [mail_subject, setMail_subject] = useState(subject?subject:'');
+
   useEffect(() => {
     setMail_subject(subject);
   }, [subject])
@@ -930,7 +961,7 @@ export function MyModal1(props) {
             <View style={styles.input}>
               <Text style={styles.label}>内容詳細</Text>
               <TextInput
-                onChangeText={(text) => {setNote(text)}}
+                onChangeText={noteEdit}
                 value={note && mail_format == 'HTML' ? note.replace(/<\/?[^>]+(>|$)/gi, "") : note}
                 style={styles.textarea}
                 multiline={true}
