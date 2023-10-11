@@ -1,4 +1,4 @@
-import React,{ useState, useEffect, useLayoutEffect } from 'react';
+import React,{ useState, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, Linking,
 } from 'react-native';
@@ -7,7 +7,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Moment from 'moment';
 import * as ImagePicker from 'expo-image-picker';
-import Feather from 'react-native-vector-icons/Feather';
+import { Feather, MaterialIcons, Entypo, Ionicons } from 'react-native-vector-icons';
 import { Collapse, CollapseHeader, CollapseBody } from 'accordion-collapse-react-native';
 import { CheckBox } from 'react-native-elements';
 import MaterialChip from "react-native-material-chip";
@@ -78,6 +78,7 @@ export function MyModal1(props) {
   const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_set,options } = props;
   
   const [res,setRes] = useState(props.reservation);
+
   useEffect(() => {
     setRes(props.reservation);
   }, [props.reservation])
@@ -116,6 +117,28 @@ export function MyModal1(props) {
     { label: 'HTML', value: 'HTML' }
   ];
 
+  // const [open4, setOpen4] = useState(false);
+  // const [font_size, setFont_size] = useState('14');
+
+  // const items4 = [
+  //   { label: '8', value: '8' },
+  //   { label: '9', value: '9' },
+  //   { label: '10', value: '10' },
+  //   { label: '11', value: '11' },
+  //   { label: '12', value: '12' },
+  //   { label: '14', value: '14' },
+  //   { label: '16', value: '16' },
+  //   { label: '18', value: '18' },
+  //   { label: '20', value: '20' },
+  //   { label: '22', value: '22' },
+  //   { label: '24', value: '24' },
+  //   { label: '26', value: '26' },
+  //   { label: '28', value: '28' },
+  //   { label: '36', value: '36' },
+  //   { label: '48', value: '48' },
+  //   { label: '72', value: '72' },
+  // ];
+
   // 内容詳細の編集
   const noteEdit = (text) => {
     if (mail_format == 'HTML') {
@@ -145,6 +168,53 @@ export function MyModal1(props) {
     }
     
   }, [options])
+  
+  // 形式を変更した場合は件名と内容を空にする
+  const changeMailFormat = (value) => {
+    Alert.alert(
+      "送信内容の形式を変更しますがよろしいですか？",
+      "",
+      [
+        {
+          text: "はい",
+          onPress: () => {
+            if (note) {
+              Alert.alert(
+                "入力されている【件名】と【送信内容】が削除されますがよろしいですか？",
+                "",
+                [
+                  {
+                    text: "はい",
+                    onPress: () => {
+                      setMail_Format(value);
+                      setNote('');
+                      setMail_subject('');
+                    }
+                  },
+                  {
+                    text: "いいえ",
+                    onPress: () => {
+                      return;
+                    }
+                  },
+                ]
+              );
+            } else {
+              setMail_Format(value);
+              setNote('');
+              setMail_subject('');
+            }
+          }
+        },
+        {
+          text: "いいえ",
+          onPress: () => {
+            return;
+          }
+        },
+      ]
+    );
+  }
   
   useEffect(() => {
     
@@ -869,7 +939,7 @@ export function MyModal1(props) {
             <Feather name='x-circle' color='gray' size={35} />
           </TouchableOpacity>
           <View style={styles.form}>
-            <ScrollView 
+            <ScrollView
               style={{height:Platform.OS === "ios" ? 400 : 500}}
             >
             {rrr()}
@@ -916,7 +986,7 @@ export function MyModal1(props) {
                 value={mail_format}
                 items={items3}
                 setOpen={setOpen3}
-                setValue={setMail_Format}
+                setValue={changeMailFormat}
                 style={[styles.inputInner,{width: 200}]}
                 dropDownContainerStyle={{width: 200}}
                 placeholder={'----------------'}
@@ -950,7 +1020,81 @@ export function MyModal1(props) {
             <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
             <View zIndex={99}>{mail_reservation()}</View>
             <View style={styles.input}>
-              <Text style={styles.label}>内容詳細</Text>
+              <View style={[styles.font,{ zIndex: 98 }]}>
+                <Text style={styles.label}>内容詳細</Text>
+                {/* <View style={[{flexDirection: 'row', alignItems: 'center'}, mail_format !== 'HTML' ? { display: "none" } : ""]}>
+                  <Text>文字サイズ</Text>
+                  <View style={{justifyContent: 'center', marginLeft: 5}}>
+                    <DropDownPicker
+                      open={open4}
+                      value={font_size}
+                      items={items4}
+                      setOpen={setOpen4}
+                      setValue={setFont_size}
+                      style={[styles.inputInner,{width: 100, height: 'auto'}]}
+                      dropDownContainerStyle={{width: 100}}
+                      autoScroll={true}
+                      placeholder={'----------------'}
+                      onOpen={()=>{
+                        setOpen4(!open4);
+                      }}
+                      disableScrollViewPanResponder={true}
+                    />
+                  </View>
+                </View> */}
+              </View>
+              {/* <View style={[styles.btn, mail_format !== 'HTML' ? { display: "none" } : ""]}>
+                <TouchableOpacity style={styles.btnBox}>
+                  <Entypo name="reply" color="#191970" size={25} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <Entypo name="forward" color="#191970" size={25} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <Feather name='link-2' color='#191970' size={25} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <MaterialIcons name="format-color-fill" color='#191970' size={25} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <MaterialIcons name="format-color-text" color='#191970' size={25} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <Feather name='align-left' color='#191970' size={25} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox} onPress={alignCenter}>
+                  <Feather name='align-center' color='#191970' size={25} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <Feather name='align-right' color='#191970' size={25} />
+                </TouchableOpacity>
+              </View> */}
+              {/* <View style={[styles.btn, mail_format !== 'HTML' ? { display: "none" } : ""]}>
+                <TouchableOpacity style={styles.btnBox}>
+                  <MaterialIcons name="format-bold" color='#191970' size={25} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <MaterialIcons name="format-italic" color='#191970' size={25} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <MaterialIcons name="format-underline" color='#191970' size={25} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <MaterialIcons name="format-strikethrough" color='#191970' size={26} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <MaterialIcons name="subscript" color='#191970' size={26} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <MaterialIcons name="superscript" color='#191970' size={26} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <Ionicons name="remove-outline" color='#191970' size={26} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnBox}>
+                  <Entypo name="code" color='#191970' size={25} />
+                </TouchableOpacity>
+              </View> */}
               <TextInput
                 onChangeText={noteEdit}
                 value={note && mail_format == 'HTML' ? note.replace(/<\/?[^>]+(>|$)/gi, "") : note}
@@ -959,6 +1103,16 @@ export function MyModal1(props) {
                 disableFullscreenUI={true}
                 numberOfLines={11}
               />
+            </View>
+            <View style={[mail_format !== 'HTML' ? { display: "none" } : ""]}>
+              <Text style={styles.label}>HTMLメールプレビュー</Text>
+              {note && (
+              <RenderHtml
+                source={{
+                  html: `${note}`
+                }}
+              />
+              )}
             </View>
             <View style={{flexDirection: 'row',alignSelf: 'center',marginBottom:10}}>
               <TouchableOpacity onPress={onDraft} style={styles.draft}>
@@ -4465,6 +4619,29 @@ const styles = StyleSheet.create({
     borderWidth:1,
     borderColor:'#1f2d53',
     marginRight:10,
+  },
+  font:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  btn:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: "space-between",
+    marginBottom: 5,
+  },
+  btnBox: {
+    width:35,
+    height:35,
+    backgroundColor:'#fafafa',
+    borderWidth:1,
+    borderColor:'#191970',
+    borderRadius:10,
+    marginHorizontal:3,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   draft:{
     justifyContent: 'center',
