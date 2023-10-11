@@ -1062,7 +1062,7 @@ export function MyModal1(props) {
                 <TouchableOpacity style={styles.btnBox}>
                   <Feather name='align-left' color='#191970' size={25} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox} onPress={alignCenter}>
+                <TouchableOpacity style={styles.btnBox}>
                   <Feather name='align-center' color='#191970' size={25} />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.btnBox}>
@@ -2016,7 +2016,7 @@ export function MyModal3(props){
                             setFilteredAddress([]);
                           }}>
                           <Text style={styles.suggestText}>
-                              {item.name}
+                            {item.name}
                           </Text>
                         </TouchableOpacity>,
                       }}
@@ -2278,9 +2278,7 @@ export function MyModal3(props){
                     style={styles.propertyInner}
                     onPress={() => proInsert(item)}
                   >
-                    <Image
-                      source={require('../../assets/btn_app.png')}
-                    />
+                    <Image source={require('../../assets/btn_app.png')} />
                   </TouchableOpacity>
                 </View>
               </TouchableOpacity>
@@ -2626,7 +2624,6 @@ export function MyModal5(props){
                   if(!json) {
                     setText('こちらの反響は、問い合わせ物件の情報がTCにないため自動追客できません\n手動対応お願い致します');
                     setPattern(2);
-                    
                   } else {
                     setText('自動追客の入力を行ってください');
                     setPattern(1);
