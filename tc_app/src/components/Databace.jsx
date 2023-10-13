@@ -486,3 +486,56 @@ exports.GetDB = function(table){
     })
   })
 }
+
+//***********************************************
+// SQLiteのデータ取得処理
+// Param:		sql	SQL文
+// Param:		db	接続DB
+// Return:	SQL結果
+//***********************************************
+exports.db_select = function (sql) {
+  return new Promise((resolve, reject) => {
+    module.exports.db.transaction(tx => {
+      tx.executeSql(
+        sql,
+        [],
+        (_, { rows }) => {
+          if (rows._array.length > 0) {
+            resolve(rows._array);
+          } else {
+            resolve(false);
+          }
+        },
+        (a,e) => {
+          console.log(e);
+          resolve(false);
+        }
+      );
+    });
+  });
+}
+
+//***********************************************
+// SQLiteの更新処理【INSERT・UPDATE両方共】
+// ※もしかしたら、DELETEもココでやるかも…。
+// Param:		sql	SQL文
+// Param:		db	接続DB
+// Return:	成否【TRUE・FALSE】
+//***********************************************
+exports.db_write = function (sql,data) {
+  return new Promise((resolve, reject) => {
+    module.exports.db.transaction(tx => {
+      tx.executeSql(
+        sql,
+        data,
+        (_, { rows }) => {
+          resolve(true);
+        },
+        (a,e) => {
+          console.log(e)
+          resolve(false);
+        }
+      );
+    });
+  });
+}

@@ -39,7 +39,7 @@ let domain = 'https://www.total-cloud.net/';
 export default function LogInScreen(props) {
 
   // アプリの最新バージョンを取得する実装
-  const latestAppVersion = '2.2.6';
+  const latestAppVersion = '2.2.8';
   
   // 現在利用しているアプリのバージョンを取得する
   const appVersion = VersionCheck.getCurrentVersion();
@@ -979,6 +979,7 @@ function delete_db(){
           </TouchableOpacity>
         </>
         )}
+        <Text style={styles.version}>var {appVersion}</Text>
       </View>
     </View>
   );
@@ -997,6 +998,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     marginBottom: 25,
     marginTop: 50,
+    flex:1,
   },
   form: {
     width: "100%"
@@ -1035,5 +1037,10 @@ const styles = StyleSheet.create({
   onetop_btn: {
     width:200,
     height:60
+  },
+  version :{
+    position:'absolute',
+    bottom:0,
+    right:15
   }
 });

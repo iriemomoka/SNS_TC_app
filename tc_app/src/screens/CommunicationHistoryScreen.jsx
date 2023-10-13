@@ -2,7 +2,9 @@ import React, {
   useEffect,
   useState,
   useCallback,
-  useRef
+  useRef,
+  useMemo,
+  useLayoutEffect
 } from "react";
 import {
   StyleSheet,
@@ -18,7 +20,7 @@ import {
   BackHandler,
   AppState,
   Platform,
-  Linking,
+  Keyboard,
   Image,
   Dimensions,
 } from "react-native";
@@ -31,7 +33,8 @@ import SideMenu from 'react-native-side-menu-updated';
 import * as SQLite from "expo-sqlite";
 
 import Loading from "../components/Loading";
-// import { db } from '../components/Databace';
+import { GetDB,db_select,db_write } from '../components/Databace';
+import { set } from "react-native-reanimated";
 
 const db = SQLite.openDatabase("db");
 
@@ -59,30 +62,33 @@ export default function CommunicationHistoryScreen(props) {
   const [menu, setMenu] = useState(false);
   const deviceScreen = Dimensions.get('window');
 
-  var items = [];
-
-  const [a, setA] = useState(false);
-
-  const [staff_db, setStaff_db] = useState(false);
   const [fixed, setFixed] = useState(false);
-
-  const [cus_list, setCus_list] = useState([]);
   
   const listRef = useRef([]);
-
-  var items = staffs.map((item) => {
-    return {
-      label:
-        item.account != "all"
-          ? item.name_1 + "　" + (item.name_2 ? item.name_2 : "")
-          : "全員",
-      value: item.account,
-      key: item.account,
-    };
-  });
-  items.unshift({ label: "担当無し", value: "" });
   
-  useEffect(() => {
+  var staffList = useMemo(()=>{
+
+    var items = [];
+
+    for (var s=0;s<staffs.length;s++) {
+      var item = staffs[s];
+      if (item.account != "all") {
+        var data = {
+          label:item.name_1 + "　" + (item.name_2 ? item.name_2 : ""),
+          value: item.account,
+        }
+        items.push(data);
+      }
+    }
+
+    items.unshift({ label: "全員", value: "all" });
+    items.unshift({ label: "担当無し", value: "" });
+
+    return items;
+
+  },[staffs]);
+  
+  useLayoutEffect(() => {
 
     if (AppState.currentState === "active") {
       Notifications.setBadgeCountAsync(0);
@@ -103,6 +109,9 @@ export default function CommunicationHistoryScreen(props) {
         ),
       headerRight: () => (
         <View style={{marginRight:15}}>
+          <View style={bell_count?styles.bell:{display:'none'}}>
+            <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
+          </View>
           <TouchableOpacity
             style={{width:60,height:60,justifyContent:'center',alignItems:'center'}}
             onPress={() => {
@@ -119,175 +128,27 @@ export default function CommunicationHistoryScreen(props) {
       ),
     });
 
-    // ※【ヘッダー移転元【変数代入効かないから移動】】※
+  },[bell_count]);
+
+    
+  useEffect(() => {
+
+    console.log('--------------------------')
 
     // ログイン時のみサーバーDB見に行く
     if (route.previous == "LogIn") {
+
       navigation.setOptions({
         gestureDirection: "vertical-inverted",
       });
 
-      setLoading(true);
-      fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: JSON.stringify({
-          ID: route.params.account,
-          pass: route.params.password,
-          act: "customer_list",
-          fc_flg: global.fc_flg,
-        }),
-      })
-        .then((response) => response.json())
-        .then((json) => {
-          // ローカルDB用スタッフリスト
-          Insert_staff_list_db(json.staff);
+      Display(true);
 
-          // ローカルDB用お客様情報＋最新のコミュニケーション
-          Insert_customer_db(json.search);
-
-          // ローカルDB用定型文
-          const fixed_mst_data = Object.entries(json.fixed_array).map(
-            ([key, value]) => {
-              return { key, value };
-            }
-          );
-
-          // 登録用に一つ一つ配列化
-          const fixed_mst = [];
-
-          fixed_mst_data.map((f) => {
-            if (!f.value.length) {
-              fixed_mst.push({
-                fixed_id: "",
-                category: f.key,
-                title: "",
-                mail_title: "",
-                note: "",
-              });
-            } else {
-              f.value.map((v) => {
-                fixed_mst.push({
-                  fixed_id: v.fixed_id,
-                  category: f.key,
-                  title: v.title,
-                  mail_title: v.note.substring(0, v.note.indexOf("<[@]>")),
-                  note: v.note.substr(v.note.indexOf("<[@]>") + 5),
-                });
-              });
-            }
-          });
-
-          Insert_fixed_db(fixed_mst);
-
-          setLoading(false);
-        })
-        .catch((error) => {
-          // オフラインの場合ローカルDBを使用
-          db.transaction((tx) => {
-            tx.executeSql(
-              `select * from staff_list;`,
-              [],
-              (_, { rows }) => {
-                setStaffs(rows._array);
-              },
-              () => {
-                console.log("失敗");
-              }
-            );
-
-            tx.executeSql(
-              `select * from fixed_mst;`,
-              [],
-              (_, { rows }) => {
-                setFixed(rows._array);
-              },
-              () => {
-                console.log("失敗");
-              }
-            );
-
-            // コミュニケーション履歴が保存されているお客様のみ表示
-            tx.executeSql(
-              `select distinct customer_id from communication_mst;`,
-              [],
-              (_, { rows }) => {
-                const cus_offline_list = rows._array.map((r) => {
-                  return r.customer_id;
-                });
-                const cus_offline_list_id = cus_offline_list.join();
-
-                tx.executeSql(
-                  `select * from customer_mst where customer_id in (` +
-                    cus_offline_list_id +
-                    `) order by time desc;`,
-                  [],
-                  (_, { rows }) => {
-                    setMemos(rows._array);
-                  },
-                  () => {
-                    console.log("失敗");
-                  }
-                );
-
-                const cus_count = cus_offline_list.length;
-
-                const errTitle = "ネットワークの接続に失敗しました";
-                const errMsg =
-                  "端末に保存された" +
-                  cus_count +
-                  "件のメッセージのみ表示します";
-                Alert.alert(errTitle, errMsg);
-              },
-              () => {
-                console.log("失敗");
-              }
-            );
-          });
-
-          setLoading(false);
-        });
     } else {
-      setLoading(true);
-      // ローカルDB用スタッフリスト
-      Insert_staff_list_db("");
 
-      // ローカルDB用お客様情報＋最新のコミュニケーション
-      Insert_customer_db("");
+      Display(false);
 
-      Insert_fixed_db("");
-      setLoading(false);
     }
-
-    //alert(1);
-    // 20220613 新着件数を変数に格納
-    fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: JSON.stringify({
-        ID: route.params.account,
-        pass: route.params.password,
-        act: "new_bell_cnt",
-        fc_flg: global.fc_flg,
-      }),
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        if (json.bell_count.cnt != "0") {
-          setBellcount(json.bell_count.cnt);
-        } else {
-          setBellcount("");
-        }
-      })
-      .catch((error) => {
-        setBellcount("");
-      });
 
     // 通知をタップしたらお客様一覧 → トーク画面 (ログイン済)
     const notificationInteractionSubscription =
@@ -340,6 +201,7 @@ export default function CommunicationHistoryScreen(props) {
       BackHandler.addEventListener("hardwareBackPress", true).remove();
       notificationInteractionSubscription.remove();
     };
+
   }, []);
 
   useEffect(() => {
@@ -367,6 +229,38 @@ export default function CommunicationHistoryScreen(props) {
   // 更新
   const [refreshing, setRefreshing] = useState(false);
 
+  async function Display(flg) {
+
+    if (flg) {
+      onRefresh(false);
+    }
+
+    var loadflg = false;
+
+    var sql = `select count(*) as count from customer_mst;`;
+    var customer = await db_select(sql);
+    const cnt = customer[0]["count"];
+
+    if (cnt == 0) loadflg = true;
+
+    loadflg&&setLoading(true);
+
+    // ローカルDB用スタッフリスト
+    const staff_ = await Insert_staff_list_db("");
+
+    // ローカルDB用お客様情報＋最新のコミュニケーション
+    await Insert_customer_db("");
+    
+    await searchCustomer(staff_,true);
+
+    await Insert_fixed_db("");
+
+    await getBELL();
+
+    loadflg&&setLoading(false);
+
+  }
+
   // websocket通信(繋がった)
   route.websocket.onopen = (open) => {
     console.log("open");
@@ -377,7 +271,7 @@ export default function CommunicationHistoryScreen(props) {
     // route.websocket.send(JSON.stringify( { "flg": 'hello' } ));
     let catchmail_flg = JSON.parse(message.data);
     console.log(catchmail_flg.message);
-    onRefresh();
+    onRefresh(true);
   };
 
   // websocket通信(切断したら再接続)
@@ -400,31 +294,26 @@ export default function CommunicationHistoryScreen(props) {
     }
   };
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async(flg) => {
 
-    setRefreshing(true);
+    if (flg) setLoading(true);
 
-    fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: JSON.stringify({
-        ID: route.params.account,
-        pass: route.params.password,
-        act: "customer_list",
-        fc_flg: global.fc_flg,
-      }),
-    })
-    .then((response) => response.json())
-    .then((json) => {
+    const startTime = Date.now(); // 開始時間
+
+    const json = await getCOM();
+
+    const endTime = Date.now(); // 終了時間
+    const time = (endTime - startTime)/1000;
+    console.log('onRefresh：'+time + '秒')
+
+    if (json != false) {
 
       // ローカルDB用スタッフリスト
-      Insert_staff_list_db(json.staff);
+      const staff_ = await Insert_staff_list_db(json.staff);
 
       // ローカルDB用お客様情報＋最新のコミュニケーション
-      Insert_customer_db(json.search);
+      await Insert_customer_db(json.search);
+      await searchCustomer(staff_,true);
 
       // ローカルDB用定型文
       const fixed_mst_data = Object.entries(json.fixed_array).map(
@@ -458,966 +347,419 @@ export default function CommunicationHistoryScreen(props) {
         }
       });
 
-      Insert_fixed_db(fixed_mst);
-    })
-    .catch((error) => {
+      await Insert_fixed_db(fixed_mst);
 
-      // オフラインの場合ローカルDBを使用
-      db.transaction((tx) => {
-        tx.executeSql(
-          `select * from staff_list;`,
-          [],
-          (_, { rows }) => {
-            setStaffs(rows._array);
-          },
-          () => {
-            console.log("失敗");
-          }
-        );
-
-        tx.executeSql(
-          `select * from fixed_mst;`,
-          [],
-          (_, { rows }) => {
-            setFixed(rows._array);
-          },
-          () => {
-            console.log("失敗");
-          }
-        );
-
-        // コミュニケーション履歴が保存されているお客様のみ表示
-        tx.executeSql(
-          `select distinct customer_id from communication_mst;`,
-          [],
-          (_, { rows }) => {
-            const cus_offline_list = rows._array.map((r) => {
-              return r.customer_id;
-            });
-            const cus_offline_list_id = cus_offline_list.join();
-
-            tx.executeSql(
-              `select * from customer_mst where customer_id in (` +
-                cus_offline_list_id +
-                `) order by time desc;`,
-              [],
-              (_, { rows }) => {
-                setMemos(rows._array);
-              },
-              () => {
-                console.log("失敗");
-              }
-            );
-
-            const cus_count = cus_offline_list.length;
-
-            const errTitle = "ネットワークの接続に失敗しました";
-            const errMsg =
-              "端末に保存された" + cus_count + "件のメッセージのみ表示します";
-            Alert.alert(errTitle, errMsg);
-          },
-          () => {
-            console.log("失敗");
-          }
-        );
-      });
+    } else {
       
-    });
+      var sql = `select count(*) as count from customer_mst;`;
+      var customer = await db_select(sql);
+      const cnt = customer[0]["count"];
 
-    // 20220613 新着件数を変数に格納
-    fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: JSON.stringify({
-        ID: route.params.account,
-        pass: route.params.password,
-        act: "new_bell_cnt",
-        fc_flg: global.fc_flg,
-      }),
-    })
-    .then((response) => response.json())
-    .then((json) => {
-      //      console.log("2:"+json.bell_count.cnt);
-      if (json.bell_count.cnt != "0") {
-        setBellcount(json.bell_count.cnt);
-      } else {
-        setBellcount("");
-      }
-      setRefreshing(false);
-    })
-    .catch((error) => {
-      setBellcount("");
-      setRefreshing(false);
-    });
+      const errTitle = "ネットワークの接続に失敗しました";
+      const errMsg   = "端末に保存された" + cnt + "件のメッセージのみ表示します";
+
+      Alert.alert(errTitle, errMsg);
+
+    }
+
+    await getBELL();
+
+
+    if (flg) setLoading(false);
+
+    return;
 
   }, []);
 
+  const endRefresh = useCallback(async() => {
+    
+    var sql = `select count(*) as count from customer_mst;`;
+    var customer = await db_select(sql);
+    const cnt = customer[0]["count"];
+    
+    if (cnt >= 500) return;
+
+    setLoading(true);
+
+    const json = await getCOMNEXT(cnt);
+
+    if (json != false) {
+      // ローカルDB用お客様情報＋最新のコミュニケーション
+      await Insert_customer_db(json.search);
+      await searchCustomer(staff_value,false);
+    }
+
+    setLoading(false);
+  });
+  
+  const getCOM = useCallback(() => {
+    
+    return new Promise((resolve, reject)=>{
+      fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: JSON.stringify({
+          ID: route.params.account,
+          pass: route.params.password,
+          act: "customer_list",
+          fc_flg: global.fc_flg,
+          page:0,
+        }),
+      })
+      .then((response) => response.json())
+      .then((json) => {
+        resolve(json);
+      })
+      .catch((error) => {
+        console.log(error);
+        resolve(false);
+      });
+    })
+
+  });
+
+  const getCOMNEXT = useCallback((page) => {
+    
+    return new Promise((resolve, reject)=>{
+      fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: JSON.stringify({
+          ID: route.params.account,
+          pass: route.params.password,
+          act: "customer_list",
+          fc_flg: global.fc_flg,
+          page:page,
+        }),
+      })
+      .then((response) => response.json())
+      .then((json) => {
+        resolve(json);
+      })
+      .catch((error) => {
+        console.log(error);
+        resolve(false);
+      });
+    })
+
+  });
+
+  const getBELL = useCallback(() => {
+    return new Promise((resolve, reject)=>{
+      fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: JSON.stringify({
+          ID: route.params.account,
+          pass: route.params.password,
+          act: "new_bell_cnt",
+          fc_flg: global.fc_flg,
+        }),
+      })
+      .then((response) => response.json())
+      .then((json) => {
+        if (json.bell_count.cnt != "0") {
+          setBellcount(json.bell_count.cnt);
+        } else {
+          setBellcount(null);
+        }
+        resolve()
+      })
+      .catch((error) => {
+        setBellcount(null);
+        resolve()
+      });
+    })
+  });
+
   // スタッフリストデータベース登録
-  function Insert_staff_list_db(staff_list) {
-    db.transaction((tx) => {
-      if (staff_list) {
-        tx.executeSql(
-          `select * from staff_list;`,
-          [],
-          (_, { rows }) => {
-            if (!rows._array.length) {
-              db.transaction((tx) => {
-                Promise.all(
-                  staff_list.map((sl) => {
-                    tx.executeSql(
-                      `insert into staff_list values (?,?,?,?);`,
-                      [sl.account, sl.name_1, sl.name_2, ""],
-                      () => {
-                        // console.log("insert staff_list");
-                      },
-                      () => {
-                        console.log("staff_list 失敗");
-                      }
-                    );
-                  })
-                ).then(() => {
-                  tx.executeSql(
-                    `select * from staff_list;`,
-                    [],
-                    (_, { rows }) => {
-                      setStaffs(rows._array);
-                    }
-                  );
-                });
-              });
-            }
+  async function Insert_staff_list_db(staff_list) {
 
-            // 最新の情報に書き換える + 新しいスタッフ追加 + 削除
-            if (rows._array.length) {
-              const rocal = rows._array;
+    if (staff_list) {
 
-              // 書き換え
-              rocal.map((r) => {
-                staff_list.map((s_l) => {
-                  if (s_l.account === r.account) {
-                    if (s_l.name_1 != r.name_1 || s_l.name_2 != r.name_2) {
-                      db.transaction((tx) => {
-                        tx.executeSql(
-                          `update staff_list set name_1 = (?), name_2 = (?) where ( account = ? );`,
-                          [s_l.name_1, s_l.name_2, s_l.account],
-                          () => {
-                            tx.executeSql(
-                              `select * from staff_list;`,
-                              [],
-                              (_, { rows }) => {
-                                if (rows._array.length) {
-                                  setStaffs(rows._array);
-                                }
-                              },
-                              () => {
-                                console.log("失敗");
-                              }
-                            );
-                          }
-                          // () => {console.log(s_l.name_1+"のデータ更新 失敗");}
-                        );
-                      });
-                    }
-                  }
-                });
-              });
+      var sql = `select * from staff_list where (account != 'all');`;
+      var stf = await db_select(sql);
 
-              // 追加
-              const local_staff_list = rocal.map((r) => {
-                return r.account;
-              });
+      var check_flg = "";
 
-              const server_staff_list = staff_list.map((s_l) => {
-                return s_l.account;
-              });
-
-              const add_staff_list = server_staff_list.filter(
-                (c) => local_staff_list.indexOf(c) == -1
-              );
-
-              staff_list.map((s_l) => {
-                add_staff_list.map((add) => {
-                  if (s_l.account === add) {
-                    db.transaction((tx) => {
-                      tx.executeSql(
-                        `insert into staff_list values (?,?,?,?);`,
-                        [s_l.account, s_l.name_1, s_l.name_2, ""],
-                        () => {
-                          tx.executeSql(
-                            `select * from staff_list;`,
-                            [],
-                            (_, { rows }) => {
-                              if (rows._array.length) {
-                                setStaffs(rows._array);
-                              }
-                            },
-                            () => {
-                              console.log("失敗");
-                            }
-                          );
-                        },
-                        () => {
-                          // console.log(s_l.name_1+"のデータ追加 失敗");
-                        }
-                      );
-                    });
-                  }
-                });
-              });
-
-              // 削除
-              const del_staff_list = local_staff_list.filter(
-                (c) => server_staff_list.indexOf(c) == -1
-              );
-
-              rocal.map((r) => {
-                del_staff_list.map((del) => {
-                  if (r.account === del && r.account != "all") {
-                    db.transaction((tx) => {
-                      tx.executeSql(
-                        `delete from staff_list where ( account = ? );`,
-                        [r.account],
-                        () => {
-                          tx.executeSql(
-                            `select * from staff_list;`,
-                            [],
-                            (_, { rows }) => {
-                              if (rows._array.length) {
-                                setStaffs(rows._array);
-                              }
-                            },
-                            () => {
-                              console.log("失敗");
-                            }
-                          );
-                        },
-                        () => {
-                          // console.log(r.name_1+"のデータ削除 失敗");
-                        }
-                      );
-                    });
-                  }
-                });
-              });
-            }
-          },
-          () => {
-            console.log("失敗");
-          }
-        );
+      // ローカルDBのスタッフ情報
+      var DBstf = [];
+      if (stf != false) {
+        DBstf = stf.map((s) => {
+          if (s.check) check_flg = s.account;
+          return s.account
+        })
       }
 
-      tx.executeSql(
-        `select * from staff_list where (account = 'all');`,
-        [],
-        (_, { rows }) => {
-          if (rows._array.length == 0) {
-            tx.executeSql(
-              `insert into staff_list values ('all','','','');`,
-              [],
-              () => {
-                console.log("all OK");
-              },
-              () => {
-                console.log("all 失敗");
-              }
-            );
-          }
-        },
-        () => {
-          console.log("失敗");
-        }
-      );
+      // 最新のスタッフ情報
+      var APIstf = [];
 
-      tx.executeSql(
-        `select * from staff_list;`,
-        // `delete from staff_list;`,
-        [],
-        (_, { rows }) => {
-          if (rows._array.length) {
-            setStaffs(rows._array);
+      for (var s=0;s<staff_list.length;s++) {
+        var staff = staff_list[s];
+        var staff_insert = `insert or replace into staff_list values (?,?,?,?);`
+        var staff_data = [staff.account, staff.name_1, staff.name_2, check_flg==staff.account?"1":""]
+        await db_write(staff_insert,staff_data);
+        APIstf.push(staff.account);
+      }
 
-            rows._array.map((s) => {
-              if (s.check) {
-                setStaff_Value(s.account);
-              }
-            });
-          }
-        },
-        () => {
-          console.log("失敗");
+      // 削除するスタッフ情報
+      const DELstf = DBstf.filter(stf => !APIstf.includes(stf));
+      
+      for (var d=0;d<DELstf.length;d++) {
+        var account = DELstf[d];
+        var staff_delete = `delete from staff_list where ( account = ? );`;
+        await db_write(staff_delete,[account]);
+      }
+    }
+    
+    // スタッフリストの中に「全員」を追加する
+    var sql = `select * from staff_list where (account = 'all');`;
+    var allcheck = await db_select(sql);
+    if (allcheck == false) {
+      var sql = `insert or replace into staff_list values ('all','','','');`;
+      await db_write(sql,[]);
+    }
+
+    const sl = await GetDB('staff_list');
+    var result = null;
+
+    if (sl != false) {
+      
+      setStaffs(sl);
+
+      for (var s=0;s<sl.length;s++) {
+        if (sl[s].check) {
+          result = sl[s].account;
+          setStaff_Value(sl[s].account);
         }
-      );
-    });
+      }
+      
+    } else {
+      setStaffs([]);
+    }
+
+    return result;
+
   }
 
   // お客様情報＋最新のコミュニケーションデータベース登録
-  function Insert_customer_db(customer) {
-    db.transaction((tx) => {
-      if (customer) {
-        tx.executeSql(
-          `select * from customer_mst;`,
-          [],
-          (_, { rows }) => {
-            // ひとつもなかったらinsert
-            if (!rows._array.length) {
-              db.transaction((tx) => {
-                Promise.all(
-                  customer.map((cus) => {
-                    if (
-                      cus.html_flg ||
-                      (cus.communication_title === "入居申込書" &&
-                        cus.communication_status === "その他")
-                    ) {
-                      cus.communication_note = cus.communication_note.replace(
-                        /<("[^"]*"|'[^']*'|[^'">])*>/g,
-                        ""
-                      );
-                    }
+  async function Insert_customer_db(customer) {
+    
+    if (customer) {
 
-                    let status = cus.status;
+      // 最新のお客様情報
+      for (var c=0;c<customer.length;c++) {
 
-                    if (status == "未対応" && cus.SENPUKI_autofollow) {
-                      status = "メールモンスター";
-                    } else if (!status) {
-                      status = "未対応";
-                    }
+        var cus = customer[c];
 
-                    // 賃貸のみ
-                    if (cus.category_number != "1") {
-                      tx.executeSql(
-                        `insert into customer_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`,
-                        [
-                          cus.customer_user_id,
-                          cus.name,
-                          cus.kana,
-                          cus.communication_time,
-                          cus.communication_title,
-                          cus.line_note
-                            ? cus.line_note
-                            : cus.communication_note,
-                          cus.mail1,
-                          cus.mail2,
-                          cus.mail3,
-                          cus.line,
-                          cus.staff_name,
-                          cus.media,
-                          cus.article_url,
-                          cus.reverberation_user_id,
-                          cus.coming_user_id,
-                          cus.coming_day1,
-                          status,
-                        ],
-                        () => {
-                          // console.log("insert customer_mst");
-                        },
-                        () => {
-                          console.log("customer_mst 失敗");
-                        }
-                      );
-                    }
-                  })
-                ).then(() => {
-                  tx.executeSql(
-                    `select * from customer_mst order by time desc;`,
-                    [],
-                    (_, { rows }) => {
-                      setMemos(rows._array);
-                      setA('a');
-                    }
-                  );
-                });
-              });
-            }
+        if (
+          cus.html_flg ||
+          (cus.communication_title === "入居申込書" &&
+            cus.communication_status === "その他")
+        ) {
+          cus.communication_note = cus.communication_note.replace(
+            /<("[^"]*"|'[^']*'|[^'">])*>/g,
+            ""
+          );
+        }
 
-            // 最新の情報に書き換える + 新しいお客様追加 + 削除
-            if (rows._array.length) {
-              const rocal = rows._array;
+        let status = cus.status;
 
-              // 書き換え
-              rocal.map((r) => {
-                customer.map((cus) => {
-                  if (
-                    cus.customer_user_id === r.customer_id &&
-                    cus.category_number != "1"
-                  ) {
-                    if (
-                      cus.communication_time != r.time ||
-                      cus.communication_note != r.note ||
-                      cus.name != r.name
-                    ) {
-                      if (
-                        cus.html_flg ||
-                        (cus.communication_title === "入居申込書" &&
-                          cus.communication_status === "その他")
-                      ) {
-                        cus.communication_note = cus.communication_note.replace(
-                          /<("[^"]*"|'[^']*'|[^'">])*>/g,
-                          ""
-                        );
-                      }
+        if (status == "未対応" && cus.SENPUKI_autofollow) {
+          status = "メールモンスター";
+        } else if (!status) {
+          status = "未対応";
+        }
 
-                      if (!cus.communication_note && cus.line_note) {
-                        cus.communication_note = cus.line_note;
-                      }
+        // 賃貸のみ
+        if (cus.category_number != "1") {
 
-                      db.transaction((tx) => {
-                        //console.log(cus)
-                        let status = cus.status;
+          var sql = `insert or replace into customer_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
 
-                        if (status == "未対応" && cus.SENPUKI_autofollow) {
-                          status = "メールモンスター";
-                        } else if (!status) {
-                          status = "未対応";
-                        }
+          var data = [
+            cus.customer_user_id,
+            cus.name,
+            cus.kana,
+            cus.communication_time,
+            cus.communication_title,
+            cus.line_note
+              ? cus.line_note
+              : cus.communication_note,
+            cus.mail1,
+            cus.mail2,
+            cus.mail3,
+            cus.line,
+            cus.staff_name,
+            cus.media,
+            cus.article_url,
+            cus.reverberation_user_id,
+            cus.coming_user_id,
+            cus.coming_day1,
+            status,
+          ];
+          
+          await db_write(sql,data);
+        }
 
-                        tx.executeSql(
-                          `update customer_mst set name = (?), kana = (?), time = (?), title = (?), note = (?), mail1 = (?), mail2 = (?), mail3 = (?), line = (?), staff_name = (?), media = (?), article_url = (?), status = (?) where ( customer_id = ? );`,
-                          [
-                            cus.name,
-                            cus.kana,
-                            cus.communication_time,
-                            cus.communication_title,
-                            cus.line_note
-                              ? cus.line_note
-                              : cus.communication_note,
-                            cus.mail1,
-                            cus.mail2,
-                            cus.mail3,
-                            cus.line,
-                            cus.staff_name,
-                            cus.media,
-                            cus.article_url,
-                            status,
-                            cus.customer_user_id,
-                          ],
-                          () => {
-                          }
-                          // () => {console.log(cus.name+"のデータ更新 失敗");}
-                        );
-                      });
-                    }
-                  }
-                });
-              });
-
-              // 追加
-              const local_cus_id = rocal.map((r) => {
-                return r.customer_id;
-              });
-
-              const server_cus_id = customer.map((c) => {
-                return c.customer_user_id;
-              });
-
-              const add_customer = server_cus_id.filter(
-                (c) => local_cus_id.indexOf(c) == -1
-              );
-
-              customer.map((cus) => {
-                add_customer.map((add) => {
-                  if (
-                    cus.customer_user_id === add &&
-                    cus.category_number != "1"
-                  ) {
-                    if (
-                      cus.html_flg ||
-                      (cus.communication_title === "入居申込書" &&
-                        cus.communication_status === "その他")
-                    ) {
-                      cus.communication_note = cus.communication_note.replace(
-                        /<("[^"]*"|'[^']*'|[^'">])*>/g,
-                        ""
-                      );
-                    }
-
-                    if (!cus.communication_note && cus.line_note) {
-                      cus.communication_note = cus.line_note;
-                    }
-
-                    let status = cus.status;
-
-                    if (status == "未対応" && cus.SENPUKI_autofollow) {
-                      status = "メールモンスター";
-                    } else if (!status) {
-                      status = "未対応";
-                    }
-
-                    db.transaction((tx) => {
-                      tx.executeSql(
-                        `insert into customer_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`,
-                        [
-                          cus.customer_user_id,
-                          cus.name,
-                          cus.kana,
-                          cus.communication_time,
-                          cus.communication_title,
-                          cus.line_note
-                            ? cus.line_note
-                            : cus.communication_note,
-                          cus.mail1,
-                          cus.mail2,
-                          cus.mail3,
-                          cus.line,
-                          cus.staff_name,
-                          cus.media,
-                          cus.article_url,
-                          cus.reverberation_user_id,
-                          cus.coming_user_id,
-                          cus.coming_day1,
-                          status,
-                        ],
-                        () => {
-                        },
-                        () => {
-                          // console.log(cus.name+"のデータ追加 失敗");
-                        }
-                      );
-                    });
-                  }
-                });
-              });
-
-              // 削除
-              const del_customer = local_cus_id.filter(
-                (c) => server_cus_id.indexOf(c) == -1
-              );
-
-              rocal.map((r) => {
-                del_customer.map((del) => {
-                  if (r.customer_id === del) {
-                    db.transaction((tx) => {
-                      tx.executeSql(
-                        `delete from customer_mst where ( customer_id = ? );`,
-                        [r.customer_id],
-                        () => {
-                          tx.executeSql(
-                            `select * from customer_mst order by time desc;`,
-                            [],
-                            (_, { rows }) => {
-                              if (rows._array.length) {
-                                setMemos(rows._array);
-                              }
-                            }
-                          );
-                        },
-                        () => {
-                          // console.log(r.name+"のデータ削除 失敗");
-                        }
-                      );
-                    });
-                  }
-                });
-              });
-              
-              setA("a");
-            }
-          },
-          () => {
-            console.log("失敗1");
-          }
-        );
-      } else {
-        setA("a");
       }
 
-    });
+      // 500件超えたら古いものから削除する
+      var sql = `select count(*) as count from customer_mst;`;
+      var customer = await db_select(sql);
+      const cnt = customer[0]["count"];
+
+      if (cnt > 500) {
+        var delcus = `DELETE FROM customer_mst WHERE customer_id IN (SELECT customer_id FROM customer_mst ORDER BY time LIMIT (SELECT COUNT(*) - 500 FROM customer_mst));`;
+        await db_write(delcus,[]);
+      }
+
+    }
+
   }
 
   // 定型文データベース登録
-  function Insert_fixed_db(fixed) {
-    db.transaction((tx) => {
-      if (fixed) {
-        tx.executeSql(
-          `select * from fixed_mst;`,
-          [],
-          (_, { rows }) => {
-            if (!rows._array.length) {
-              db.transaction((tx) => {
-                Promise.all(
-                  fixed.map((f) => {
-                    tx.executeSql(
-                      `insert into fixed_mst values (?,?,?,?,?);`,
-                      [f.fixed_id, f.category, f.title, f.mail_title, f.note],
-                      () => {
-                        // console.log("insert staff_list");
-                      },
-                      () => {
-                        console.log("fixed_mst 失敗");
-                      }
-                    );
-                  })
-                ).then(() => {
-                  tx.executeSql(
-                    `select * from fixed_mst;`,
-                    [],
-                    (_, { rows }) => {
-                      setFixed(rows._array);
-                    }
-                  );
-                });
-              });
-            }
+  async function Insert_fixed_db(fixed) {
 
-            // 最新の定型文に書き換える + 新しい定型文追加 + 削除
-            if (rows._array.length) {
-              const rocal = rows._array;
+    if (fixed) {
 
-              // 書き換え
-              rocal.map((r) => {
-                fixed.map((f) => {
-                  if (f.fixed_id && r.fixed_id) {
-                    if (f.fixed_id === r.fixed_id) {
-                      if (
-                        f.category != r.category ||
-                        f.title != r.title ||
-                        f.mail_title != r.mail_title ||
-                        f.note != r.note
-                      ) {
-                        db.transaction((tx) => {
-                          tx.executeSql(
-                            `update fixed_mst set category = (?), title = (?), mail_title = (?), note = (?) where ( fixed_id = ? );`,
-                            [
-                              f.category,
-                              f.title,
-                              f.mail_title,
-                              f.note,
-                              f.fixed_id,
-                            ],
-                            () => {
-                              tx.executeSql(
-                                `select * from fixed_mst;`,
-                                [],
-                                (_, { rows }) => {
-                                  if (rows._array.length) {
-                                    setFixed(rows._array);
-                                  }
-                                }
-                              );
-                            },
-                            () => {
-                              console.log("定型文のデータ更新 失敗");
-                            }
-                          );
-                        });
-                      }
-                    }
-                  }
-                });
-              });
+      const fixed_mst = await GetDB('fixed_mst');
 
-              // 追加
-              const local_fixed_list = rocal.map((r) => {
-                return r.fixed_id;
-              });
-
-              const server_fixed_list = fixed.map((s_l) => {
-                return s_l.fixed_id;
-              });
-
-              const add_fixed_list = server_fixed_list.filter(
-                (c) => local_fixed_list.indexOf(c) == -1
-              );
-
-              fixed.map((f) => {
-                add_fixed_list.map((add) => {
-                  if (f.fixed_id === add) {
-                    db.transaction((tx) => {
-                      tx.executeSql(
-                        `insert into fixed_mst values (?,?,?,?,?);`,
-                        [f.fixed_id, f.category, f.title, f.mail_title, f.note],
-                        () => {
-                          tx.executeSql(
-                            `select * from fixed_mst;`,
-                            [],
-                            (_, { rows }) => {
-                              if (rows._array.length) {
-                                setFixed(rows._array);
-                              }
-                            }
-                          );
-                        },
-                        () => {
-                          console.log(f.title + "のデータ追加 失敗");
-                        }
-                      );
-                    });
-                  }
-                });
-              });
-
-              // 削除
-              const del_fixed_list = local_fixed_list.filter(
-                (c) => server_fixed_list.indexOf(c) == -1
-              );
-
-              rocal.map((r) => {
-                del_fixed_list.map((del) => {
-                  if (r.fixed_id === del) {
-                    db.transaction((tx) => {
-                      tx.executeSql(
-                        `delete from fixed_mst where ( fixed_id = ? );`,
-                        [r.fixed_id],
-                        () => {
-                          tx.executeSql(
-                            `select * from fixed_mst;`,
-                            [],
-                            (_, { rows }) => {
-                              if (rows._array.length) {
-                                setFixed(rows._array);
-                              }
-                            }
-                          );
-                        },
-                        () => {
-                          console.log(r.title + "のデータ削除 失敗");
-                        }
-                      );
-                    });
-                  }
-                });
-              });
-            }
-          },
-          () => {
-            console.log("失敗");
-          }
-        );
+      // ローカルDBの定型文情報
+      var DBfix = [];
+      if (fixed_mst != false) {
+        DBstf = fixed_mst.map((f) => {
+          return f.fixed_id
+        })
       }
 
-      tx.executeSql(
-        `select * from fixed_mst;`,
-        // `delete from fixed_mst;`,
-        [],
-        (_, { rows }) => {
-          setFixed(rows._array);
-        },
-        () => {
-          console.log("失敗");
-        }
-      );
-    });
+      // 最新の定型文情報
+      var APIfix = [];
+
+      for (var f=0;f<fixed.length;f++) {
+        var fix_ = fixed[f];
+        var fixed_insert = `insert or replace into fixed_mst values (?,?,?,?,?);`;
+        var fixed_data = [fix_.fixed_id, fix_.category, fix_.title, fix_.mail_title, fix_.note];
+        await db_write(fixed_insert,fixed_data);
+        APIfix.push(fix_.fixed_id);
+      }
+
+      // 削除する定型文情報
+      const DELfix = DBfix.filter(fix => !APIfix.includes(fix));
+      
+      for (var d=0;d<DELfix.length;d++) {
+        var fixed_id = DELfix[d];
+        var fixed_delete = `delete from fixed_mst where ( fixed_id = ? );`;
+        await db_write(fixed_delete,[fixed_id]);
+      }
+    }
+    
+    const fixed_mst = await GetDB('fixed_mst');
+    if (fixed_mst != false) setFixed(fixed_mst);
+    else setFixed([]);
+
   }
 
-  function onSubmit() {
+  async function onSubmit() {
 
+    Keyboard.dismiss();
     setLoading(true);
+    await searchCustomer(staff_value);
+    setLoading(false);
+    
+  }
 
-    var sql = `select * from customer_mst where (name||kana)  like '%${name}%' `;
+  async function searchCustomer(staff,scrollTOP) {
 
-    if (staff_value != "all" && staff_value != null && staff_value != "") {
-      sql += ` and ((reverberation_user_id = '${staff_value}') or (coming_user_id = '${staff_value}')) `
+    var customer_list = []; // 格納する顧客リスト
+    var staff_check   = ""; // チェックするスタッフ
+
+    // 一旦すべてチェック外す
+    var check_null = `update staff_list set "check" = null;`;
+    await db_write(check_null,[]);
+
+    if (staff == "all" || staff == null) {
+
+      var sql = `select * from customer_mst where (name||kana)  like '%${name}%' order by time desc;`;
+      var customer_mst = await db_select(sql);
+
+      if (customer_mst != false) {
+        customer_list = customer_mst;
+      }
+
+      if (staff == "all") {
+        staff_check = "all";
+      }
+
     } else if (staff_value == "") {
-      sql += ` and ((reverberation_user_id = '' or reverberation_user_id is null) and (coming_user_id = '' or coming_user_id is null)) `
+
+      var sql = `select * from customer_mst where (name||kana)  like '%${name}%' and ((reverberation_user_id = '' or reverberation_user_id is null) and (coming_user_id = '' or coming_user_id is null)) order by time desc;`
+      var customer_mst = await db_select(sql);
+
+      if (customer_mst != false) {
+        customer_list = customer_mst;
+      }
+
+    } else {
+      
+      var sql = `select * from customer_mst where (name||kana)  like '%${name}%' and ((reverberation_user_id = '${staff}') or (coming_user_id = '${staff}')) order by time desc;`;
+      var customer_mst = await db_select(sql);
+
+      if (customer_mst != false) {
+        customer_list = customer_mst;
+      }
+
+      staff_check = staff;
+
     }
 
-    sql += ` order by time desc;`
+    setMemos(customer_list);
 
-    db.transaction((tx) => {
-      tx.executeSql(
-        sql,
-        [],
-        (_, { rows }) => {
-          if (rows._array.length) {
-            setMemos(rows._array);
-          } else {
-            setMemos([]);
-          }
-        },
-        () => {
-          console.log("失敗");
-        }
-      );
-    });
-
-    setLoading(false);
-  }
-
-  if (a) {
-    setLoading(true);
-
-    db.transaction((tx) => {
-      if (staff_value == "all" || staff_value == null) {
-        tx.executeSql(
-          `select * from customer_mst where (name||kana)  like '%${name}%' order by time desc;`,
-          [],
-          (_, { rows }) => {
-            if (rows._array.length) {
-              setMemos(rows._array);
-              if (listRef.current != null) {
-                listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
-              }
-            } else {
-              setMemos([]);
-            }
-          },
-          () => {
-            console.log("失敗1");
-          }
-        );
-
-        if (staff_value == "all") {
-          tx.executeSql(
-            `update staff_list set "check" = null;`,
-            [],
-            (_, { rows }) => {},
-            () => {
-              console.log("失敗1");
-            }
-          );
-          tx.executeSql(
-            `update staff_list set "check" = '1' where ( account = 'all' );`,
-            [],
-            (_, { rows }) => {},
-            () => {
-              console.log("失敗1");
-            }
-          );
-        }
-      } else if (staff_value == "") {
-        tx.executeSql(
-          `select * from customer_mst where (name||kana)  like '%${name}%' and ((reverberation_user_id = '' or reverberation_user_id is null) and (coming_user_id = '' or coming_user_id is null)) order by time desc;`,
-          [],
-          (_, { rows }) => {
-            if (rows._array.length) {
-              setMemos(rows._array);
-              if (listRef.current != null) {
-                listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
-              }
-            } else {
-              setMemos([]);
-            }
-          },
-          () => {
-            console.log("失敗2");
-          }
-        );
-
-        tx.executeSql(
-          `update staff_list set "check" = null;`,
-          [],
-          (_, { rows }) => {},
-          () => {
-            console.log("失敗1");
-          }
-        );
-      } else {
-        tx.executeSql(
-          `select * from customer_mst where (name||kana)  like '%${name}%' and ((reverberation_user_id = ?) or (coming_user_id = ?)) order by time desc;`,
-          [staff_value],
-          (_, { rows }) => {
-            if (rows._array.length) {
-              setMemos(rows._array);
-              if (listRef.current != null) {
-                listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
-              }
-            } else {
-              setMemos([]);
-            }
-          },
-          () => {
-            console.log("失敗2");
-          }
-        );
-
-        tx.executeSql(
-          `update staff_list set "check" = null;`,
-          [],
-          (_, { rows }) => {},
-          () => {
-            console.log("失敗1");
-          }
-        );
-        tx.executeSql(
-          `update staff_list set "check" = '1' where ( account = ? );`,
-          [staff_value],
-          (_, { rows }) => {},
-          () => {
-            console.log("失敗1");
-          }
-        );
+    if (customer_list.length > 0) {
+      if (listRef.current != null && scrollTOP) {
+        listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
       }
-    });
+    }
 
-    setLoading(false);
-    setA(false);
-    
+    if (staff_check) {
+      var check = `update staff_list set "check" = '1' where ( account = ? );`;
+      var data = [staff_check]
+      await db_write(check,data);
+    }
+
   }
 
-  function Delete_staff_db(){
+  async function Delete_staff_db(){
+
+    const dbList = [
+      "staff_mst",
+      "staff_list",
+      "customer_mst",
+      "communication_mst",
+      "fixed_mst",
+      "staff_profile",
+      "ranking_mst",
+      "black_sales_mst",
+    ]
     
-    new Promise((resolve, reject)=>{
-      db.transaction((tx) => {
-      
-        // スタッフ
-        tx.executeSql(
-          `delete from staff_mst;`,  
-          [],
-          () => {console.log("delete staff_mst OK");},
-          () => {console.log("delete staff_mst 失敗");}
-        );
-        // スタッフ一覧
-        tx.executeSql(
-          `delete from staff_list;`,
-          [],
-          () => {console.log("staff_list 削除");},
-          () => {console.log("失敗");}
-        );
-        // お客様
-        tx.executeSql(
-          `delete from customer_mst;`,
-          [],
-          () => {console.log("customer_mst 削除");},
-          () => {console.log("失敗");}
-        );
-        // コミュニケーション履歴
-        tx.executeSql(
-          `delete from communication_mst;`,
-          [],
-          () => {console.log("communication_mst 削除");},
-          () => {console.log("失敗");}
-        );
-        // 定型文
-        tx.executeSql(
-          `delete from fixed_mst;`,
-          [],
-          () => {console.log("fixed_mst 削除");},
-          () => {console.log("失敗");}
-        );
-  
-        // スタッフプロフィール
-        tx.executeSql(
-          `drop table staff_profile;`,
-          [],
-          () => {console.log("staff_profile テーブル削除");},
-          () => {console.log("staff_profile テーブル削除失敗");}
-        );
-        
-        // ランキング
-        tx.executeSql(
-          `drop table ranking_mst;`,
-          [],
-          () => {console.log("ranking_mst テーブル削除");},
-          () => {console.log("ranking_mst テーブル削除失敗");}
-        );
-        
-        // 売上グラフ
-        tx.executeSql(
-          `drop table black_sales_mst;`,
-          [],
-          () => {console.log("black_sales_mst テーブル削除");},
-          () => {console.log("black_sales_mst テーブル削除失敗");}
-        );
-  
-      // →→→ 駅・沿線、エリアは残す
-      
-        resolve();
-      })
-      
-    });
+    for (var d=0;d<dbList.length;d++) {
+      var table = dbList[d];
+      var delete_sql = `delete from ${table};`;
+      const del_res = await db_write(delete_sql,[]);
+      if (del_res) {
+        console.log(`${table} 削除 成功`);
+      } else {
+        console.log(`${table} 削除 失敗`);
+      }
+    }
   
   }
     
@@ -1429,15 +771,14 @@ export default function CommunicationHistoryScreen(props) {
         [
           {
             text: "はい",
-            onPress: () => {
+            onPress: async() => {
               
-              Delete_staff_db();
-              // route.websocket.close()
+              await Delete_staff_db();
               
               if(global.sp_token && global.sp_id){
                 
                 // サーバーに情報送信して、DBから削除
-                fetch(domain+'app/app_system/set_staff_app_token.php', {
+                await fetch(domain+'app/app_system/set_staff_app_token.php', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -1457,7 +798,7 @@ export default function CommunicationHistoryScreen(props) {
                 let formData = new FormData();
                 formData.append('fc_logout',1);
                 
-                fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+                await fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
                 {
                   method: 'POST',
                   header: {
@@ -1493,7 +834,7 @@ export default function CommunicationHistoryScreen(props) {
     
   }
   
-  function headerRight() {
+  const headerRight = useMemo(() => {
     return (
       <View style={{backgroundColor:'#fff',flex:1,paddingTop:25}}>
         <TouchableOpacity
@@ -1522,6 +863,9 @@ export default function CommunicationHistoryScreen(props) {
             size={35}
           />
           <Text style={styles.menutext}>通知</Text>
+          <View style={bell_count?styles.bell2:{display:'none'}}>
+            <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.menulist}
@@ -1586,11 +930,100 @@ export default function CommunicationHistoryScreen(props) {
         </TouchableOpacity>
       </View>
     )
-  }
+  },[bell_count])
+
+  const comList = useMemo(() => {
+    if (memos.length == 0) {
+      return (
+        <View style={{width:'100%',height:'100%',marginTop:150}}>
+          <TouchableOpacity style={styles.buttonReload} onPress={()=>onRefresh(true)}>
+            <Text style={styles.buttonReloadLabel}>読　込</Text>
+          </TouchableOpacity>
+        </View>
+      )
+    } else {
+      return (
+        <FlatList
+          ref={listRef}
+          onEndReached={endRefresh}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={async()=>{
+                await onRefresh(true);
+              }}
+            />
+          }
+          initialNumToRender={10}
+          data={memos}
+          renderItem={({ item }) => {
+            if (!item.del_flg) {
+              return (
+                <TouchableOpacity
+                  style={styles.ListItem}
+                  onPress={() => {
+                    navigation.reset({
+                      index: 0,
+                      routes: [
+                        {
+                          name: "TalkScreen",
+                          params: route.params,
+                          customer: item.customer_id,
+                          websocket: route.websocket,
+                          station: route.station,
+                          address: route.address,
+                          profile: route.profile,
+                          staff: staffs,
+                          fixed: fixed,
+                          cus_name: item.name,
+                        },
+                      ],
+                    });
+                  }}
+                >
+                  <View style={styles.ListInner}>
+                    <View style={{ flexDirection: "row" }}>
+                      <Text
+                        style={
+                          item.status == "未対応"
+                            ? { color: "red", fontSize: 18 }
+                            : { display: "none" }
+                        }
+                      >
+                        ●
+                      </Text>
+                      <Text style={styles.name} numberOfLines={1}>
+                        {item.name
+                          ? item.name.length < 10
+                            ? item.name
+                            : item.name.substring(0, 10) + "..."
+                          : ""}
+                      </Text>
+                    </View>
+                    <Text style={styles.date}>
+                      {item.time ? item.time.slice(0, -3) : ""}
+                    </Text>
+                    <Text style={styles.message} numberOfLines={1}>
+                      {item.title === "スタンプ"
+                        ? "スタンプを送信しました"
+                        : !item.note
+                        ? item.title
+                        : item.note}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            }
+          }}
+          keyExtractor={(item) => `${item.customer_id}`}
+        />
+      )
+    }
+  },[memos,fixed])
 
   return (
     <SideMenu
-      menu={headerRight()}
+      menu={headerRight}
       isOpen={menu}
       onChange={isOpen => {
         setMenu(isOpen);
@@ -1622,84 +1055,15 @@ export default function CommunicationHistoryScreen(props) {
             dropDownContainerStyle={styles.dropDownContainer}
             open={open}
             value={staff_value}
-            items={items}
+            items={staffList}
             setOpen={setOpen}
             setValue={setStaff_Value}
             placeholder="▼　担当者"
-            onClose={() => {
-              setA("a");
-            }}
+            onSelectItem={(item) => searchCustomer(item.value,true)}
           />
         </View>
         <View style={{zIndex: 100,paddingBottom:128}}>
-          <FlatList
-            ref={listRef}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-            initialNumToRender={10}
-            data={memos}
-            renderItem={({ item }) => {
-              if (!item.del_flg) {
-                return (
-                  <TouchableOpacity
-                    style={styles.ListItem}
-                    onPress={() => {
-                      navigation.reset({
-                        index: 0,
-                        routes: [
-                          {
-                            name: "TalkScreen",
-                            params: route.params,
-                            customer: item.customer_id,
-                            websocket: route.websocket,
-                            station: route.station,
-                            address: route.address,
-                            profile: route.profile,
-                            staff: staffs,
-                            fixed: fixed,
-                            cus_name: item.name,
-                          },
-                        ],
-                      });
-                    }}
-                  >
-                    <View style={styles.ListInner}>
-                      <View style={{ flexDirection: "row" }}>
-                        <Text
-                          style={
-                            item.status == "未対応"
-                              ? { color: "red", fontSize: 18 }
-                              : { display: "none" }
-                          }
-                        >
-                          ●
-                        </Text>
-                        <Text style={styles.name} numberOfLines={1}>
-                          {item.name
-                            ? item.name.length < 10
-                              ? item.name
-                              : item.name.substring(0, 10) + "..."
-                            : ""}
-                        </Text>
-                      </View>
-                      <Text style={styles.date}>
-                        {item.time ? item.time.slice(0, -3) : ""}
-                      </Text>
-                      <Text style={styles.message} numberOfLines={1}>
-                        {item.title === "スタンプ"
-                          ? "スタンプを送信しました"
-                          : !item.note
-                          ? item.title
-                          : item.note}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              }
-            }}
-            keyExtractor={(item) => `${item.customer_id}`}
-          />
+          {comList}
         </View>
       </View>
     </SideMenu>
@@ -1755,6 +1119,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     color: "#000000",
   },
+  buttonReload: {
+    backgroundColor: "#b3b3b3",
+    borderRadius: 4,
+    alignSelf: "center",
+  },
+  buttonReloadLabel: {
+    fontSize: 16,
+    lineHeight: 30,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    color: "#000000",
+  },
   ListItem: {
     backgroundColor: "#ffffff",
     flexDirection: "row",
@@ -1784,16 +1160,38 @@ const styles = StyleSheet.create({
   memoDelete: {
     padding: 8,
   },
-  belltext: {
+  bell: {
+    justifyContent:"center",
     alignItems: "center",
     position: "absolute",
     color: "white",
     fontWeight: "bold",
     backgroundColor: "red",
-    borderRadius: 5,
+    borderRadius: 10,
     paddingLeft: 5,
     paddingRight: 5,
-    left: 30,
+    right: 5,
+    top:5,
+    zIndex:999,
+    width:20,
+    height:20
+  },
+  bell2: {
+    justifyContent:"center",
+    alignItems: "center",
+    color: "white",
+    fontWeight: "bold",
+    backgroundColor: "red",
+    borderRadius: 10,
+    paddingLeft: 5,
+    paddingRight: 5,
+    width:20,
+    height:20,
+    marginLeft:5
+  },
+  belltext: {
+    color:'#fff',
+    fontSize:12
   },
   menulist: {
     flexDirection:'row',

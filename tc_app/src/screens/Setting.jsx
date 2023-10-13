@@ -10,7 +10,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from "react-native-modal";
 
 import Loading from '../components/Loading';
-import { db } from '../components/Databace';
+import { db,db_write } from '../components/Databace';
 
 import TagInput from 'react-native-tags-input';
 
@@ -846,97 +846,48 @@ function sleep(waitMsec) {
   while (new Date() - startMsec < waitMsec);
 }
 
+async function Delete_staff_db(){
+
+  const dbList = [
+    "staff_mst",
+    "staff_list",
+    "customer_mst",
+    "communication_mst",
+    "fixed_mst",
+    "staff_profile",
+    "ranking_mst",
+    "black_sales_mst",
+  ]
   
-function Delete_staff_db(){
-    
-  new Promise((resolve, reject)=>{
-    db.transaction((tx) => {
-    
-      // スタッフ
-      tx.executeSql(
-        `delete from staff_mst;`,
-        [],
-        () => {console.log("delete staff_mst OK");},
-        () => {console.log("delete staff_mst 失敗");}
-      );
-      // スタッフ一覧
-      tx.executeSql(
-        `delete from staff_list;`,
-        [],
-        () => {console.log("staff_list 削除");},
-        () => {console.log("失敗");}
-      );
-      // お客様
-      tx.executeSql(
-        `delete from customer_mst;`,
-        [],
-        () => {console.log("customer_mst 削除");},
-        () => {console.log("失敗");}
-      );
-      // コミュニケーション履歴
-      tx.executeSql(
-        `delete from communication_mst;`,
-        [],
-        () => {console.log("communication_mst 削除");},
-        () => {console.log("失敗");}
-      );
-      // 定型文
-      tx.executeSql(
-        `delete from fixed_mst;`,
-        [],
-        () => {console.log("fixed_mst 削除");},
-        () => {console.log("失敗");}
-      );
-
-      // スタッフプロフィール
-      tx.executeSql(
-        `drop table staff_profile;`,
-        [],
-        () => {console.log("staff_profile テーブル削除");},
-        () => {console.log("staff_profile テーブル削除失敗");}
-      );
-      
-      // ランキング
-      tx.executeSql(
-        `drop table ranking_mst;`,
-        [],
-        () => {console.log("ranking_mst テーブル削除");},
-        () => {console.log("ranking_mst テーブル削除失敗");}
-      );
-      
-      // 売上グラフ
-      tx.executeSql(
-        `drop table black_sales_mst;`,
-        [],
-        () => {console.log("black_sales_mst テーブル削除");},
-        () => {console.log("black_sales_mst テーブル削除失敗");}
-      );
-
-    // →→→ 駅・沿線、エリアは残す
-    
-      resolve();
-    })
-    
-  });
+  for (var d=0;d<dbList.length;d++) {
+    var table = dbList[d];
+    var delete_sql = `delete from ${table};`;
+    const del_res = await db_write(delete_sql,[]);
+    if (del_res) {
+      console.log(`${table} 削除 成功`);
+    } else {
+      console.log(`${table} 削除 失敗`);
+    }
+  }
 
 }
   
 function logout() {
-  
+    
   Alert.alert(
       "ログアウトしますか？",
       "",
       [
         {
           text: "はい",
-          onPress: () => {
+          onPress: async() => {
             
-            Delete_staff_db();
+            await Delete_staff_db();
             
             if(global.sp_token && global.sp_id){
               
               // サーバーに情報送信して、DBから削除
-              fetch(domain+'app/app_system/set_staff_app_token.php', {
+              await fetch(domain+'app/app_system/set_staff_app_token.php', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -956,7 +907,7 @@ function logout() {
               let formData = new FormData();
               formData.append('fc_logout',1);
               
-              fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+              await fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
               {
                 method: 'POST',
                 header: {
@@ -991,7 +942,6 @@ function logout() {
     );
   
 }
-  
   
 /****************************************************************
 * 機　能： 入力された値が日付でYYYY/MM/DD形式になっているか調べる

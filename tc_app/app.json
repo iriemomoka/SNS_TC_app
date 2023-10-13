@@ -2,7 +2,7 @@
   "expo": {
     "name": "TC",
     "slug": "totalcloud",
-    "version": "2.2.6",
+    "version": "2.2.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -23,7 +23,7 @@
     "ios": {
       "bundleIdentifier": "com.totalcloud.totalcloud",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "2.2.6",
+      "buildNumber": "2.2.8",
       "infoPlist": {
         "UIRequiresFullScreen": "YES",
         "CFBundleDevelopmentRegion": "ja_JP",
@@ -66,7 +66,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "e3c3717d-cef6-4ef9-9725-53f3cf30d03b"
+        "projectId": "17f9fbe4-117d-4572-aaf6-39347ef9f85d"
       }
     },
     "plugins": [
@@ -86,7 +86,7 @@
         }
       ]
     ],
-    "owner": "iriemomoka"
+    "owner": "tc_ooishi"
   },
   "react-native-google-mobile-ads": {
     "android_app_id": "ca-app-pub-1369937549147272~4339063045",
