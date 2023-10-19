@@ -1,4 +1,4 @@
-import React,{ useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React,{ useState, useEffect, useLayoutEffect } from 'react';
 import {
   StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, Linking,
 } from 'react-native';
@@ -7,10 +7,10 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Moment from 'moment';
 import * as ImagePicker from 'expo-image-picker';
-import { Feather, MaterialIcons, Entypo, Ionicons } from 'react-native-vector-icons';
+import Feather from 'react-native-vector-icons/Feather';
 import { Collapse, CollapseHeader, CollapseBody } from 'accordion-collapse-react-native';
 import { CheckBox } from 'react-native-elements';
-import MaterialChip from "react-native-material-chip";
+import MaterialChip from "react-native-material-chip"
 import Autocomplete from 'react-native-autocomplete-input';
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
@@ -19,7 +19,6 @@ import * as SQLite from "expo-sqlite";
 import * as Permissions from "expo-permissions";
 import { Camera } from 'expo-camera';
 import { Audio } from 'expo-av';
-import RenderHtml from 'react-native-render-html';
 
 // DB接続
 import { db } from './Databace';
@@ -27,8 +26,7 @@ import { db } from './Databace';
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = 'https://www.total-cloud.net/';
 
-LogBox.ignoreAllLogs();
-
+LogBox.ignoreAllLogs()
 export function MyModal0(props){
   
   const { isVisible,onSwipeComplete,onPress,send_image,pickDocument } = props;
@@ -78,7 +76,6 @@ export function MyModal1(props) {
   const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_set,options } = props;
   
   const [res,setRes] = useState(props.reservation);
-
   useEffect(() => {
     setRes(props.reservation);
   }, [props.reservation])
@@ -109,56 +106,6 @@ export function MyModal1(props) {
     });
   });
   
-  const [open3, setOpen3] = useState(false);
-  const [mail_format, setMail_Format] = useState('テキスト');
-  
-  const items3 = [
-    { label: 'テキスト', value: 'テキスト' },
-    { label: 'HTML', value: 'HTML' }
-  ];
-
-  // const [open4, setOpen4] = useState(false);
-  // const [font_size, setFont_size] = useState('14');
-
-  // const items4 = [
-  //   { label: '8', value: '8' },
-  //   { label: '9', value: '9' },
-  //   { label: '10', value: '10' },
-  //   { label: '11', value: '11' },
-  //   { label: '12', value: '12' },
-  //   { label: '14', value: '14' },
-  //   { label: '16', value: '16' },
-  //   { label: '18', value: '18' },
-  //   { label: '20', value: '20' },
-  //   { label: '22', value: '22' },
-  //   { label: '24', value: '24' },
-  //   { label: '26', value: '26' },
-  //   { label: '28', value: '28' },
-  //   { label: '36', value: '36' },
-  //   { label: '48', value: '48' },
-  //   { label: '72', value: '72' },
-  // ];
-
-  // 内容詳細の編集
-  const noteEdit = (text) => {
-    if (mail_format == 'HTML') {
-      let mail_contents = text.replace(/\n/g, '<br>\n');
-
-      // URLはaタグで囲む
-      const extractedText = mail_contents.replace(
-        /((https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;/?:\@&=+$,%#]+))/g,
-        '<a href="$1">$1</a>'
-      );
-
-      const htmlTemplate = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"></head><body>${extractedText}</body></html>`;
-      
-      setNote(htmlTemplate);
-    } else {
-      setNote(text);
-    }
-    
-  }
-
   const [option, setOption] = useState(false);
   
   useEffect(() => {
@@ -168,53 +115,6 @@ export function MyModal1(props) {
     }
     
   }, [options])
-  
-  // 形式を変更した場合は件名と内容を空にする
-  const changeMailFormat = (value) => {
-    Alert.alert(
-      "送信内容の形式を変更しますがよろしいですか？",
-      "",
-      [
-        {
-          text: "はい",
-          onPress: () => {
-            if (note) {
-              Alert.alert(
-                "入力されている【件名】と【送信内容】が削除されますがよろしいですか？",
-                "",
-                [
-                  {
-                    text: "はい",
-                    onPress: () => {
-                      setMail_Format(value);
-                      setNote('');
-                      setMail_subject('');
-                    }
-                  },
-                  {
-                    text: "いいえ",
-                    onPress: () => {
-                      return;
-                    }
-                  },
-                ]
-              );
-            } else {
-              setMail_Format(value);
-              setNote('');
-              setMail_subject('');
-            }
-          }
-        },
-        {
-          text: "いいえ",
-          onPress: () => {
-            return;
-          }
-        },
-      ]
-    );
-  }
   
   useEffect(() => {
     
@@ -300,7 +200,6 @@ export function MyModal1(props) {
   }
   
   const [mail_subject, setMail_subject] = useState(subject?subject:'');
-
   useEffect(() => {
     setMail_subject(subject);
   }, [subject])
@@ -330,7 +229,7 @@ export function MyModal1(props) {
   const showTimepicker = () => {
     showMode('time');
   };
-
+  
   // オススメ物件
   const [Property, setProperty] = useState(false);
 
@@ -482,7 +381,7 @@ export function MyModal1(props) {
   
 	const pickDocument = async () => {
     var result = await DocumentPicker.getDocumentAsync({});
-
+  	  
     if (result) {
 	    
       if(result.size > 7000000) {
@@ -614,6 +513,7 @@ export function MyModal1(props) {
             {
               text: "はい",
               onPress: () => {
+                
                 props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata]],'mail');
                 props.setModal1(false);
                 setNote('');
@@ -744,6 +644,7 @@ export function MyModal1(props) {
       setDraft(val.draft_flg);
       
       if (val.time) {
+        
         setIsEnabled(true);
         setCheck(true);
         
@@ -908,7 +809,6 @@ export function MyModal1(props) {
         setMail_subject={setMail_subject}
         setNote={setNote}
         setFixed={setFixed}
-        mail_format={mail_format}
       />
       <View style={styles.sydemenu}>
         <TouchableOpacity
@@ -939,7 +839,7 @@ export function MyModal1(props) {
             <Feather name='x-circle' color='gray' size={35} />
           </TouchableOpacity>
           <View style={styles.form}>
-            <ScrollView
+            <ScrollView 
               style={{height:Platform.OS === "ios" ? 400 : 500}}
             >
             {rrr()}
@@ -979,22 +879,6 @@ export function MyModal1(props) {
                 }}
               />
             </View>
-            <Text style={styles.label}>形式</Text>
-            <View style={{ zIndex: 99 }}>
-              <DropDownPicker
-                open={open3}
-                value={mail_format}
-                items={items3}
-                setOpen={setOpen3}
-                setValue={changeMailFormat}
-                style={[styles.inputInner,{width: 200}]}
-                dropDownContainerStyle={{width: 200}}
-                placeholder={'----------------'}
-                onOpen={()=>{
-                  setOpen3(!open3);
-                }}
-              />
-            </View>
             <View style={styles.input}>
               <Text style={styles.label}>件名</Text>
               <TextInput
@@ -1020,99 +904,15 @@ export function MyModal1(props) {
             <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
             <View zIndex={99}>{mail_reservation()}</View>
             <View style={styles.input}>
-              <View style={[styles.font,{ zIndex: 98 }]}>
-                <Text style={styles.label}>内容詳細</Text>
-                {/* <View style={[{flexDirection: 'row', alignItems: 'center'}, mail_format !== 'HTML' ? { display: "none" } : ""]}>
-                  <Text>文字サイズ</Text>
-                  <View style={{justifyContent: 'center', marginLeft: 5}}>
-                    <DropDownPicker
-                      open={open4}
-                      value={font_size}
-                      items={items4}
-                      setOpen={setOpen4}
-                      setValue={setFont_size}
-                      style={[styles.inputInner,{width: 100, height: 'auto'}]}
-                      dropDownContainerStyle={{width: 100}}
-                      autoScroll={true}
-                      placeholder={'----------------'}
-                      onOpen={()=>{
-                        setOpen4(!open4);
-                      }}
-                      disableScrollViewPanResponder={true}
-                    />
-                  </View>
-                </View> */}
-              </View>
-              {/* <View style={[styles.btn, mail_format !== 'HTML' ? { display: "none" } : ""]}>
-                <TouchableOpacity style={styles.btnBox}>
-                  <Entypo name="reply" color="#191970" size={25} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <Entypo name="forward" color="#191970" size={25} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <Feather name='link-2' color='#191970' size={25} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <MaterialIcons name="format-color-fill" color='#191970' size={25} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <MaterialIcons name="format-color-text" color='#191970' size={25} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <Feather name='align-left' color='#191970' size={25} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <Feather name='align-center' color='#191970' size={25} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <Feather name='align-right' color='#191970' size={25} />
-                </TouchableOpacity>
-              </View> */}
-              {/* <View style={[styles.btn, mail_format !== 'HTML' ? { display: "none" } : ""]}>
-                <TouchableOpacity style={styles.btnBox}>
-                  <MaterialIcons name="format-bold" color='#191970' size={25} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <MaterialIcons name="format-italic" color='#191970' size={25} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <MaterialIcons name="format-underline" color='#191970' size={25} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <MaterialIcons name="format-strikethrough" color='#191970' size={26} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <MaterialIcons name="subscript" color='#191970' size={26} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <MaterialIcons name="superscript" color='#191970' size={26} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <Ionicons name="remove-outline" color='#191970' size={26} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnBox}>
-                  <Entypo name="code" color='#191970' size={25} />
-                </TouchableOpacity>
-              </View> */}
+              <Text style={styles.label}>内容詳細</Text>
               <TextInput
-                onChangeText={noteEdit}
-                value={note && mail_format == 'HTML' ? note.replace(/<\/?[^>]+(>|$)/gi, "") : note}
+                onChangeText={(text) => {setNote(text)}}
+                value={note}
                 style={styles.textarea}
                 multiline={true}
                 disableFullscreenUI={true}
                 numberOfLines={11}
               />
-            </View>
-            <View style={[mail_format !== 'HTML' ? { display: "none" } : ""]}>
-              <Text style={styles.label}>HTMLメールプレビュー</Text>
-              {note && (
-              <RenderHtml
-                source={{
-                  html: `${note}`
-                }}
-              />
-              )}
             </View>
             <View style={{flexDirection: 'row',alignSelf: 'center',marginBottom:10}}>
               <TouchableOpacity onPress={onDraft} style={styles.draft}>
@@ -1769,6 +1569,7 @@ export function MyModal3(props){
             .then((response) => response.json())
             .then((json) => {
               setSearch_results(json['article_search_list']);
+              
             })
             .catch((error) => {
               const errorMsg = "検索に失敗しました";
@@ -1803,6 +1604,7 @@ export function MyModal3(props){
   const [insertMsg,setInsertMsg] = useState(false);
   
   const proInsert = (item) => {
+    
     var msg = item.article_name+"／"+item.layout+"／"+item.category+"\n"+
               item.line_name1+"／"+item.station_name1+"駅／徒歩"+item.station_time1+"分／"+
               item.rent/10000+"万円("+item.general+"円)／"+item.exclusive+"㎡"+"\n\n"+
@@ -1855,6 +1657,7 @@ export function MyModal3(props){
           animationOut={'slideOutUp'}
         >
           <View style={[{height:600},styles.modalInner]}>
+            
             <TouchableOpacity
               style={styles.close}
               onPress={recommended}
@@ -2016,7 +1819,7 @@ export function MyModal3(props){
                             setFilteredAddress([]);
                           }}>
                           <Text style={styles.suggestText}>
-                            {item.name}
+                              {item.name}
                           </Text>
                         </TouchableOpacity>,
                       }}
@@ -2225,6 +2028,7 @@ export function MyModal3(props){
                   </View>
                 </View>
               </ScrollView>
+              
               <CheckBox
                 center
                 title='条件を保存する'
@@ -2278,7 +2082,9 @@ export function MyModal3(props){
                     style={styles.propertyInner}
                     onPress={() => proInsert(item)}
                   >
-                    <Image source={require('../../assets/btn_app.png')} />
+                    <Image
+                      source={require('../../assets/btn_app.png')}
+                    />
                   </TouchableOpacity>
                 </View>
               </TouchableOpacity>
@@ -2293,7 +2099,7 @@ export function MyModal3(props){
 
 export function MyModal4(props){
   
-  const { isVisible,onSwipeComplete,onPress,fixed,msgtext,subject,hensu,mail_format } = props;
+  const { isVisible,onSwipeComplete,onPress,fixed,msgtext,subject,hensu } = props;
   
   // カテゴリーの重複を検出したものを重複しないでリスト
   const f_c = fixed.map((c) => {
@@ -2315,21 +2121,6 @@ export function MyModal4(props){
     })
     
     return l;
-  }
-  
-  // HTML形式に変換
-  function convertToHTML(text) {
-    let mail_contents = text.replace(/\n/g, '<br>\n');
-
-    // URLはaタグで囲む
-    const extractedText = mail_contents.replace(
-      /((https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;/?:\@&=+$,%#]+))/g,
-      '<a href="$1">$1</a>'
-    );
-
-    const htmlTemplate = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"></head><body>${extractedText}</body></html>`;
-    
-    return htmlTemplate;
   }
   
   // 書き換え
@@ -2446,10 +2237,6 @@ export function MyModal4(props){
     note = note.join('');
     note = note.split("%LINE友達追加%");
     note = note.join('');
-
-    if (mail_format == 'HTML') {
-      note = convertToHTML(note);
-    }
     
     if(msgtext || subject || props.setNote || props.setMail_subject) {
       Alert.alert(
@@ -2623,10 +2410,11 @@ export function MyModal5(props){
                 .then((json) => {
                   if(!json) {
                     setText('こちらの反響は、問い合わせ物件の情報がTCにないため自動追客できません\n手動対応お願い致します');
-                    setPattern(2);
+                    setPattern(2)
+                    
                   } else {
                     setText('自動追客の入力を行ってください');
-                    setPattern(1);
+                    setPattern(1)
                   }
                 })
                 .catch((error) => {
@@ -3837,13 +3625,13 @@ export function MyModal5_condition(props){
     .then((response) => response.json())
     .then((json) => {
       if (json) {
-        console.log('希望条件登録OK');
+        console.log('希望条件登録OK')
       }
     })
     .catch((error) => {
-      console.log(error);
+      console.log(error)
       Alert.alert('失敗');
-      console.log(error);
+      console.log(error)
     })
     
     setClose(false);
@@ -4281,11 +4069,14 @@ export function MyModal6(props){
       // 重複パターン振り分け
       setNum(overlap.overlap);
       if (overlap.overlap == '1') {    // 重複【既存あり(1件のみ)】
-        setText(`${s[0][1].name_1+'　'+s[0][1].name_2}`+'さんが担当している\nお客様：'+`${overlap.list[0].name}`+'さんと連絡先が同一です。\nこのお客様にまとめますか？');
+      
+        setText(`${s[0][1].name_1+'　'+s[0][1].name_2}`+'さんが担当している\nお客様：'+`${overlap.list[0].name}`+'さんと連絡先が同一です。\nこのお客様にまとめますか？')
+        
       } else if (overlap.overlap == '2') {    // 重複【既存あり(1件以上)】
-        setText('下記お客様たちと同一の連絡先をもっています。\nどれかのお客様にまとめますか？');
+        setText('下記お客様たちと同一の連絡先をもっています。\nどれかのお客様にまとめますか？')
       } else if (overlap.overlap == '3') {    // 重複【新規に既存有り】
-        setText('下記反響は同じ連絡先を持っています。\n一人のお客様としてまとめますか？');
+      
+        setText('下記反響は同じ連絡先を持っています。\n一人のお客様としてまとめますか？')
         
         let id_list = '';
         let id_list_min = '';
@@ -4616,29 +4407,6 @@ const styles = StyleSheet.create({
     borderWidth:1,
     borderColor:'#1f2d53',
     marginRight:10,
-  },
-  font:{
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  btn:{
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: "space-between",
-    marginBottom: 5,
-  },
-  btnBox: {
-    width:35,
-    height:35,
-    backgroundColor:'#fafafa',
-    borderWidth:1,
-    borderColor:'#191970',
-    borderRadius:10,
-    marginHorizontal:3,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   draft:{
     justifyContent: 'center',
