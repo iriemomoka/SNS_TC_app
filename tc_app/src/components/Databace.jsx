@@ -25,7 +25,6 @@ exports.CreateDB = function(props){
         }
 
         if (!pk) {
-          console.log("定型文テーブルでプライマリキー設定されてません")
           // 一旦削除
           tx.executeSql(
             `drop table fixed_mst;`,
@@ -50,8 +49,7 @@ exports.CreateDB = function(props){
                 );`,
                 [],
               );
-            },
-            () => {console.log("失敗");}
+            }
           );
         }
 
