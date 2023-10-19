@@ -9,6 +9,58 @@ exports.CreateDB = function(props){
     
   module.exports.db.transaction((tx) => {
     
+    // 定型文テーブルがプライマリキー設定されているか確認する
+    tx.executeSql(
+      `PRAGMA table_info('fixed_mst');`,
+      [],
+      (_, { rows }) => {
+        
+        var fixed_mst = rows._array;
+        var pk = false;
+        
+        for (var f=0;f<fixed_mst.length;f++) {
+          if (fixed_mst[f]["name"] == "fixed_id") {
+            if(fixed_mst[f]["pk"] == "1") pk = true;
+          }
+        }
+
+        if (!pk) {
+          console.log("定型文テーブルでプライマリキー設定されてません")
+          // 一旦削除
+          tx.executeSql(
+            `drop table fixed_mst;`,
+            [],
+            () => {
+              // 定型文テーブル追加
+              tx.executeSql(
+                `CREATE TABLE "fixed_mst" (
+                	"fixed_id"	TEXT UNIQUE,
+                	"category"	TEXT,
+                	"title"	TEXT,
+                	"mail_title"	TEXT,
+                	"note"	TEXT,
+                	PRIMARY KEY("fixed_id")
+                );`,
+                [],
+              );
+              // 定型文インデックス作成
+              tx.executeSql(
+                `CREATE INDEX "index_fixed_mst" ON "fixed_mst" (
+                	"category"
+                );`,
+                [],
+              );
+            },
+            () => {console.log("失敗");}
+          );
+        }
+
+      },
+      () => {
+        console.log("定型文テーブル　再作成失敗");
+      }
+    );
+
     // スタッフプロフィール　カラム追加
     // staff_photo4（バストアップ写真）
     tx.executeSql(
@@ -260,11 +312,12 @@ exports.CreateDB = function(props){
               // 定型文テーブル追加
               tx.executeSql(
                 `CREATE TABLE "fixed_mst" (
-                	"fixed_id"	TEXT,
+                	"fixed_id"	TEXT UNIQUE,
                 	"category"	TEXT,
                 	"title"	TEXT,
                 	"mail_title"	TEXT,
-                	"note"	TEXT
+                	"note"	TEXT,
+                	PRIMARY KEY("fixed_id")
                 );`,
                 [],
                 () => {console.log("定型文テーブル追加");},
