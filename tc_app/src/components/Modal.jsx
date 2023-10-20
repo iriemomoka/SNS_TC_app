@@ -211,7 +211,7 @@ export function MyModal1(props) {
         var brower_mail = mail_set.brower_mail.split(',');
         
         brower_mail = brower_mail.map((b) => {
-          return b.replace('_s@','@')
+          return b.replace('_s@','@');
         });
         
         setShop_Value(brower_mail[brower_mail.length-1]);
@@ -336,13 +336,13 @@ export function MyModal1(props) {
           {
             text: "キャンセル",
             style: "cancel",
-            onPress:() => {resolve(false)}
+            onPress:() => {resolve(false);}
           },
           {
             text: "設定する",
             onPress: () => {
               Linking.openSettings();
-              resolve(false)
+              resolve(false);
             }
           }
         ]
@@ -375,13 +375,13 @@ export function MyModal1(props) {
           {
             text: "キャンセル",
             style: "cancel",
-            onPress:() => {resolve(false)}
+            onPress:() => {resolve(false);}
           },
           {
             text: "設定する",
             onPress: () => {
               Linking.openSettings();
-              resolve(false)
+              resolve(false);
             }
           }
         ]
@@ -404,10 +404,10 @@ export function MyModal1(props) {
 
   // オンライン通話
 	const openOnline_call = async (id) => {
-	  
+    
     if (!await CameraPermissionsCheck()) return;
     if (!await AudioPermissionsCheck()) return;
-	  
+
     Alert.alert(
       "通話画面を開きますか？",
       "",
@@ -464,7 +464,7 @@ export function MyModal1(props) {
     var result = await DocumentPicker.getDocumentAsync({});
 
     if (result) {
-	    
+
       if(result.size > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
       }else{
@@ -485,13 +485,13 @@ export function MyModal1(props) {
           {
             text: "キャンセル",
             style: "cancel",
-            onPress:() => {resolve(false)}
+            onPress:() => {resolve(false);}
           },
           {
             text: "設定する",
             onPress: () => {
               Linking.openSettings();
-              resolve(false)
+              resolve(false);
             }
           }
         ]
@@ -513,7 +513,7 @@ export function MyModal1(props) {
 
   // 画像選択
 	const pickImage = async () => {
-	  
+    
     if (!await LibraryPermissionsCheck()) return;
     
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -521,7 +521,7 @@ export function MyModal1(props) {
       allowsEditing: true,
       quality: 1,
     });
-	  
+
     if (result) {
       if(result.size > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
@@ -765,31 +765,31 @@ export function MyModal1(props) {
       
       return(
         <>
-        <Text style={styles.label}>予約・下書き</Text>
-        <View style={{ zIndex: 102 }}>
-          <DropDownPicker
-            open={op}
-            value={val}
-            items={it}
-            setOpen={setOp}
-            setValue={setVal}
-            style={styles.inputInner}
-            placeholder = {'----------------'}
-            onClose={() => {setA('a')}}
-            translation={{
-              NOTHING_TO_SHOW: "予約・下書きはありません"
-            }}
-            onOpen={() => {
-              setOpen(false);
-              setOpen2(false);
-            }}
-          />
-        </View>
-        
-        <TouchableOpacity onPress={onDelete}
-          style={[val? '':{display: 'none'},styles.delete]}>
-          <Text>削　除</Text>
-        </TouchableOpacity>
+          <Text style={styles.label}>予約・下書き</Text>
+          <View style={{ zIndex: 102 }}>
+            <DropDownPicker
+              open={op}
+              value={val}
+              items={it}
+              setOpen={setOp}
+              setValue={setVal}
+              style={styles.inputInner}
+              placeholder = {'----------------'}
+              onClose={() => {setA('a')}}
+              translation={{
+                NOTHING_TO_SHOW: "予約・下書きはありません"
+              }}
+              onOpen={() => {
+                setOpen(false);
+                setOpen2(false);
+              }}
+            />
+          </View>
+          
+          <TouchableOpacity onPress={onDelete}
+            style={[val? '':{display: 'none'},styles.delete]}>
+            <Text>削　除</Text>
+          </TouchableOpacity>
         </>
       )
     }
@@ -911,7 +911,7 @@ export function MyModal1(props) {
           <Feather name='video' color='#1f2d53' size={28} />
         </TouchableOpacity>
       </View>
-      <KeyboardAvoidingView  behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={[{height:Platform.OS === "ios" ? 600 : 700},styles.modalInner]}>
           <TouchableOpacity
             style={styles.close}
@@ -920,106 +920,116 @@ export function MyModal1(props) {
             <Feather name='x-circle' color='gray' size={35} />
           </TouchableOpacity>
           <View style={styles.form}>
-            <ScrollView
+            {/* <ScrollView
               style={{height:Platform.OS === "ios" ? 400 : 500}}
-            >
-            {rrr()}
-            <Text style={styles.label}>宛先</Text>
-            <View style={{ zIndex: 101 }}>
-              <DropDownPicker
-                open={open}
-                value={cus_value}
-                items={items1}
-                setOpen={setOpen}
-                setValue={setCus_Value}
-                style={styles.inputInner}
-                placeholder={'----------------'}
-                translation={{
-                  NOTHING_TO_SHOW: "メールアドレスが登録されていません"
-                }}
-                onClose={() => {setAuto_gmail(1)}}
-                onOpen={() => {
-                  setOpen2(false);
-                  setOp(false);
-                }}
-              />
-            </View>
-            <Text style={styles.label}>送信元</Text>
-            <View style={{ zIndex: 100 }}>
-              <DropDownPicker
-                open={open2}
-                value={shop_value}
-                items={items2}
-                setOpen={setOpen2}
-                setValue={setShop_Value}
-                style={styles.inputInner}
-                placeholder={'----------------'}
-                onOpen={() => {
-                  setOpen(false);
-                  setOp(false);
-                }}
-              />
-            </View>
-            <Text style={styles.label}>形式</Text>
-            <View style={{ zIndex: 99 }}>
-              <DropDownPicker
-                open={open3}
-                value={mail_format}
-                items={items3}
-                setOpen={setOpen3}
-                setValue={changeMailFormat}
-                style={[styles.inputInner,{width: 200}]}
-                dropDownContainerStyle={{width: 200}}
-                placeholder={'----------------'}
-                onOpen={() => {
-                  setOpen3(!open3);
-                }}
-              />
-            </View>
-            <View style={styles.input}>
-              <Text style={styles.label}>件名</Text>
-              <TextInput
-                onChangeText={(text) => setMail_subject(text)}
-                value={mail_subject}
-                style={styles.inputInner}
-              />
-            </View>
-            <View style={[styles.input,{flexDirection: 'row',alignItems: 'center'}]}>
-              <TouchableOpacity onPress={pickDocument} style={styles.file}>
-                <Text>ファイル添付</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={pickImage} style={styles.file}>
-                <Text>画像添付</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={filename?{flexDirection: 'row',marginVertical:5}:{display:'none'}}>
-              <TouchableOpacity onPress={img_Delete} style={filename?{marginHorizontal:5}:{display:'none'}}>
-                <Feather name='x-circle' color='gray' size={25} />
-              </TouchableOpacity>
-              <Text>{filename}</Text>
-            </View>
-            <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
-            <View zIndex={99}>{mail_reservation()}</View>
-            <View style={styles.input}>
-              <Text style={styles.label}>内容詳細</Text>
-              {mail_format !== 'HTML' ? (
-                <TextInput
-                  onChangeText={(text) => {setNote(text)}}
-                  value={note}
-                  style={styles.textarea}
-                  multiline={true}
-                  disableFullscreenUI={true}
-                  numberOfLines={11}
-                />
-              ) : (
-                <RichEditor
-                  ref={editorRef}
-                  style={styles.editor}
-                  onChange={(text) => noteEdit(text)}
-                />
+            > */}
+            <FlatList
+              style={{height:Platform.OS === "ios" ? 400 : 500}}
+              data={[
+                (<>
+                {rrr()}
+                <Text style={styles.label}>宛先</Text>
+                <View style={{ zIndex: 101 }}>
+                  <DropDownPicker
+                    open={open}
+                    value={cus_value}
+                    items={items1}
+                    setOpen={setOpen}
+                    setValue={setCus_Value}
+                    style={styles.inputInner}
+                    placeholder={'----------------'}
+                    translation={{
+                      NOTHING_TO_SHOW: "メールアドレスが登録されていません"
+                    }}
+                    onClose={() => {setAuto_gmail(1)}}
+                    onOpen={() => {
+                      setOpen2(false);
+                      setOp(false);
+                    }}
+                  />
+                </View>
+                <Text style={styles.label}>送信元</Text>
+                <View style={{ zIndex: 100 }}>
+                  <DropDownPicker
+                    open={open2}
+                    value={shop_value}
+                    items={items2}
+                    setOpen={setOpen2}
+                    setValue={setShop_Value}
+                    style={styles.inputInner}
+                    placeholder={'----------------'}
+                    onOpen={() => {
+                      setOpen(false);
+                      setOp(false);
+                    }}
+                  />
+                </View>
+                <Text style={styles.label}>形式</Text>
+                <View style={{ zIndex: 99 }}>
+                  <DropDownPicker
+                    open={open3}
+                    value={mail_format}
+                    items={items3}
+                    setOpen={setOpen3}
+                    setValue={changeMailFormat}
+                    style={[styles.inputInner,{width: 200}]}
+                    dropDownContainerStyle={{width: 200}}
+                    placeholder={'----------------'}
+                    onOpen={() => {
+                      setOpen3(!open3);
+                    }}
+                  />
+                </View>
+                <View style={styles.input}>
+                  <Text style={styles.label}>件名</Text>
+                  <TextInput
+                    onChangeText={(text) => setMail_subject(text)}
+                    value={mail_subject}
+                    style={styles.inputInner}
+                  />
+                </View>
+                <View style={[styles.input,{flexDirection: 'row',alignItems: 'center'}]}>
+                  <TouchableOpacity onPress={pickDocument} style={styles.file}>
+                    <Text>ファイル添付</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={pickImage} style={styles.file}>
+                    <Text>画像添付</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={filename?{flexDirection: 'row',marginVertical:5}:{display:'none'}}>
+                  <TouchableOpacity onPress={img_Delete} style={filename?{marginHorizontal:5}:{display:'none'}}>
+                    <Feather name='x-circle' color='gray' size={25} />
+                  </TouchableOpacity>
+                  <Text>{filename}</Text>
+                </View>
+                <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
+                <View zIndex={99}>{mail_reservation()}</View>
+                <View style={styles.input}>
+                  <Text style={styles.label}>内容詳細</Text>
+                  {mail_format !== 'HTML' ? (
+                    <TextInput
+                      onChangeText={(text) => {setNote(text)}}
+                      value={note}
+                      style={styles.textarea}
+                      multiline={true}
+                      disableFullscreenUI={true}
+                      numberOfLines={11}
+                    />
+                  ) : (
+                    <RichEditor
+                      ref={editorRef}
+                      style={styles.editor}
+                      onChange={(text) => noteEdit(text)}
+                    />
+                  )}
+                </View>
+                </>)
+              ]}
+              renderItem={({ item }) => (
+                <>{item}</>
               )}
-            </View>
-            </ScrollView>
+            />
+            {/* </ScrollView> */}
             {mail_format == 'HTML' ? (
               <>
                 <RichToolbar
@@ -1030,16 +1040,23 @@ export function MyModal1(props) {
                     actions.setBold,
                     actions.setItalic,
                     actions.setUnderline,
+                    actions.blockquote,
                     actions.insertBulletsList,
                     actions.insertOrderedList,
                     actions.insertLink,
                     actions.fontSize,
+                    actions.insertLine,
                     actions.setStrikethrough,
+                    actions.indent,
+                    actions.outdent,
                     actions.alignLeft,
                     actions.alignCenter,
                     actions.alignRight,
                     actions.alignFull,
+                    actions.setSubscript,
+                    actions.setSuperscript,
                     actions.removeFormat,
+                    actions.table,
                     actions.code,
                     actions.insertImage,
                     actions.insertVideo,
@@ -1708,7 +1725,7 @@ export function MyModal3(props){
             })
             .catch((error) => {
               const errorMsg = "検索に失敗しました";
-              console.log(error)
+              console.log(error);
               Alert.alert(errorMsg);
             })
       }
@@ -2233,7 +2250,7 @@ export function MyModal4(props){
   
   // カテゴリーの重複を検出したものを重複しないでリスト
   const f_c = fixed.map((c) => {
-    return c.category
+    return c.category;
   })
   const [fixed_category, setFixed_Category] = useState(Array.from(new Set(f_c)));
   
@@ -2319,9 +2336,9 @@ export function MyModal4(props){
 
     let date = '';
     if (hensu[10]) {
-      let month = new Date(hensu[10].substr(0,10)).getMonth()+1
-      let day   = new Date(hensu[10].substr(0,10)).getDate()
-      date  = month+'月'+day+'日'
+      let month = new Date(hensu[10].substr(0,10)).getMonth()+1;
+      let day   = new Date(hensu[10].substr(0,10)).getDate();
+      date  = month+'月'+day+'日';
     }
     title = title.join(date);
     
@@ -2412,7 +2429,9 @@ export function MyModal4(props){
               } else if (props.setNote && props.setMail_subject) {
                 props.setNote(note);
                 props.setMail_subject(title);
-                editorRef.current.setContentHTML(note);
+                if (mail_format == 'HTML') {
+                  editorRef.current.setContentHTML(note);
+                }
               }
               
               if (props.setFixed) {
@@ -2866,7 +2885,7 @@ export function MyModal5(props){
       
       if (err) {
         Alert.alert('下記エラーが出ています',err);
-        return
+        return;
       } else {
         
         if (contact_tel && contact_tel != '電話で会話した') {
@@ -4282,7 +4301,7 @@ export function MyModal6(props){
   function setView(num,overlap){
     
     if (!overlap.list) {
-      return
+      return;
     }
     
     if (num == '1') {
@@ -4476,7 +4495,7 @@ export function MyModal6(props){
         station_list={station_list}
         address={address}
       />
-      <View  style={[{height:430},styles.template]}>
+      <View style={[{height:430},styles.template]}>
         <TouchableOpacity
           style={styles.close}
           onPress={() => {
@@ -4779,6 +4798,6 @@ const styles = StyleSheet.create({
   },
   editor: {
     borderColor: '#1f2d53',
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
 })
