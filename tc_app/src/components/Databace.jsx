@@ -14,8 +14,11 @@ exports.CreateDB = function(props){
       `PRAGMA table_info('fixed_mst');`,
       [],
       (_, { rows }) => {
-        
+
         var fixed_mst = rows._array;
+
+        if (fixed_mst.length == 0) return;
+
         var pk = false;
         
         for (var f=0;f<fixed_mst.length;f++) {
