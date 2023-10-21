@@ -912,7 +912,7 @@ export function MyModal1(props) {
         </TouchableOpacity>
       </View>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <View style={[{height:Platform.OS === "ios" ? 600 : 700},styles.modalInner]}>
+        <View style={[{height:Platform.OS === "ios" ? 570 : 670},styles.modalInner]}>
           <TouchableOpacity
             style={styles.close}
             onPress={onClose}
@@ -1034,6 +1034,8 @@ export function MyModal1(props) {
               <>
                 <RichToolbar
                   editor={editorRef}
+                  iconTint={"black"}
+                  selectedIconTint={"white"}
                   actions={[
                     actions.undo,
                     actions.redo,
@@ -4742,7 +4744,7 @@ const styles = StyleSheet.create({
   },
   sydemenu: {
     position:'absolute',
-    top:30,
+    top:0,
     zIndex:1000,
     width:'100%',
     flexDirection: 'row',

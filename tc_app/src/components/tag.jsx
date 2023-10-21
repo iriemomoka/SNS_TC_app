@@ -5,11 +5,10 @@ import {
   View
 } from 'react-native';
 import {Icon} from 'react-native-elements';
- 
 import TagInput from 'react-native-tags-input';
- 
+
 const mainColor = '#3ca897';
- 
+
 export default class App extends React.Component {
   constructor(props) {
     super(props);
@@ -24,18 +23,18 @@ export default class App extends React.Component {
   }
   
   updateTagState = (state) => {
-      this.setState({
-        tags: state
-      })
-    };
- 
+    this.setState({
+      tags: state
+    })
+  };
+
   render() {
     return (
       <View style={styles.container}>
         <TagInput
           updateState={this.updateTagState}
           tags={this.state.tags}
-          placeholder="Tags..."                            
+          placeholder="Tags..."
           label='Press comma & space to add a tag'
           labelStyle={{color: '#fff'}}
           leftElement={<Icon name={'tag-multiple'} type={'material-community'} color={this.state.tagsText}/>}
@@ -48,12 +47,13 @@ export default class App extends React.Component {
           autoCorrect={false}
           tagStyle={styles.tag}
           tagTextStyle={styles.tagText}
-          keysForTag={', '}/>
+          keysForTag={', '}
+        />
       </View>
     );
   }
 }
- 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -62,17 +62,17 @@ const styles = StyleSheet.create({
     backgroundColor: mainColor,
   },
   textInput: {
-      height: 40,
-      borderColor: 'white',
-      borderWidth: 1,
-      marginTop: 8,
-      borderRadius: 5,
-      padding: 3,
-    },
-    tag: {
-        backgroundColor: '#fff'
-      },
-    tagText: {
-        color: mainColor
-      },
+    height: 40,
+    borderColor: 'white',
+    borderWidth: 1,
+    marginTop: 8,
+    borderRadius: 5,
+    padding: 3,
+  },
+  tag: {
+    backgroundColor: '#fff',
+  },
+  tagText: {
+    color: mainColor,
+  },
 });

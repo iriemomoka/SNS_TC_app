@@ -8,8 +8,8 @@ export default function Video(props) {
   Linking.openURL(url);
   return (
     <WebView
-     source={{ uri: url }}
-     onShouldStartLoadWithRequest={(event)=>{
+      source={{ uri: url }}
+      onShouldStartLoadWithRequest={(event)=>{
         console.log(event.url)
         if (event.url.indexOf('https://w3o1gvqpqg.execute-api.ap-northeast-1.amazonaws.com/Prod/') != -1){
           Linking.openURL(event.url);
@@ -19,6 +19,6 @@ export default function Video(props) {
           return true;
         }
       }}
-   />
+    />
   );
 }
