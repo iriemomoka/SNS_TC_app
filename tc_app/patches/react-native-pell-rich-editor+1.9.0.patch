@@ -1,0 +1,22 @@
+diff --git a/node_modules/react-native-pell-rich-editor/src/RichEditor.js b/node_modules/react-native-pell-rich-editor/src/RichEditor.js
+index 14bea22..0e3fbbd 100644
+--- a/node_modules/react-native-pell-rich-editor/src/RichEditor.js
++++ b/node_modules/react-native-pell-rich-editor/src/RichEditor.js
+@@ -211,7 +211,8 @@ export default class RichTextEditor extends Component {
+   setWebHeight(height) {
+     const {onHeightChange, useContainer, initialHeight} = this.props;
+     if (height !== this.state.height) {
+-      const maxHeight = Math.max(height, initialHeight);
++      // const maxHeight = Math.max(height, initialHeight);
++      const maxHeight = initialHeight;
+       if (!this.unmount && useContainer && maxHeight >= initialHeight) {
+         this.setState({height: maxHeight});
+       }
+@@ -281,6 +282,7 @@ export default class RichTextEditor extends Component {
+             }
+             return true;
+           }}
++          injectedJavaScript={`document.body.style.overflow = 'auto'; document.body.style.webkitOverflowScrolling = 'touch';`}
+         />
+         {Platform.OS === 'android' && <TextInput ref={ref => (that._input = ref)} style={styles._input} />}
+       </>
