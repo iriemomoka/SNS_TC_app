@@ -924,7 +924,7 @@ export function MyModal1(props) {
               style={{height:Platform.OS === "ios" ? 400 : 500}}
             > */}
             <FlatList
-              style={{height:Platform.OS === "ios" ? 400 : 500}}
+              style={{height: mail_format == 'HTML' ? 200 : Platform.OS === "ios" ? 400 : 500}}
               data={[
                 (<>
                 {rrr()}
@@ -1005,22 +1005,20 @@ export function MyModal1(props) {
                 <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
                 <View zIndex={99}>{mail_reservation()}</View>
                 <View style={styles.input}>
-                  <Text style={styles.label}>内容詳細</Text>
                   {mail_format !== 'HTML' ? (
-                    <TextInput
-                      onChangeText={(text) => {setNote(text)}}
-                      value={note}
-                      style={styles.textarea}
-                      multiline={true}
-                      disableFullscreenUI={true}
-                      numberOfLines={11}
-                    />
+                    <>
+                      <Text style={styles.label}>内容詳細</Text>
+                      <TextInput
+                        onChangeText={(text) => {setNote(text)}}
+                        value={note}
+                        style={styles.textarea}
+                        multiline={true}
+                        disableFullscreenUI={true}
+                        numberOfLines={11}
+                      />
+                    </>
                   ) : (
-                    <RichEditor
-                      ref={editorRef}
-                      style={styles.editor}
-                      onChange={(text) => noteEdit(text)}
-                    />
+                    <></>
                   )}
                 </View>
                 </>)
@@ -1032,6 +1030,13 @@ export function MyModal1(props) {
             {/* </ScrollView> */}
             {mail_format == 'HTML' ? (
               <>
+                <Text style={styles.label}>内容詳細</Text>
+                <RichEditor
+                  ref={editorRef}
+                  style={styles.editor}
+                  onChange={(text) => noteEdit(text)}
+                  initialHeight={250}
+                />
                 <RichToolbar
                   editor={editorRef}
                   iconTint={"black"}
@@ -1070,7 +1075,7 @@ export function MyModal1(props) {
             ) : (
               <></>
             )}
-            <View style={{flexDirection: 'row',alignSelf: 'center',marginBottom:10}}>
+            <View style={{flexDirection: 'row',alignSelf: 'center'}}>
               <TouchableOpacity onPress={onDraft} style={styles.draft}>
                 <Text>下書き保存</Text>
               </TouchableOpacity>
@@ -4613,7 +4618,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginTop:20,
+    marginTop:15,
     borderRadius: 8,
     width:100,
     height:40,
@@ -4625,7 +4630,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginTop:20,
+    marginTop:15,
     borderRadius: 8,
     width:100,
     height:40,
