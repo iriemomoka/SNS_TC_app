@@ -818,6 +818,7 @@ export function MyModal1(props) {
               is24Hour={true}
               display="default"
               locale={'ja'}
+              onChange={onChange}
             />
           </View>
         </View>
@@ -1172,6 +1173,7 @@ export function MyModal2(props){
               is24Hour={true}
               display="default"
               locale={'ja'}
+              onChange={onChange}
             />
           </View>
         </View>
