@@ -1,6 +1,6 @@
 import React,{ useState, useEffect, useLayoutEffect, useRef } from 'react';
 import {
-  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, Linking, SafeAreaView,
+  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, TouchableWithoutFeedback, Linking, SafeAreaView,
 } from 'react-native';
 import Modal from "react-native-modal";
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -325,6 +325,13 @@ export function MyModal1(props) {
     setFixed(!Fixed);
   };
   const [c_permission, c_requestPermission] = Camera.useCameraPermissions();
+
+  // HTMLエディタのキーボードを閉じる
+  const keyboardClose = () => {
+    if (mail_format == 'HTML') {
+      editorRef.current.dismissKeyboard();
+    }
+  };
 
   const CameraPermissionsCheck = async() => {
 
@@ -892,7 +899,7 @@ export function MyModal1(props) {
         mail_format={mail_format}
         editorRef={editorRef}
       />
-      <View style={styles.sydemenu}>
+      <View style={[styles.sydemenu,{top: Platform.OS === "ios" ? 20 : 0}]}>
         <TouchableOpacity
           style={styles.menucircle}
           onPress={openProperty}
@@ -912,8 +919,9 @@ export function MyModal1(props) {
           <Feather name='video' color='#1f2d53' size={28} />
         </TouchableOpacity>
       </View>
+      <TouchableWithoutFeedback onPress={keyboardClose}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <View style={[{height:Platform.OS === "ios" ? 570 : 670},styles.modalInner]}>
+        <View style={[{height:650},styles.modalInner]}>
           <TouchableOpacity
             style={styles.close}
             onPress={onClose}
@@ -921,11 +929,8 @@ export function MyModal1(props) {
             <Feather name='x-circle' color='gray' size={35} />
           </TouchableOpacity>
           <View style={styles.form}>
-            {/* <ScrollView
-              style={{height:Platform.OS === "ios" ? 400 : 500}}
-            > */}
             <FlatList
-              style={{height: mail_format == 'HTML' ? 200 : Platform.OS === "ios" ? 400 : 500}}
+              style={{height: mail_format == 'HTML' ? 200 : 500}}
               data={[
                 (<>
                 {rrr()}
@@ -1028,16 +1033,9 @@ export function MyModal1(props) {
                 <>{item}</>
               )}
             />
-            {/* </ScrollView> */}
             {mail_format == 'HTML' ? (
               <>
                 <Text style={styles.label}>内容詳細</Text>
-                <RichEditor
-                  ref={editorRef}
-                  style={styles.editor}
-                  onChange={(text) => noteEdit(text)}
-                  initialHeight={250}
-                />
                 <RichToolbar
                   editor={editorRef}
                   iconTint={"black"}
@@ -1048,6 +1046,7 @@ export function MyModal1(props) {
                     actions.setBold,
                     actions.setItalic,
                     actions.setUnderline,
+                    actions.keyboard,
                     actions.blockquote,
                     actions.insertBulletsList,
                     actions.insertOrderedList,
@@ -1068,9 +1067,14 @@ export function MyModal1(props) {
                     actions.code,
                     actions.insertImage,
                     actions.insertVideo,
-                    actions.keyboard,
                     actions.checkboxList,
                   ]}
+                />
+                <RichEditor
+                  ref={editorRef}
+                  style={styles.editor}
+                  onChange={(text) => noteEdit(text)}
+                  initialHeight={230}
                 />
               </>
             ) : (
@@ -1087,6 +1091,7 @@ export function MyModal1(props) {
           </View>
         </View>
       </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
@@ -4751,7 +4756,6 @@ const styles = StyleSheet.create({
   },
   sydemenu: {
     position:'absolute',
-    top:0,
     zIndex:1000,
     width:'100%',
     flexDirection: 'row',
