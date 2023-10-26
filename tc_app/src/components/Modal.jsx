@@ -333,6 +333,14 @@ export function MyModal1(props) {
     }
   };
 
+  // RichToolbarのカスタムアイコン
+  const H1 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H1</Text>
+  const H2 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H2</Text>
+  const H3 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H3</Text>
+  const H4 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H4</Text>
+  const H5 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H5</Text>
+  const H6 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H6</Text>
+
   const CameraPermissionsCheck = async() => {
 
     const AsyncAlert = async () => new Promise((resolve) => {
@@ -1050,10 +1058,16 @@ export function MyModal1(props) {
                     actions.blockquote,
                     actions.insertBulletsList,
                     actions.insertOrderedList,
-                    actions.insertLink,
-                    actions.fontSize,
+                    // actions.fontSize,
+                    actions.heading1,
+                    actions.heading2,
+                    actions.heading3,
+                    actions.heading4,
+                    actions.heading5,
+                    actions.heading6,
                     actions.insertLine,
                     actions.setStrikethrough,
+                    actions.insertLink,
                     actions.indent,
                     actions.outdent,
                     actions.alignLeft,
@@ -1062,13 +1076,21 @@ export function MyModal1(props) {
                     actions.alignFull,
                     actions.setSubscript,
                     actions.setSuperscript,
-                    actions.removeFormat,
-                    actions.table,
+                    // actions.removeFormat,
+                    // actions.table,
                     actions.code,
-                    actions.insertImage,
-                    actions.insertVideo,
+                    // actions.insertImage,
+                    // actions.insertVideo,
                     actions.checkboxList,
                   ]}
+                  iconMap={{
+                    [actions.heading1]: H1,
+                    [actions.heading2]: H2,
+                    [actions.heading3]: H3,
+                    [actions.heading4]: H4,
+                    [actions.heading5]: H5,
+                    [actions.heading6]: H6,
+                  }}
                 />
                 <RichEditor
                   ref={editorRef}
@@ -4811,6 +4833,6 @@ const styles = StyleSheet.create({
   },
   editor: {
     borderColor: '#1f2d53',
-    borderWidth: 1.5,
+    borderWidth: 1,
   },
 })
