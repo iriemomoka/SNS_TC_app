@@ -211,7 +211,7 @@ export default function TalkScreen(props) {
         setProperty(json['article_list']);
         setConditions_date(json['conditions_date']);
         setInquiry(json['inquiry']);
-        setOptions(json['staff'].option_list);
+        setOptions(json['staff'].option_list.split(","));
         setOverlap(json['overlap']);
         setLoading(false);
         
@@ -311,7 +311,7 @@ export default function TalkScreen(props) {
         setProperty(json['article_list']);
         setConditions_date(json['conditions_date']);
         setInquiry(json['inquiry']);
-        setOptions(json['staff'].option_list);
+        setOptions(json['staff'].option_list.split(","));
       })
       .catch((error) => {
         const errorMsg = "更新に失敗しました";

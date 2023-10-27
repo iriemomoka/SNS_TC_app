@@ -1827,6 +1827,7 @@ export function MyModal3(props){
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       propagateSwipe={true}
+      onBackdropPress={onClose}
     >
       <View  style={[{height:400},styles.template]}>
         <TouchableOpacity
@@ -2514,6 +2515,7 @@ export function MyModal4(props){
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       propagateSwipe={true}
+      onBackdropPress={onPress}
     >
       <View  style={[{height:300},styles.template]}>
         <TouchableOpacity
