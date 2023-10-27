@@ -1377,6 +1377,7 @@ export default function TalkScreen(props) {
                 mail_select:staff.mail_select,
               }:''}
               options={video_option}
+              options2={options}
             />
             <MyModal2
               isVisible={modal2}

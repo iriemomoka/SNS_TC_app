@@ -77,7 +77,7 @@ export function MyModal0(props){
 
 export function MyModal1(props) {
   
-  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_set,options } = props;
+  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_set,options,options2 } = props;
   
   const [res,setRes] = useState(props.reservation);
   const editorRef = useRef();
@@ -882,6 +882,7 @@ export function MyModal1(props) {
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       onModalHide={() => {setCon_flg(false)}}
+      onBackdropPress={onClose}
     >
       <MyModal3 
         isVisible={Property}
@@ -927,7 +928,6 @@ export function MyModal1(props) {
           <Feather name='video' color='#1f2d53' size={28} />
         </TouchableOpacity>
       </View>
-      <TouchableWithoutFeedback onPress={keyboardClose}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={[{height:650},styles.modalInner]}>
           <TouchableOpacity
@@ -937,110 +937,118 @@ export function MyModal1(props) {
             <Feather name='x-circle' color='gray' size={35} />
           </TouchableOpacity>
           <View style={styles.form}>
-            <FlatList
-              style={{height: mail_format == 'HTML' ? 200 : 500}}
-              data={[
-                (<>
-                {rrr()}
-                <Text style={styles.label}>宛先</Text>
-                <View style={{ zIndex: 101 }}>
-                  <DropDownPicker
-                    open={open}
-                    value={cus_value}
-                    items={items1}
-                    setOpen={setOpen}
-                    setValue={setCus_Value}
-                    style={styles.inputInner}
-                    placeholder={'----------------'}
-                    translation={{
-                      NOTHING_TO_SHOW: "メールアドレスが登録されていません"
-                    }}
-                    onClose={() => {setAuto_gmail(1)}}
-                    onOpen={() => {
-                      setOpen2(false);
-                      setOp(false);
-                    }}
-                  />
-                </View>
-                <Text style={styles.label}>送信元</Text>
-                <View style={{ zIndex: 100 }}>
-                  <DropDownPicker
-                    open={open2}
-                    value={shop_value}
-                    items={items2}
-                    setOpen={setOpen2}
-                    setValue={setShop_Value}
-                    style={styles.inputInner}
-                    placeholder={'----------------'}
-                    onOpen={() => {
-                      setOpen(false);
-                      setOp(false);
-                    }}
-                  />
-                </View>
-                <Text style={styles.label}>形式</Text>
-                <View style={{ zIndex: 99 }}>
-                  <DropDownPicker
-                    open={open3}
-                    value={mail_format}
-                    items={items3}
-                    setOpen={setOpen3}
-                    setValue={changeMailFormat}
-                    style={[styles.inputInner,{width: 200}]}
-                    dropDownContainerStyle={{width: 200}}
-                    placeholder={'----------------'}
-                    onOpen={() => {
-                      setOpen3(!open3);
-                    }}
-                  />
-                </View>
-                <View style={styles.input}>
-                  <Text style={styles.label}>件名</Text>
-                  <TextInput
-                    onChangeText={(text) => setMail_subject(text)}
-                    value={mail_subject}
-                    style={styles.inputInner}
-                  />
-                </View>
-                <View style={[styles.input,{flexDirection: 'row',alignItems: 'center'}]}>
-                  <TouchableOpacity onPress={pickDocument} style={styles.file}>
-                    <Text>ファイル添付</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={pickImage} style={styles.file}>
-                    <Text>画像添付</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={filename?{flexDirection: 'row',marginVertical:5}:{display:'none'}}>
-                  <TouchableOpacity onPress={img_Delete} style={filename?{marginHorizontal:5}:{display:'none'}}>
-                    <Feather name='x-circle' color='gray' size={25} />
-                  </TouchableOpacity>
-                  <Text>{filename}</Text>
-                </View>
-                <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
-                <View zIndex={99}>{mail_reservation()}</View>
-                <View style={styles.input}>
-                  {mail_format !== 'HTML' ? (
-                    <>
-                      <Text style={styles.label}>内容詳細</Text>
-                      <TextInput
-                        onChangeText={(text) => {setNote(text)}}
-                        value={note}
-                        style={styles.textarea}
-                        multiline={true}
-                        disableFullscreenUI={true}
-                        numberOfLines={11}
-                      />
-                    </>
-                  ) : (
-                    <></>
+            <TouchableWithoutFeedback onPress={keyboardClose}>
+              <View>
+                <FlatList
+                  style={{height: mail_format == 'HTML' ? 200 : 500}}
+                  data={[
+                    (<>
+                      {rrr()}
+                      <Text style={styles.label}>宛先</Text>
+                      <View style={{ zIndex: 101 }}>
+                        <DropDownPicker
+                          open={open}
+                          value={cus_value}
+                          items={items1}
+                          setOpen={setOpen}
+                          setValue={setCus_Value}
+                          style={styles.inputInner}
+                          placeholder={'----------------'}
+                          translation={{
+                            NOTHING_TO_SHOW: "メールアドレスが登録されていません"
+                          }}
+                          onClose={() => {setAuto_gmail(1)}}
+                          onOpen={() => {
+                            setOpen2(false);
+                            setOp(false);
+                          }}
+                        />
+                      </View>
+                      <Text style={styles.label}>送信元</Text>
+                      <View style={{ zIndex: 100 }}>
+                        <DropDownPicker
+                          open={open2}
+                          value={shop_value}
+                          items={items2}
+                          setOpen={setOpen2}
+                          setValue={setShop_Value}
+                          style={styles.inputInner}
+                          placeholder={'----------------'}
+                          onOpen={() => {
+                            setOpen(false);
+                            setOp(false);
+                          }}
+                        />
+                      </View>
+                      {options2 && options2.includes('1') && (
+                        <>
+                          <Text style={styles.label}>形式</Text>
+                          <View style={{ zIndex: 99 }}>
+                            <DropDownPicker
+                              open={open3}
+                              value={mail_format}
+                              items={items3}
+                              setOpen={setOpen3}
+                              setValue={changeMailFormat}
+                              style={[styles.inputInner,{width: 200}]}
+                              dropDownContainerStyle={{width: 200}}
+                              placeholder={'----------------'}
+                              onOpen={() => {
+                                setOpen3(!open3);
+                              }}
+                            />
+                          </View>
+                        </>
+                      )}
+                      <View style={styles.input}>
+                        <Text style={styles.label}>件名</Text>
+                        <TextInput
+                          onChangeText={(text) => setMail_subject(text)}
+                          value={mail_subject}
+                          style={styles.inputInner}
+                        />
+                      </View>
+                      <View style={[styles.input,{flexDirection: 'row',alignItems: 'center'}]}>
+                        <TouchableOpacity onPress={pickDocument} style={styles.file}>
+                          <Text>ファイル添付</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={pickImage} style={styles.file}>
+                          <Text>画像添付</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={filename?{flexDirection: 'row',marginVertical:5}:{display:'none'}}>
+                        <TouchableOpacity onPress={img_Delete} style={filename?{marginHorizontal:5}:{display:'none'}}>
+                          <Feather name='x-circle' color='gray' size={25} />
+                        </TouchableOpacity>
+                        <Text>{filename}</Text>
+                      </View>
+                      <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
+                      <View zIndex={99}>{mail_reservation()}</View>
+                      <View style={styles.input}>
+                        {mail_format !== 'HTML' ? (
+                          <>
+                            <Text style={styles.label}>内容詳細</Text>
+                            <TextInput
+                              onChangeText={(text) => {setNote(text)}}
+                              value={note}
+                              style={styles.textarea}
+                              multiline={true}
+                              disableFullscreenUI={true}
+                              numberOfLines={11}
+                            />
+                          </>
+                        ) : (
+                          <></>
+                        )}
+                      </View>
+                    </>)
+                  ]}
+                  renderItem={({ item }) => (
+                    <>{item}</>
                   )}
-                </View>
-                </>)
-              ]}
-              renderItem={({ item }) => (
-                <>{item}</>
-              )}
-            />
+                />
+              </View>
+            </TouchableWithoutFeedback>
             {mail_format == 'HTML' ? (
               <>
                 <Text style={styles.label}>内容詳細</Text>
@@ -1113,7 +1121,6 @@ export function MyModal1(props) {
           </View>
         </View>
       </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
     </Modal>
   );
 }
