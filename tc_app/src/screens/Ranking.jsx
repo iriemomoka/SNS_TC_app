@@ -213,6 +213,7 @@ export default function Ranking(props) {
   var scopeData_B;    // 総入金を保持する
   var scopeData_A;    // 他業者付け等その他売上月別データを保持する
   var scopeData_T;    // 当月目標データを保持する
+  var scopeData_N;    // 反響・来店・決定分析
   var tax = 1.1;      // 消費税
 
   //********************************************************
@@ -281,6 +282,7 @@ export default function Ranking(props) {
     scopeData_C = DATA["gwp"]["customer"];           // 業務進捗データ(顧客情報)
     scopeData_O = await get_other_data(DATA["god"]); // 他業者付け等その他売上データ
     scopeData_R = DATA["grc"]&&DATA["grc"]["data"];  // 反響数
+    scopeData_N = DATA["samd"];                      // 反響・来店・決定分析
 
     var staff_id = route.params.account;
 
@@ -638,7 +640,7 @@ export default function Ranking(props) {
             act: "ranking",
             month: month_,
             fc_flg: global.fc_flg,
-            flg:"2",
+            flg:"3",
           }),
         })
         .then((response) => response.json())
@@ -669,7 +671,7 @@ export default function Ranking(props) {
     }
 
     var startTime = Date.now(); // 開始時間
-    const gwdRank =  await getWorkDataRanking(DATA,rankData,month_);
+    await getWorkDataRanking(DATA["workData"],rankData,month_);
 
     setLoading(false);
     setKaishi(false);
@@ -766,389 +768,27 @@ export default function Ranking(props) {
   //********************************************************
   async function getWorkDataRanking(DATA,rankData,month_) {
     
-    var otherData = DATA["otherData"];
-    var workData  = DATA["workData"];
-    var revData   = DATA["revData"];
-    
-    //==============================================
-    // 
-    // 全店の売上を計算していく
-    // 
-    //==============================================
-    var countArray = {};
-    var otherArray = {};
-    Object.keys(workData).forEach(function (shop_id) {
-      
-      var value = workData[shop_id];
-      
-      // 除外設定されている店舗は飛ばす
-      if(testShopIdArray.includes(shop_id)){
-        return;
-      }
+    // キーの数値の順で配列化
+    var scores = Object.keys(DATA).map(key => {
+      return { staff_id: key, ...DATA[key] };
+    });
+    setAll(scores.length); // 全体スタッフ数
 
-      // スタッフごとの売上をカウントする配列を宣言する
-      Object.keys(value["staff"]).forEach(function (i) {
-        countArray[i] = {
-          "rev"            : 0, // 反響
-          "com_total"      : 0, // 来店
-          "com_new"        : 0, // 新規
-          "com_rev"        : 0, // 反響来店数
-          "com_catch"      : 0, // 飛び込み・キャッチ
-          "com_intro"      : 0, // 紹介
-          "com_other"      : 0, // 来店その他
-          "com_recoming"   : 0, // 再来
-          "con_total"      : 0, // 決定
-          "con_unit"       : 0, // 契約単価
-          "con_sales"      : 0, // 契約売上
-          "con_incidental" : 0, // 付帯売上
-          "con_article"    : 0, // 物担売上
-          "con_brokerage"  : 0, // 仲介売上
-          "other"          : 0, // その他売上
-          "total"          : 0, // 売上
-          "over"           : 0, // 繰越
-          "shop_id"        : shop_id,
-        };
-      })
-
-      //==============================================
-      // 
-      // 【 他業者付け等その他売上 】 を集計する
-      // 
-      //==============================================
-      var other_total = {};
-      Object.keys(value["staff"]).forEach(function (i) {
-        other_total[i] = {
-          0 : 0, 
-          1 : 0, 
-          "total" : 0, 
-          "other" : {0 : 0, 1 : 0, "total" : 0}, 
-          "extra" : {0 : 0, 1 : 0, "total" : 0}
-        }
-        Object.keys(incidentalArray).forEach(function (j) {
-          var inc = incidentalArray[j];
-          other_total[i][inc["key"]] = {0 : 0, 1 : 0, "total" : 0, "cnt" : 0};
-        });
-      })
-      
-      if (Array.isArray(otherData[shop_id])) {
-        otherData[shop_id].forEach(function (v) {
-          var reformType = toInt(v["reform_type"]);
-          switch(reformType){
-            // リフォーム売上の合計を計算する
-            case 1:
-            case 2:
-              if(v["reform_flg"] == 1){
-                // 入金済のトータル
-                other_total[v["staff"]][1] = other_total[v["staff"]][1] + toInt(v["reform_sales"]);
-              }else{
-                // 未入金のトータル
-                other_total[v["staff"]][0] = other_total[v["staff"]][0] + toInt(v["reform_sales"]);
-              }
-              // 売上金額のトータル
-              other_total[v["staff"]]["total"] = other_total[v["staff"]]["total"] + toInt(v["reform_sales"]);
-              break;
-
-            // その他売上の合計を計算する
-            case 4:
-              if(v["reform_flg"] == 1){
-                // 入金済のトータル
-                other_total[v["staff"]]["extra"][1] = other_total[v["staff"]]["extra"][1] + toInt(v["reform_sales"]);
-              }else{
-                // 未入金のトータル
-                other_total[v["staff"]]["extra"][0] = other_total[v["staff"]]["extra"][0] + toInt(v["reform_sales"]);
-              }
-              // 売上金額のトータル
-              other_total[v["staff"]]["extra"]["total"] = other_total[v["staff"]]["extra"]["total"] + toInt(v["reform_sales"]);
-              break;
-            
-            // 他業者付け売上と付帯の合計を計算する
-            default:
-              if(v["reform_flg"] == 1){
-                // 売上金額と付帯それぞれの入金済トータル
-                other_total[v["staff"]]["other"][1] = other_total[v["staff"]]["other"][1] + toInt(v["reform_sales"]);
-                other_total[v["staff"]]["other"][1] = other_total[v["staff"]]["other"][1] + toInt(v["other_brokerage"]);
-                
-                Object.keys(incidentalArray).forEach(function (j) {
-                  var inc = incidentalArray[j];
-                  other_total[v["staff"]][inc["key"]][1] = other_total[v["staff"]][inc["key"]][1] + toInt(v["other_"+inc["key"]]);
-                });
-                
-                // 付帯獲得数のカウントをする
-                Object.keys(incidentalArray).forEach(function (j) {
-                  var inc = incidentalArray[j];
-                  other_total[v["staff"]][inc["key"]]["cnt"] = other_total[v["staff"]][inc["key"]]["cnt"] + toInt(v["other_"+inc["key"]+"_flg"]);
-                });
-                
-              }else{
-                // 売上金額と付帯それぞれの未入金トータル
-                other_total[v["staff"]]["other"][0] = other_total[v["staff"]]["other"][0] + toInt(v["reform_sales"]);
-                other_total[v["staff"]]["other"][0] = other_total[v["staff"]]["other"][0] + toInt(v["other_brokerage"]);
-                
-                Object.keys(incidentalArray).forEach(function (j) {
-                  var inc = incidentalArray[j];
-                  other_total[v["staff"]][inc["key"]][0] = other_total[v["staff"]][inc["key"]][0] + toInt(v["other_"+inc["key"]]);
-                });
-              }
-              
-              // 売上金額と付帯それぞれのトータル
-              other_total[v["staff"]]["other"]["total"] = other_total[v["staff"]]["other"]["total"] + toInt(v["reform_sales"]);
-              other_total[v["staff"]]["other"]["total"] = other_total[v["staff"]]["other"]["total"] + toInt(v["other_brokerage"]);
-              
-              Object.keys(incidentalArray).forEach(function (j) {
-                var inc = incidentalArray[j];
-                other_total[v["staff"]][inc["key"]]["total"] = other_total[v["staff"]][inc["key"]]["total"] + toInt(v["other_"+inc["key"]]);
-              });
-              break;
-          }
-        })
-      }
-
-      //==============================================
-      // 
-      // 【 反響数 】 【 来店数 】 【 決定数 】 【 売上 】 を集計する
-      // 
-      //==============================================
-
-      if(value["customer"]){
-        Object.keys(value["customer"]).forEach(function (staff_id) {
-
-          // 「店全体」の表に「店舗外」の数字が含まれないように処理をスキップ
-          if(staff_id == "tenpogai"){
-            return;
-          }
-
-          // カウントする配列が作成されていなかったら飛ばす
-          if (countArray[staff_id] == undefined) return;
-
-          var salesArray = value["customer"][staff_id];
-          Object.keys(salesArray).forEach(function (sales_type) {
-            var customerArray = salesArray[sales_type];
-            //----------------------------------------------
-            // 
-            // 【 来店数 】 のカウントをする
-            // 
-            //----------------------------------------------
-            switch(sales_type){
-              case "coming":
-                countArray[staff_id]["com_total"] = countArray[staff_id]["com_total"] + Object.keys(customerArray).length;
-                break;
-                
-              case "recoming":
-                countArray[staff_id]["com_total"]    = countArray[staff_id]["com_total"] + Object.keys(customerArray).length;
-                countArray[staff_id]["com_recoming"] = countArray[staff_id]["com_recoming"] + Object.keys(customerArray).length;
-                break;
-                
-              case "over":
-                break;
-                
-              case "article":
-                break;
-                
-              // 【 他業者 】 【 付帯 】 は計上しない
-              case "other":
-              case "incidental":
-                return;
-              default:
-                break;
-            }
-
-            Object.keys(customerArray).forEach(function (i) {
-              var v =customerArray[i];
-              if(sales_type == "coming"){
-                switch(v["campany_device"]){
-                  case "反響":
-                    countArray[staff_id]["com_rev"] = countArray[staff_id]["com_rev"] + 1;
-                    countArray[staff_id]["com_new"] = countArray[staff_id]["com_new"] + 1;
-                    break;
-                    
-                  case "飛び込み":
-                  case "キャッチ":
-                    countArray[staff_id]["com_catch"] = countArray[staff_id]["com_catch"] + 1;
-                    countArray[staff_id]["com_new"]   = countArray[staff_id]["com_new"] + 1;
-                    break;
-                    
-                  case "紹介":
-                    countArray[staff_id]["com_intro"] = countArray[staff_id]["com_intro"] + 1;
-                    break;
-                    
-                  default:
-                    if(v["media"] == "紹介"){
-                      countArray[staff_id]["com_intro"] = countArray[staff_id]["com_intro"] + 1;
-                    }else{
-                      countArray[staff_id]["com_other"] = countArray[staff_id]["com_other"] + 1;
-                      countArray[staff_id]["com_new"]   = countArray[staff_id]["com_new"] + 1;
-                    }
-                    break;
-                }
-              }
-
-              //----------------------------------------------
-              // 
-              // 【 決定数 】 【 売上 】 のカウントをする
-              // 
-              //----------------------------------------------
-              if(sales_type == "coming" || sales_type == "recoming" || sales_type == "over"){
-                // 【 決定数 】
-                if(v["important_flg"] != "" && sales_type != "over"){
-                  countArray[staff_id]["con_total"] = countArray[staff_id]["con_total"] + 1;
-                }
-                
-                // 【 契約売上 】
-                countArray[staff_id]["con_sales"] = countArray[staff_id]["con_sales"] + (v["brokerage_flg"] != "-" ? toInt(v["brokerage"]) : 0);
-                countArray[staff_id]["con_sales"] = countArray[staff_id]["con_sales"] + (v["advertisement_flg"] != "-" ? toInt(v["ad"]) : 0);
-                countArray[staff_id]["con_sales"] = countArray[staff_id]["con_sales"] + (v["garage_flg"] != "-" ? toInt(v["garage"]) : 0);
-                countArray[staff_id]["con_sales"] = countArray[staff_id]["con_sales"] + (v["referral_flg"] != "-" ? toInt(v["referral"]) : 0);
-                countArray[staff_id]["con_sales"] = countArray[staff_id]["con_sales"] + (v["article_manager_flg"] != "-" ? toInt(v["article_manager"]) : 0);
-                
-                // 【 付帯売上 】
-                Object.keys(incidentalArray).forEach(function (j) {
-                  var inc = incidentalArray[j];
-                  countArray[staff_id]["con_incidental"] = countArray[staff_id]["con_incidental"] + (v[inc["key"]+"_payment"] != "-" ? toInt(v[inc["key"]]) : 0);
-                });
-              }
-
-              if(sales_type == "article"){
-                // 【 物担売上 】
-                countArray[staff_id]["con_article"] = countArray[staff_id]["con_article"] + (v["brokerage_flg"] != "-" ? toInt(v["brokerage"]) : 0);
-                countArray[staff_id]["con_article"] = countArray[staff_id]["con_article"] + (v["advertisement_flg"] != "-" ? toInt(v["ad"]) : 0);
-                countArray[staff_id]["con_article"] = countArray[staff_id]["con_article"] + (v["garage_flg"] != "-" ? toInt(v["garage"]) : 0);
-                countArray[staff_id]["con_article"] = countArray[staff_id]["con_article"] + (v["referral_flg"] != "-" ? toInt(v["referral"]) : 0);
-                countArray[staff_id]["con_article"] = countArray[staff_id]["con_article"] + (v["article_manager_flg"] != "-" ? toInt(v["article_manager"]) * (-1) : 0);
-              }
-
-              // 【 売上合計 】
-              var article_manager = sales_type != "article" ? toInt(v["article_manager"]) : toInt(v["article_manager"]) * (-1);
-              countArray[staff_id]["total"] = countArray[staff_id]["total"] + toInt(v["brokerage"]);
-              countArray[staff_id]["total"] = countArray[staff_id]["total"] + toInt(v["ad"]);
-              countArray[staff_id]["total"] = countArray[staff_id]["total"] + toInt(v["garage"]);
-              countArray[staff_id]["total"] = countArray[staff_id]["total"] + toInt(v["referral"]);
-              countArray[staff_id]["total"] = countArray[staff_id]["total"] + article_manager;
-              Object.keys(incidentalArray).forEach(function (j) {
-                var inc = incidentalArray[j];
-                countArray[staff_id]["total"] = countArray[staff_id]["total"] + toInt(v[inc["key"]]);
-              });
-
-              // 【 繰越確定金額 】
-              countArray[staff_id]["over"] = countArray[staff_id]["over"] + (v["brokerage_flg"] == "-" ? toInt(v["brokerage"]) : 0);
-              countArray[staff_id]["over"] = countArray[staff_id]["over"] + (v["advertisement_flg"] == "-" ? toInt(v["ad"]) : 0);
-              countArray[staff_id]["over"] = countArray[staff_id]["over"] + (v["garage_flg"] == "-" ? toInt(v["garage"]) : 0);
-              countArray[staff_id]["over"] = countArray[staff_id]["over"] + (v["referral_flg"] == "-" ? toInt(v["referral"]) : 0);
-              countArray[staff_id]["over"] = countArray[staff_id]["over"] + (v["article_manager_flg"] == "-" ? article_manager : 0);
-              Object.keys(incidentalArray).forEach(function (j) {
-                var inc = incidentalArray[j];
-                countArray[staff_id]["over"] = countArray[staff_id]["over"] + (v[inc["key"]+"_payment"] == "-" ? toInt(v[inc["key"]]) : 0);
-              });
-
-            })
-
-
-          })
-        })
-      }
-      
-      Object.keys(value["staff"]).forEach(function (staff_id) {
-        // 【 契約単価 】
-        var unit = Math.round(countArray[staff_id]["con_sales"] / countArray[staff_id]["con_total"]);
-        countArray[staff_id]["con_unit"] = toInt(unit) > 0 ? unit : 0;
-  
-        //----------------------------------------------
-        // 
-        // 【 繰越確定金額 】 【 他業者付け等その他売上 】 が関わる計算をする
-        // 
-        //----------------------------------------------
-        // 【 売上合計 】 から 【 繰越確定金額 】 を減算する
-        countArray[staff_id]["total"] -= countArray[staff_id]["over"];
-  
-        // 【 付帯売上 】 【 他業者付け等その他売上 】 のカウントをする
-        // 【 売上合計 】 に 【 他業者付け等その他売上 】 を加算する
-        var v = other_total[staff_id];
-        countArray[staff_id]["other"] = countArray[staff_id]["other"] + toInt(v["total"]);
-        countArray[staff_id]["other"] = countArray[staff_id]["other"] + toInt(v["other"]["total"]);
-        countArray[staff_id]["other"] = countArray[staff_id]["other"] + toInt(v["extra"]["total"]);
-        
-        countArray[staff_id]["total"] = countArray[staff_id]["total"] + toInt(v["total"]);
-        countArray[staff_id]["total"] = countArray[staff_id]["total"] + toInt(v["other"]["total"]);
-        countArray[staff_id]["total"] = countArray[staff_id]["total"] + toInt(v["extra"]["total"]);
-        
-        Object.keys(incidentalArray).forEach(function (j) {
-          var inc = incidentalArray[j];
-          countArray[staff_id]["con_incidental"] = countArray[staff_id]["con_incidental"] + toInt(v[inc["key"]]["total"]);
-          countArray[staff_id]["total"]          = countArray[staff_id]["total"] + toInt(v[inc["key"]]["total"]);
-        });
-  
-        // 【 仲介売上合計 】
-        countArray[staff_id]["con_brokerage"] = countArray[staff_id]["con_brokerage"] + countArray[staff_id]["con_sales"];
-        countArray[staff_id]["con_brokerage"] = countArray[staff_id]["con_brokerage"] + countArray[staff_id]["con_incidental"];
-        countArray[staff_id]["con_brokerage"] = countArray[staff_id]["con_brokerage"] + countArray[staff_id]["con_article"];
-      })
-
-      //----------------------------------------------
-      // 
-      // 【 反響数 】 のカウントと表示をする
-      // 
-      //----------------------------------------------
-      if (revData[shop_id]) {
-        if (Array.isArray(revData[shop_id]["data"])) {
-          revData[shop_id]["data"].forEach(function (data) {
-            countArray[data["account"]]["rev"] = countArray[data["account"]]["rev"] + 1;
-          })
-        } else {
-          Object.keys(revData[shop_id]["data"]).forEach(function (i) {
-            var data = revData[shop_id]["data"][i];
-            countArray[data["account"]]["rev"] = countArray[data["account"]]["rev"] + 1;
-          })
-        }
-      }
-    })
-
-    //==============================================
-    // 
-    // 売上ランキングを出す
-    // 
-    //==============================================
+    // //==============================================
+    // // 
+    // // 売上ランキングを出す
+    // // 
+    // //==============================================
 	  var rankingArray = {};
     var totalArray = [];
     var myTotal = 0
 
     var staff_id = route.params.account;
 
-    // ソートするため配列の整頓をする
-    var cnt = 0;
-    var bufArray = {};
-
-    Object.keys(countArray).forEach(function (sid) {
-
-      var array = countArray[sid];
-
-      if(testShopIdArray.includes(array["shop_id"])){
-        return;
-      }
-      
-      bufArray[cnt] = { "staff_id": sid };
-
-      Object.keys(array).forEach(function (key) {
-        var val = array[key];
-        bufArray[cnt][key] = toInt(val);
-      });
-      
-      // 【 反響来店率 】 の計算をする
-      var rate = toInt(Math.round((array["com_rev"] / array["rev"]) * 1000) / 10);
-      rate = rate ? rate : 0;
-      bufArray[cnt]["rev_rate"] = rate;
-      
-      cnt++;
-    })
-
-	  // 各項目のソートを行う
-
-    // キーの数値の順で配列化
-    var scores = Object.keys(bufArray).map((ba)=>bufArray[ba]);
-    setAll(scores.length); // 全体スタッフ数
-
     var array = scores[0];
     
     Object.keys(array).forEach(function (key) {
-      if(key != "shop_id" || key != "staff_id"){
+      if(key == "estimate" || key == "new" || key == "intro" || key == "agreement"){
       
         scores = scores.sort( ( a, b ) => {
           var x = a[ key ];
@@ -1165,12 +805,12 @@ export default function Ranking(props) {
             tmp = item[key];
           }
           if (item["staff_id"] == staff_id) {
-            if (key == "total") {
+            if (key == "estimate") {
               myTotal = item[key];
             }
             rankingArray[key] = count;
           }
-          if (key == "total") {
+          if (key == "estimate") {
             // 降順で売上総見込の額を入れていく
             totalArray.push(item[key]);
           }
@@ -1198,13 +838,13 @@ export default function Ranking(props) {
 
     const updatedRank = rankData.map(item => {
       if (item.label === "売上総見込") {
-        return { ...item, rank: rankingArray["total"] };
+        return { ...item, rank: rankingArray["estimate"] };
       } else if (item.label === "新規") {
-        return { ...item, rank: rankingArray["com_new"] };
+        return { ...item, rank: rankingArray["new"] };
       } else if (item.label === "紹介") {
-        return { ...item, rank: rankingArray["com_intro"] };
+        return { ...item, rank: rankingArray["intro"] };
       } else if (item.label === "決定") {
-        return { ...item, rank: rankingArray["con_total"] };
+        return { ...item, rank: rankingArray["agreement"] };
       } else if (item.label === "反響来店率") {
         return { ...item, rank: rankingArray["com_rev"] };
       }
@@ -2114,45 +1754,27 @@ export default function Ranking(props) {
 
   //*******************************************************
   // 
-  // 【カウント】 全体の反響数からスタッフの分だけ抽出
+  // 【カウント】 反響来店率取得
   // 
   //*******************************************************
   function rev_Count(key){
 
-    if (!scopeData_R) return 0;
-    
-    // 反響数
-    var countArray = {
-      rev: 0,
-      comrev: 0,
-    }
-    scopeData_R.forEach(function (v) {
-      if(v["account"] == key) {
-        countArray["rev"] += 1;
-      }
-    })
+    if (!scopeData_N) return 0;
 
-    var salesArray = scopeData_C[key];
-    Object.keys(salesArray).forEach(function (sales_type) {
-      if (sales_type == "coming") {
-        var customerArray = salesArray[sales_type];
-        Object.keys(customerArray).forEach(function (i) {
-          var v = customerArray[i];
-          if (v["campany_device"] == '反響') {
-            countArray["comrev"] += 1;
-          }
-        });
-      }
-    });
+    const analytical = scopeData_N[key];
 
-    let rate = 0;
+    if (!analytical) return 0;
 
-    if (countArray["rev"] !== 0) {
-      rate = Number(Math.round((countArray["comrev"] / countArray["rev"]) * 1000) / 10);
-      rate = rate ? rate : 0;
-    }
+    const all_coming1 = analytical["coming_tel1"] + analytical["coming_mail1"] + analytical["coming_line1"];
+    const all_reverberation = analytical["reverberation_tel"] + analytical["reverberation_mail"] + analytical["reverberation_line"];
 
-    return rate;
+    if (!all_coming1 || all_coming1 == 0) return 0;
+    if (!all_reverberation || all_reverberation == 0) return 0;
+
+    var result = Number(Math.round((all_coming1 / all_reverberation) * 100));
+    result = result ? result : 0;
+
+    return result
 
   }
 
@@ -2309,7 +1931,7 @@ export default function Ranking(props) {
       >
         <Text style={styles.rankLabel}>{item.label}</Text>
         <Text style={styles.rankData}>{item.data}</Text>
-        <Text style={styles.rankRank}>{item.rank}位</Text>
+        <Text style={[styles.rankRank,item.label=="反響来店率"&&{display:"none"}]}>{item.rank}位</Text>
       </TouchableOpacity>
     )
   }
@@ -2336,7 +1958,7 @@ export default function Ranking(props) {
       rank = item.agreement_r;
     } else if (record.label === "反響来店率") {
       data = item.comrev_d;
-      rank = item.comrev_r;
+      // rank = item.comrev_r;
     }
 
     return(
@@ -2344,7 +1966,7 @@ export default function Ranking(props) {
         <Text style={styles.rankdataLabel1}>{item["date"].substring(0, 10)}</Text>
         <Text style={styles.rankdataLabel2}>{item["getdate"]}</Text>
         <Text style={styles.rankdataData}>{data}</Text>
-        <Text style={styles.rankdataRank}>{rank}位</Text>
+        <Text style={styles.rankdataRank}>{rank}{rank&&"位"}</Text>
       </View>
     )
   }
