@@ -834,7 +834,7 @@ export default function Ranking(props) {
 
     setMade(madeTXT);
 
-    setOverall(rankingArray.total); // 全体順位
+    setOverall(rankingArray.estimate); // 全体順位
 
     const updatedRank = rankData.map(item => {
       if (item.label === "売上総見込") {
