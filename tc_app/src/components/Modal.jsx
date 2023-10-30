@@ -47,6 +47,7 @@ export function MyModal0(props){
       animationOut={'slideOutUp'}
       propagateSwipe={true}
       style={{alignItems: 'center'}}
+      onBackdropPress={onPress}
     >
       <View  style={styles.line}>
         <TouchableOpacity
@@ -119,6 +120,23 @@ export function MyModal1(props) {
     { label: 'テキスト', value: 'テキスト' },
     { label: 'HTML', value: 'HTML' }
   ];
+
+  const [filteredFixed, setFilteredFixed] = useState([]);
+
+  // リストからHTML用の定型文をフィルタリング
+  const filterFixedByCategory = (category) => {
+    const filtered = fixed.filter((obj) => obj.category !== category);
+    setFilteredFixed(filtered);
+  }
+
+  useEffect(() => {
+    if (mail_format === 'テキスト') {
+      // 形式がテキストの時は'HTML用'の定型文は表示しない
+      filterFixedByCategory('HTML用');
+    } else {
+      setFilteredFixed(fixed);
+    }
+  }, [mail_format]);
 
   // 内容詳細の編集
   const noteEdit = (text) => {
@@ -900,7 +918,7 @@ export function MyModal1(props) {
         isVisible={Fixed}
         onSwipeComplete={() => { setFixed(false) }}
         onPress={() => { setFixed(false) }}
-        fixed={fixed}
+        fixed={filteredFixed}
         hensu={hensu}
         setMail_subject={setMail_subject}
         setNote={setNote}
@@ -1250,6 +1268,7 @@ export function MyModal2(props){
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       onModalHide={() => {setCon_flg(false)}}
+      onBackdropPress={onClose}
     >
       <KeyboardAvoidingView  behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={[{height:500},styles.bottom,styles.modalInner]}>
@@ -2292,11 +2311,13 @@ export function MyModal4(props){
   
   const { isVisible,onSwipeComplete,onPress,fixed,msgtext,subject,hensu,mail_format,editorRef } = props;
   
-  // カテゴリーの重複を検出したものを重複しないでリスト
-  const f_c = fixed.map((c) => {
-    return c.category;
-  })
-  const [fixed_category, setFixed_Category] = useState(Array.from(new Set(f_c)));
+  const [fixed_category, setFixed_Category] = useState([]);
+
+  useEffect(() => {
+    // カテゴリーの重複を検出したものを重複しないでリスト
+    const f_c = fixed.map((c) => c.category);
+    setFixed_Category(Array.from(new Set(f_c)));
+  }, [fixed]);
   
   // カテゴリ内をリスト化
   function list(category) {
