@@ -731,24 +731,24 @@ export function MyModal1(props) {
     setFiledata(null);
     setDel_file(1);
   }
-  
-  const [a, setA] = useState(false);
 
   const [op, setOp] = useState(false);
   const [val, setVal] = useState(false);
   
   function rrr(){
-    
-    if (a){
-      
-      axios.get(val.file_path)
-      .then(res => {
-        setFilename(val.file_path?'添付ファイル':'');
-        setFiledata({uri:res.config.url});
-      })
-      .catch((error) => {
-        console.log(error);
-      })
+
+    function GetYoyaku(val) {
+
+      if (val.file_path) {
+        axios.get(val.file_path)
+        .then(res => {
+          setFilename(val.file_path?'添付ファイル':'');
+          setFiledata({uri:res.config.url});
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+      }
       
       setNote(val.note);
       setCus_Value(val.receive_mail);
@@ -775,8 +775,6 @@ export function MyModal1(props) {
       }
       
       setRes_id(val.reservation_id);
-      
-      setA(false);
     }
     
     if (res){
@@ -808,7 +806,6 @@ export function MyModal1(props) {
               setValue={setVal}
               style={styles.inputInner}
               placeholder = {'----------------'}
-              onClose={() => {setA('a')}}
               translation={{
                 NOTHING_TO_SHOW: "予約・下書きはありません"
               }}
@@ -816,6 +813,7 @@ export function MyModal1(props) {
                 setOpen(false);
                 setOpen2(false);
               }}
+              onSelectItem={(item) => GetYoyaku(item.value)}
             />
           </View>
           
@@ -975,7 +973,7 @@ export function MyModal1(props) {
                           translation={{
                             NOTHING_TO_SHOW: "メールアドレスが登録されていません"
                           }}
-                          onClose={() => {setAuto_gmail(1)}}
+                          onSelectItem={() => {setAuto_gmail(1)}}
                           onOpen={() => {
                             setOpen2(false);
                             setOp(false);
