@@ -16,6 +16,15 @@ import TagInput from 'react-native-tags-input';
 
 import * as ImagePicker from 'expo-image-picker';
 
+import Storage from 'react-native-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// ローカルストレージ読み込み
+const storage = new Storage({
+  storageBackend: AsyncStorage,
+  defaultExpires: null,
+});
+
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = 'https://www.total-cloud.net/';
 let photo_path = domain + 'img/staff_img/';
@@ -881,6 +890,11 @@ function logout() {
         {
           text: "はい",
           onPress: async() => {
+            
+            storage.save({
+              key: 'GET-DATA',
+              data: '',
+            });
             
             await Delete_staff_db();
             

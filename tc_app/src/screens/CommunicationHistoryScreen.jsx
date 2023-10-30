@@ -36,6 +36,15 @@ import Loading from "../components/Loading";
 import { GetDB,db_select,db_write } from '../components/Databace';
 import { set } from "react-native-reanimated";
 
+import Storage from 'react-native-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// ローカルストレージ読み込み
+const storage = new Storage({
+  storageBackend: AsyncStorage,
+  defaultExpires: null,
+});
+
 const db = SQLite.openDatabase("db");
 
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
@@ -65,6 +74,9 @@ export default function CommunicationHistoryScreen(props) {
   const [fixed, setFixed] = useState(false);
   
   const listRef = useRef([]);
+  
+  // 参照データ取得日時
+  const [date, setDate] = useState('');
   
   var staffList = useMemo(()=>{
 
@@ -233,6 +245,35 @@ export default function CommunicationHistoryScreen(props) {
 
     if (flg) {
       onRefresh(false);
+    } else {
+      storage.load({
+        key : 'GET-DATA'
+      })
+      .then(data => {
+    
+        if (data) {
+  
+          var parts = data.split(/-|:/);
+          
+          // 年、月、日、時、分を取得
+          var year = parts[0];
+          var month = parts[1];
+          var day = parts[2];
+          var hour = parts[3];
+          var minute = parts[4];
+          
+          // 新しいフォーマットの日付文字列を作成
+          var newDate = year + "-" + month + "-" + day + " " + hour + ":" + minute;
+  
+          setDate(newDate+' 時点');
+        }
+      })
+      .catch(err => {
+        storage.save({
+          key: 'GET-DATA',
+          data: '',
+        });
+      })
     }
 
     var loadflg = false;
@@ -298,6 +339,8 @@ export default function CommunicationHistoryScreen(props) {
 
     if (flg) setLoading(true);
 
+    setDate('最新データ取得中');
+
     const startTime = Date.now(); // 開始時間
 
     const json = await getCOM();
@@ -349,8 +392,51 @@ export default function CommunicationHistoryScreen(props) {
 
       await Insert_fixed_db(fixed_mst);
 
+      function addZero(num, length) {
+        var minus = "";
+        var zero = ('0'.repeat(length)).slice(-length);
+        if (parseInt(num) < 0) {
+          // マイナス値の場合
+          minus = "-";
+          num = -num;
+          zero = zero.slice(-(length - 1 - String(num).length));	// -の1桁+数値の桁数分引く
+        }
+      
+        return (minus + zero + num).slice(-length);
+      }
+
+      // データ取得日時
+      var date = new Date();
+      var date_ = (date.getFullYear()).toString() + "-" 
+      + addZero((date.getMonth() + 1).toString(),2) + "-" 
+      + addZero((date.getDate()).toString(),2) + "-" 
+      + addZero((date.getHours()).toString(),2) + "-" 
+      + addZero((date.getMinutes()).toString(),2) + "-" 
+      + addZero((date.getSeconds()).toString(),2);
+
+      storage.save({
+        key: 'GET-DATA',
+        data: date_,
+      });
+
+      var parts = date_.split(/-|:/);
+        
+      // 年、月、日、時、分を取得
+      var year = parts[0];
+      var month = parts[1];
+      var day = parts[2];
+      var hour = parts[3];
+      var minute = parts[4];
+      
+      // 新しいフォーマットの日付文字列を作成
+      var newDate = year + "-" + month + "-" + day + " " + hour + ":" + minute;
+
+      setDate(newDate+' 時点');
+
     } else {
       
+      setDate('');
+
       var sql = `select count(*) as count from customer_mst;`;
       var customer = await db_select(sql);
       const cnt = customer[0]["count"];
@@ -773,6 +859,11 @@ export default function CommunicationHistoryScreen(props) {
             text: "はい",
             onPress: async() => {
               
+              storage.save({
+                key: 'GET-DATA',
+                data: '',
+              });
+
               await Delete_staff_db();
               
               if(global.sp_token && global.sp_id){
@@ -1049,7 +1140,7 @@ export default function CommunicationHistoryScreen(props) {
             </TouchableOpacity>
           </View>
         </View>
-        <View style={{zIndex: 500}}>
+        <View style={{zIndex: 500,flexDirection:'row'}}>
           <DropDownPicker
             style={styles.DropDown}
             dropDownContainerStyle={styles.dropDownContainer}
@@ -1061,6 +1152,7 @@ export default function CommunicationHistoryScreen(props) {
             placeholder="▼　担当者"
             onSelectItem={(item) => searchCustomer(item.value,true)}
           />
+          <Text style={styles.sub_title}>{date}</Text>
         </View>
         <View style={{zIndex: 100,paddingBottom:128}}>
           {comList}
@@ -1104,6 +1196,13 @@ const styles = StyleSheet.create({
   dropDownContainer: {
     width: 200,
     marginLeft: 10,
+  },
+  sub_title: {
+    fontSize: 13,
+    color: "#9B9B9B",
+    position: "absolute",
+    right: 10,
+    bottom:10
   },
   buttonContainer: {
     backgroundColor: "#b3b3b3",
