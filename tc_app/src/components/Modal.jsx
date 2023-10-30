@@ -1867,6 +1867,7 @@ export function MyModal3(props){
           animationOutTiming={500}
           animationIn={'slideInDown'}
           animationOut={'slideOutUp'}
+          onBackdropPress={recommended}
         >
           <View style={[{height:600},styles.modalInner]}>
             <TouchableOpacity
@@ -1876,369 +1877,373 @@ export function MyModal3(props){
               <Feather name='x-circle' color='gray' size={35} />
             </TouchableOpacity>
             <View style={styles.form}>
-              <ScrollView 
+              <FlatList
                 style={{height:400}}
-              >
-                <View>
-                  <View style={styles.input}>
-                    <Text style={styles.label}>物件名</Text>
-                    <TextInput
-                      onChangeText={(text) => {setArticle_name(text)}}
-                      value={article_name}
-                      style={styles.inputInner}
-                    />
-                  </View>
-                    <Text style={styles.label}>賃料</Text>
-                    <View style={{flexDirection: 'row',zIndex:1000}}>
-                      <DropDownPicker
-                        placeholder="------------"
-                        style={styles.inputInner}
-                        containerStyle={{width:'43%'}}
-                        open={open_rent_from}
-                        value={value_rent_from}
-                        items={rent_from}
-                        setOpen={setOpen_Rent_from}
-                        setValue={setValue_Rent_from}
-                        setItems={setRent_from}
-                        zIndex={1000}
-                        listMode={"SCROLLVIEW"}
-                        dropDownContainerStyle={[Platform.OS === 'android'&&{
-                          position: 'relative',
-                          top: 0,
-                        },{height:100}]}
-                      />
-                      <Text style={{marginTop:15}}>　～　</Text>
-                      <DropDownPicker
-                        placeholder="------------"
-                        style={styles.inputInner}
-                        containerStyle={{width:'43%'}}
-                        open={open_rent_to}
-                        value={value_rent_to}
-                        items={rent_to}
-                        setOpen={setOpen_Rent_to}
-                        setValue={setValue_Rent_to}
-                        setItems={setRent_to}
-                        zIndex={999}
-                        listMode={"SCROLLVIEW"}
-                        dropDownContainerStyle={[Platform.OS === 'android'&&{
-                          position: 'relative',
-                          top: 0,
-                        },{height:100}]}
-                      />
-                    </View>
-                    <View style={{flexDirection: 'row',marginTop:10}}>
-                      <View style={{width:'50%'}}>
-                        <CheckBox
-                          title='管理費込み'
-                          checked={general}
-                          onPress={() => setGeneral(!general)}
-                          containerStyle={{marginLeft:0}}
-                        />
-                      </View>
-                      <View style={{width:'50%'}}>
-                        <CheckBox
-                          title='敷金礼金なし'
-                          checked={deposit}
-                          onPress={() => setDeposit(!deposit)}
-                          containerStyle={{marginLeft:0}}
-                        />
-                      </View>
-                    </View>
-                    <Text style={styles.label}>間取り
-                    <Text style={styles.inlabel}>　※複数選択可</Text></Text>
-                    <View style={{zIndex:998}}>
-                      <DropDownPicker
-                        placeholder="------------"
-                        multiple={true}
-                        open={open_layout}
-                        value={value_layout}
-                        items={layout}
-                        setOpen={setOpen_layout}
-                        setValue={setValue_layout}
-                        setItems={setLayout}
-                        zIndex={998}
-                        listMode={"SCROLLVIEW"}
-                        translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
-                        dropDownContainerStyle={[Platform.OS === 'android'&&{
-                          position: 'relative',
-                          top: 0,
-                        },{height:150}]}
-                      />
-                    </View>
-                  <View style={[styles.input,{zIndex:997}]}>
-                    <Text style={styles.label}>沿線・駅名
-                    <Text style={styles.inlabel}>　※検索語句を入力してください</Text></Text>
-                    <Autocomplete
-                      data={filteredStations}
-                      onChangeText={(text) => findStation(text)}
-                      style={styles.inputInner}
-                      inputContainerStyle={{borderWidth:0}}
-                      flatListProps={{
-                        keyExtractor: (item) => `${item.id}`,
-                        renderItem: ({ item }) =>
-                        <TouchableOpacity
-                          onPress={() => {
-                            setSelectedStations((prevArray) => [...prevArray, item]);
-                            setFilteredStations([]);
-                          }}>
-                          <Text style={styles.suggestText}>
-                            {item.name}
-                          </Text>
-                        </TouchableOpacity>,
-                      }}
-                    />
-                  </View>
-                  <View style={{flexDirection: 'row'}}>
-                    <FlatList 
-                      data={selectedStations}
-                      renderItem={({ item }) =>
-                        (
-                          <MaterialChip
-                            text={item.name}
-                            onPress={() => station_delete(item)}
-                            rightIcon={
-                              <Feather name='x-circle' color='gray' size={18} />
-                            }
-                          />
-                        )
-                      }
-                      keyExtractor={(item) => `${item.id}`}
-                    />
-                  </View>
-                  <View style={styles.input}>
-                    <Text style={styles.label}>徒歩分数</Text>
-                    <TextInput
-                      onChangeText={(text) => {setStation_time(text)}}
-                      value={station_time}
-                      style={styles.inputInner}
-                    />
-                  </View>
-                  <View style={[styles.input,{zIndex:996}]}>
-                    <Text style={styles.label}>エリア名
-                    <Text style={styles.inlabel}>　※検索語句を入力してください</Text></Text>
-                    <Autocomplete
-                      data={filteredAddress}
-                      onChangeText={(text) => findAddress(text)}
-                      style={styles.inputInner}
-                      inputContainerStyle={{borderWidth:0}}
-                      flatListProps={{
-                        keyExtractor: (item) => `${item.id}`,
-                        renderItem: ({ item }) =>
-                        <TouchableOpacity
-                          onPress={() => {
-                            setSelectedAddress((prevArray) => [...prevArray, item]);
-                            setFilteredAddress([]);
-                          }}>
-                          <Text style={styles.suggestText}>
-                            {item.name}
-                          </Text>
-                        </TouchableOpacity>,
-                      }}
-                    />
-                  </View>
-                  <View style={{flexDirection: 'row'}}>
-                    <FlatList 
-                      data={selectedAddress}
-                      renderItem={({ item }) =>
-                        (
-                          <MaterialChip
-                            text={item.name}
-                            onPress={() => area_delete(item)}
-                            rightIcon={
-                              <Feather name='x-circle' color='gray' size={18} />
-                            }
-                          />
-                        )
-                      }
-                      keyExtractor={(item) => `${item.id}`}
-                    />
-                  </View>
-                  <View style={[styles.input,{zIndex:995}]}>
-                    <Text style={styles.label}>面積</Text>
-                    <View style={{flexDirection: 'row',zIndex:997}}>
-                      <DropDownPicker
-                        placeholder="------------"
-                        style={styles.inputInner}
-                        containerStyle={{width:'43%'}}
-                        open={open_exclusive_from}
-                        value={value_exclusive_from}
-                        items={exclusive_from}
-                        setOpen={setOpen_Exclusive_from}
-                        setValue={setValue_Exclusive_from}
-                        setItems={setExclusive_from}
-                        zIndex={995}
-                        listMode={"SCROLLVIEW"}
-                        dropDownContainerStyle={[Platform.OS === 'android'&&{
-                          position: 'relative',
-                          top: 0,
-                        },{height:100}]}
-                      />
-                      <Text style={{marginTop:15}}>　～　</Text>
-                      <DropDownPicker
-                        placeholder="------------"
-                        style={styles.inputInner}
-                        containerStyle={{width:'43%'}}
-                        open={open_exclusive_to}
-                        value={value_exclusive_to}
-                        items={exclusive_to}
-                        setOpen={setOpen_Exclusive_to}
-                        setValue={setValue_Exclusive_to}
-                        setItems={setExclusive_to}
-                        zIndex={994}
-                        listMode={"SCROLLVIEW"}
-                        dropDownContainerStyle={[Platform.OS === 'android'&&{
-                          position: 'relative',
-                          top: 0,
-                        },{height:100}]}
-                      />
-                    </View>
-                    <CheckBox
-                      center
-                      title='詳細'
-                      containerStyle={[detail === true?'':{marginBottom:35},{marginTop:20}]}
-                      checked={detail}
-                      onPress={() => setDetail(!detail)}
-                    />
-                  </View>
-                  <View style={detail === true?'':{display:'none'}}>
+                data={[
+                  (<View>
                     <View style={styles.input}>
-                      <Text style={styles.label}>物件番号</Text>
+                      <Text style={styles.label}>物件名</Text>
                       <TextInput
-                        onChangeText={(text) => {setArticle_id(text)}}
-                        value={article_id}
+                        onChangeText={(text) => {setArticle_name(text)}}
+                        value={article_name}
                         style={styles.inputInner}
                       />
                     </View>
-                    <View style={[styles.input,{zIndex:993}]}>
-                      <Text style={styles.label}>物件種別
+                      <Text style={styles.label}>賃料</Text>
+                      <View style={{flexDirection: 'row',zIndex:1000}}>
+                        <DropDownPicker
+                          placeholder="------------"
+                          style={styles.inputInner}
+                          containerStyle={{width:'43%'}}
+                          open={open_rent_from}
+                          value={value_rent_from}
+                          items={rent_from}
+                          setOpen={setOpen_Rent_from}
+                          setValue={setValue_Rent_from}
+                          setItems={setRent_from}
+                          zIndex={1000}
+                          listMode={"SCROLLVIEW"}
+                          dropDownContainerStyle={[Platform.OS === 'android'&&{
+                            position: 'relative',
+                            top: 0,
+                          },{height:100}]}
+                        />
+                        <Text style={{marginTop:15}}>　～　</Text>
+                        <DropDownPicker
+                          placeholder="------------"
+                          style={styles.inputInner}
+                          containerStyle={{width:'43%'}}
+                          open={open_rent_to}
+                          value={value_rent_to}
+                          items={rent_to}
+                          setOpen={setOpen_Rent_to}
+                          setValue={setValue_Rent_to}
+                          setItems={setRent_to}
+                          zIndex={999}
+                          listMode={"SCROLLVIEW"}
+                          dropDownContainerStyle={[Platform.OS === 'android'&&{
+                            position: 'relative',
+                            top: 0,
+                          },{height:100}]}
+                        />
+                      </View>
+                      <View style={{flexDirection: 'row',marginTop:10}}>
+                        <View style={{width:'50%'}}>
+                          <CheckBox
+                            title='管理費込み'
+                            checked={general}
+                            onPress={() => setGeneral(!general)}
+                            containerStyle={{marginLeft:0}}
+                          />
+                        </View>
+                        <View style={{width:'50%'}}>
+                          <CheckBox
+                            title='敷金礼金なし'
+                            checked={deposit}
+                            onPress={() => setDeposit(!deposit)}
+                            containerStyle={{marginLeft:0}}
+                          />
+                        </View>
+                      </View>
+                      <Text style={styles.label}>間取り
                       <Text style={styles.inlabel}>　※複数選択可</Text></Text>
-                      <DropDownPicker
-                        placeholder="------------"
-                        multiple={true}
+                      <View style={{zIndex:998}}>
+                        <DropDownPicker
+                          placeholder="------------"
+                          multiple={true}
+                          open={open_layout}
+                          value={value_layout}
+                          items={layout}
+                          setOpen={setOpen_layout}
+                          setValue={setValue_layout}
+                          setItems={setLayout}
+                          zIndex={998}
+                          listMode={"SCROLLVIEW"}
+                          translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
+                          dropDownContainerStyle={[Platform.OS === 'android'&&{
+                            position: 'relative',
+                            top: 0,
+                          },{height:150}]}
+                        />
+                      </View>
+                    <View style={[styles.input,{zIndex:997}]}>
+                      <Text style={styles.label}>沿線・駅名
+                      <Text style={styles.inlabel}>　※検索語句を入力してください</Text></Text>
+                      <Autocomplete
+                        data={filteredStations}
+                        onChangeText={(text) => findStation(text)}
                         style={styles.inputInner}
-                        open={open_category}
-                        value={value_category}
-                        items={category}
-                        setOpen={setOpen_Category}
-                        setValue={setValue_Category}
-                        setItems={setCategory}
-                        listMode={"SCROLLVIEW"}
-                        translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
-                        dropDownContainerStyle={Platform.OS === 'android'&&{
-                          position: 'relative',
-                          top: 0,
+                        inputContainerStyle={{borderWidth:0}}
+                        flatListProps={{
+                          keyExtractor: (item) => `${item.id}`,
+                          renderItem: ({ item }) =>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setSelectedStations((prevArray) => [...prevArray, item]);
+                              setFilteredStations([]);
+                            }}>
+                            <Text style={styles.suggestText}>
+                              {item.name}
+                            </Text>
+                          </TouchableOpacity>,
                         }}
                       />
                     </View>
-                    <View style={[styles.input,{zIndex:992}]}>
-                      <Text style={styles.label}>建物構造
-                      <Text style={styles.inlabel}>　※複数選択可</Text></Text>
-                      <DropDownPicker
-                        placeholder="------------"
-                        multiple={true}
+                    <View style={{flexDirection: 'row'}}>
+                      <FlatList 
+                        data={selectedStations}
+                        renderItem={({ item }) =>
+                          (
+                            <MaterialChip
+                              text={item.name}
+                              onPress={() => station_delete(item)}
+                              rightIcon={
+                                <Feather name='x-circle' color='gray' size={18} />
+                              }
+                            />
+                          )
+                        }
+                        keyExtractor={(item) => `${item.id}`}
+                      />
+                    </View>
+                    <View style={styles.input}>
+                      <Text style={styles.label}>徒歩分数</Text>
+                      <TextInput
+                        onChangeText={(text) => {setStation_time(text)}}
+                        value={station_time}
                         style={styles.inputInner}
-                        open={open_constructure}
-                        value={value_constructure}
-                        items={constructure}
-                        setOpen={setOpen_Constructure}
-                        setValue={setValue_Constructure}
-                        setItems={setConstructure}
-                        listMode={"SCROLLVIEW"}
-                        translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
-                        dropDownContainerStyle={Platform.OS === 'android'&&{
-                          position: 'relative',
-                          top: 0,
+                      />
+                    </View>
+                    <View style={[styles.input,{zIndex:996}]}>
+                      <Text style={styles.label}>エリア名
+                      <Text style={styles.inlabel}>　※検索語句を入力してください</Text></Text>
+                      <Autocomplete
+                        data={filteredAddress}
+                        onChangeText={(text) => findAddress(text)}
+                        style={styles.inputInner}
+                        inputContainerStyle={{borderWidth:0}}
+                        flatListProps={{
+                          keyExtractor: (item) => `${item.id}`,
+                          renderItem: ({ item }) =>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setSelectedAddress((prevArray) => [...prevArray, item]);
+                              setFilteredAddress([]);
+                            }}>
+                            <Text style={styles.suggestText}>
+                              {item.name}
+                            </Text>
+                          </TouchableOpacity>,
                         }}
                       />
                     </View>
-                    <View style={[styles.input,{zIndex:991}]}>
-                      <Text style={styles.label}>築年数</Text>
-                      <DropDownPicker
-                        placeholder="------------"
-                        style={styles.inputInner}
-                        open={open_built}
-                        value={value_built}
-                        items={built}
-                        setOpen={setOpen_Built}
-                        setValue={setValue_Built}
-                        setItems={setBuilt}
-                        listMode={"SCROLLVIEW"}
-                        dropDownContainerStyle={Platform.OS === 'android'&&{
-                          position: 'relative',
-                          top: 0,
-                        }}
-                      />
-                      <Text style={[styles.inlabel,{marginTop:10}]}>※新築は築1年以内の物件が絞り込まれます</Text>
-                    </View>
-                    <View style={[styles.input,{zIndex:990}]}>
-                      <Text style={styles.label}>条件・設備
-                      <Text style={styles.inlabel}>　※複数選択可</Text></Text>
-                      <DropDownPicker
-                        placeholder="------------"
-                        multiple={true}
-                        categorySelectable={false}
-                        style={styles.inputInner}
-                        open={open_setubi}
-                        value={value_setubi}
-                        items={setubi}
-                        setOpen={setOpen_Setubi}
-                        setValue={setValue_Setubi}
-                        setItems={setSetubi}
-                        listMode={"SCROLLVIEW"}
-                        translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
-                        dropDownContainerStyle={Platform.OS === 'android'&&{
-                          position: 'relative',
-                          top: 0,
-                        }}
+                    <View style={{flexDirection: 'row'}}>
+                      <FlatList 
+                        data={selectedAddress}
+                        renderItem={({ item }) =>
+                          (
+                            <MaterialChip
+                              text={item.name}
+                              onPress={() => area_delete(item)}
+                              rightIcon={
+                                <Feather name='x-circle' color='gray' size={18} />
+                              }
+                            />
+                          )
+                        }
+                        keyExtractor={(item) => `${item.id}`}
                       />
                     </View>
-                    <View style={{flexDirection: 'row',alignItems: 'center',zIndex:889,marginTop:10}}>
-                      <Text style={[styles.label,{width:'20%'}]}>コンロ：</Text>
-                      <DropDownPicker
-                        placeholder="------------"
-                        style={[styles.inputInner,{width:'78%'}]}
-                        open={open_stove}
-                        value={value_stove}
-                        items={stove}
-                        setOpen={setOpen_Stove}
-                        setValue={setValue_Stove}
-                        setItems={setStove}
-                        listMode={"SCROLLVIEW"}
-                        dropDownContainerStyle={Platform.OS === 'android'&&{
-                          position: 'relative',
-                          top: 0,
-                        }}
+                    <View style={[styles.input,{zIndex:995}]}>
+                      <Text style={styles.label}>面積</Text>
+                      <View style={{flexDirection: 'row',zIndex:997}}>
+                        <DropDownPicker
+                          placeholder="------------"
+                          style={styles.inputInner}
+                          containerStyle={{width:'43%'}}
+                          open={open_exclusive_from}
+                          value={value_exclusive_from}
+                          items={exclusive_from}
+                          setOpen={setOpen_Exclusive_from}
+                          setValue={setValue_Exclusive_from}
+                          setItems={setExclusive_from}
+                          zIndex={995}
+                          listMode={"SCROLLVIEW"}
+                          dropDownContainerStyle={[Platform.OS === 'android'&&{
+                            position: 'relative',
+                            top: 0,
+                          },{height:100}]}
+                        />
+                        <Text style={{marginTop:15}}>　～　</Text>
+                        <DropDownPicker
+                          placeholder="------------"
+                          style={styles.inputInner}
+                          containerStyle={{width:'43%'}}
+                          open={open_exclusive_to}
+                          value={value_exclusive_to}
+                          items={exclusive_to}
+                          setOpen={setOpen_Exclusive_to}
+                          setValue={setValue_Exclusive_to}
+                          setItems={setExclusive_to}
+                          zIndex={994}
+                          listMode={"SCROLLVIEW"}
+                          dropDownContainerStyle={[Platform.OS === 'android'&&{
+                            position: 'relative',
+                            top: 0,
+                          },{height:100}]}
+                        />
+                      </View>
+                      <CheckBox
+                        center
+                        title='詳細'
+                        containerStyle={[detail === true?'':{marginBottom:35},{marginTop:20}]}
+                        checked={detail}
+                        onPress={() => setDetail(!detail)}
                       />
                     </View>
-                    <View
-                      style={[
-                        styles.input,
-                        (open_direction || open_setubi || open_stove === true)&&Platform.OS === 'ios'?{marginBottom:130}:'',
-                        {zIndex:888}
-                      ]}>
-                      <Text style={styles.label}>主要採光面
-                      <Text style={styles.inlabel}>　※複数選択可</Text></Text>
-                      <DropDownPicker
-                        placeholder="------------"
-                        multiple={true}
-                        style={styles.inputInner}
-                        open={open_direction}
-                        value={value_direction}
-                        items={direction}
-                        setOpen={setOpen_Direction}
-                        setValue={setValue_Direction}
-                        setItems={setDirection}
-                        listMode={"SCROLLVIEW"}
-                        translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
-                        dropDownContainerStyle={[Platform.OS === 'android'&&{
-                          position: 'relative',
-                          top: 0,
-                        },{height:120,zIndex:888}]}
-                      />
+                    <View style={detail === true?'':{display:'none'}}>
+                      <View style={styles.input}>
+                        <Text style={styles.label}>物件番号</Text>
+                        <TextInput
+                          onChangeText={(text) => {setArticle_id(text)}}
+                          value={article_id}
+                          style={styles.inputInner}
+                        />
+                      </View>
+                      <View style={[styles.input,{zIndex:993}]}>
+                        <Text style={styles.label}>物件種別
+                        <Text style={styles.inlabel}>　※複数選択可</Text></Text>
+                        <DropDownPicker
+                          placeholder="------------"
+                          multiple={true}
+                          style={styles.inputInner}
+                          open={open_category}
+                          value={value_category}
+                          items={category}
+                          setOpen={setOpen_Category}
+                          setValue={setValue_Category}
+                          setItems={setCategory}
+                          listMode={"SCROLLVIEW"}
+                          translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
+                          dropDownContainerStyle={Platform.OS === 'android'&&{
+                            position: 'relative',
+                            top: 0,
+                          }}
+                        />
+                      </View>
+                      <View style={[styles.input,{zIndex:992}]}>
+                        <Text style={styles.label}>建物構造
+                        <Text style={styles.inlabel}>　※複数選択可</Text></Text>
+                        <DropDownPicker
+                          placeholder="------------"
+                          multiple={true}
+                          style={styles.inputInner}
+                          open={open_constructure}
+                          value={value_constructure}
+                          items={constructure}
+                          setOpen={setOpen_Constructure}
+                          setValue={setValue_Constructure}
+                          setItems={setConstructure}
+                          listMode={"SCROLLVIEW"}
+                          translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
+                          dropDownContainerStyle={Platform.OS === 'android'&&{
+                            position: 'relative',
+                            top: 0,
+                          }}
+                        />
+                      </View>
+                      <View style={[styles.input,{zIndex:991}]}>
+                        <Text style={styles.label}>築年数</Text>
+                        <DropDownPicker
+                          placeholder="------------"
+                          style={styles.inputInner}
+                          open={open_built}
+                          value={value_built}
+                          items={built}
+                          setOpen={setOpen_Built}
+                          setValue={setValue_Built}
+                          setItems={setBuilt}
+                          listMode={"SCROLLVIEW"}
+                          dropDownContainerStyle={Platform.OS === 'android'&&{
+                            position: 'relative',
+                            top: 0,
+                          }}
+                        />
+                        <Text style={[styles.inlabel,{marginTop:10}]}>※新築は築1年以内の物件が絞り込まれます</Text>
+                      </View>
+                      <View style={[styles.input,{zIndex:990}]}>
+                        <Text style={styles.label}>条件・設備
+                        <Text style={styles.inlabel}>　※複数選択可</Text></Text>
+                        <DropDownPicker
+                          placeholder="------------"
+                          multiple={true}
+                          categorySelectable={false}
+                          style={styles.inputInner}
+                          open={open_setubi}
+                          value={value_setubi}
+                          items={setubi}
+                          setOpen={setOpen_Setubi}
+                          setValue={setValue_Setubi}
+                          setItems={setSetubi}
+                          listMode={"SCROLLVIEW"}
+                          translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
+                          dropDownContainerStyle={Platform.OS === 'android'&&{
+                            position: 'relative',
+                            top: 0,
+                          }}
+                        />
+                      </View>
+                      <View style={{flexDirection: 'row',alignItems: 'center',zIndex:889,marginTop:10}}>
+                        <Text style={[styles.label,{width:'20%'}]}>コンロ：</Text>
+                        <DropDownPicker
+                          placeholder="------------"
+                          style={[styles.inputInner,{width:'78%'}]}
+                          open={open_stove}
+                          value={value_stove}
+                          items={stove}
+                          setOpen={setOpen_Stove}
+                          setValue={setValue_Stove}
+                          setItems={setStove}
+                          listMode={"SCROLLVIEW"}
+                          dropDownContainerStyle={Platform.OS === 'android'&&{
+                            position: 'relative',
+                            top: 0,
+                          }}
+                        />
+                      </View>
+                      <View
+                        style={[
+                          styles.input,
+                          (open_direction || open_setubi || open_stove === true)&&Platform.OS === 'ios'?{marginBottom:130}:'',
+                          {zIndex:888}
+                        ]}>
+                        <Text style={styles.label}>主要採光面
+                        <Text style={styles.inlabel}>　※複数選択可</Text></Text>
+                        <DropDownPicker
+                          placeholder="------------"
+                          multiple={true}
+                          style={styles.inputInner}
+                          open={open_direction}
+                          value={value_direction}
+                          items={direction}
+                          setOpen={setOpen_Direction}
+                          setValue={setValue_Direction}
+                          setItems={setDirection}
+                          listMode={"SCROLLVIEW"}
+                          translation={{ SELECTED_ITEMS_COUNT_TEXT:"{count}"}}
+                          dropDownContainerStyle={[Platform.OS === 'android'&&{
+                            position: 'relative',
+                            top: 0,
+                          },{height:120,zIndex:888}]}
+                        />
+                      </View>
                     </View>
-                  </View>
-                </View>
-              </ScrollView>
+                  </View>)
+                ]}
+                renderItem={({ item }) => (
+                  <>{item}</>
+                )}
+              />
               <CheckBox
                 center
                 title='条件を保存する'
