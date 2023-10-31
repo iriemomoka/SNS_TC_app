@@ -362,7 +362,7 @@ exports.CreateDB = function(props){
     tx.executeSql(
       `select * from staff_profile;`,  
       [],
-      () => {console.log("ローカルDB[スタッフプロフィール]はすでに作成されています");},
+      () => {},
       () => {
               // スタッフプロフィールテーブル追加
               tx.executeSql(
@@ -390,7 +390,7 @@ exports.CreateDB = function(props){
     tx.executeSql(
       `select * from ranking_mst;`,  
       [],
-      () => {console.log("ローカルDB[ランキング]はすでに作成されています");},
+      () => {},
       () => {
               // スタッフプロフィールテーブル追加
               tx.executeSql(
@@ -424,7 +424,7 @@ exports.CreateDB = function(props){
     tx.executeSql(
       `select * from black_sales_mst;`,  
       [],
-      () => {console.log("ローカルDB[売上グラフ]はすでに作成されています");},
+      () => {},
       () => {
               // スタッフプロフィールテーブル追加
               tx.executeSql(

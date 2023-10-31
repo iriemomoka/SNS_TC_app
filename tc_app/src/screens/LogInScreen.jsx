@@ -37,9 +37,6 @@ Notifications.setNotificationHandler({
 let domain = 'https://www.total-cloud.net/';
 
 export default function LogInScreen(props) {
-
-  // アプリの最新バージョンを取得する実装
-  const latestAppVersion = '2.3.5';
   
   // 現在利用しているアプリのバージョンを取得する
   const appVersion = VersionCheck.getCurrentVersion();
@@ -103,45 +100,52 @@ export default function LogInScreen(props) {
         
       }
     })
-    
-    // 新しいバージョンのアプリがストアに配布されている場合は更新を促す
-    if (appVersion != latestAppVersion) {
+
+    fetch(domain+'js/appversion.json')
+    .then((response) => response.json())
+    .then((json) => {
       
-      Alert.alert("更新情報", "新しいバージョンが利用可能です。最新版にアップデートしてご利用ください。", [
-        { text: "後で通知", style: "cancel" },
-        { text: "アップデート", onPress: () => {
-          // iOSとAndroidでストアのURLが違うので分岐する
-          if (Platform.OS === "ios") {
-            const appId = 1559136330; // AppStoreのURLから確認できるアプリ固有の数値
-            const itunesURLScheme = `itms-apps://itunes.apple.com/jp/app/id${appId}?mt=8`;
-            const itunesURL = `https://itunes.apple.com/jp/app/id${appId}?mt=8`;
-        
-            Linking.canOpenURL(itunesURLScheme).then(supported => {
-              // AppStoreアプリが開ける場合はAppStoreアプリで開く。開けない場合はブラウザで開く。
-              if (supported) {
-                Linking.openURL(itunesURLScheme);
-              } else {
-                Linking.openURL(itunesURL);
-              }
-            });
-          } else {
-            const appId = "com.totalcloud.totalcloud"; // PlayストアのURLから確認できるid=?の部分
-            const playStoreURLScheme = `market://details?id=${appId}`;
-            const playStoreURL = `https://play.google.com/store/apps/details?id=${appId}`;
-        
-            Linking.canOpenURL(playStoreURLScheme).then(supported => {
-              // Playストアアプリが開ける場合はPlayストアアプリで開く。開けない場合はブラウザで開く。
-              if (supported) {
-                Linking.openURL(playStoreURLScheme);
-              } else {
-                Linking.openURL(playStoreURL);
-              }
-            });
-          }
-        }}
-      ]);
+      var latestAppVersion = json.version;
       
-    }
+      // 新しいバージョンのアプリがストアに配布されている場合は更新を促す
+      if (appVersion < latestAppVersion) {
+        
+        Alert.alert("更新情報", "新しいバージョンが利用可能です。最新版にアップデートしてご利用ください。", [
+          { text: "後で通知", style: "cancel" },
+          { text: "アップデート", onPress: () => {
+            // iOSとAndroidでストアのURLが違うので分岐する
+            if (Platform.OS === "ios") {
+              const appId = 1559136330; // AppStoreのURLから確認できるアプリ固有の数値
+              const itunesURLScheme = `itms-apps://itunes.apple.com/jp/app/id${appId}?mt=8`;
+              const itunesURL = `https://itunes.apple.com/jp/app/id${appId}?mt=8`;
+          
+              Linking.canOpenURL(itunesURLScheme).then(supported => {
+                // AppStoreアプリが開ける場合はAppStoreアプリで開く。開けない場合はブラウザで開く。
+                if (supported) {
+                  Linking.openURL(itunesURLScheme);
+                } else {
+                  Linking.openURL(itunesURL);
+                }
+              });
+            } else {
+              const appId = "com.totalcloud.totalcloud"; // PlayストアのURLから確認できるid=?の部分
+              const playStoreURLScheme = `market://details?id=${appId}`;
+              const playStoreURL = `https://play.google.com/store/apps/details?id=${appId}`;
+          
+              Linking.canOpenURL(playStoreURLScheme).then(supported => {
+                // Playストアアプリが開ける場合はPlayストアアプリで開く。開けない場合はブラウザで開く。
+                if (supported) {
+                  Linking.openURL(playStoreURLScheme);
+                } else {
+                  Linking.openURL(playStoreURL);
+                }
+              });
+            }
+          }}
+        ]);
+        
+      }
+    })
     
     // ローカルDBでログイン(同期処理)
     const execute = async() => {
