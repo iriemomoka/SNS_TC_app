@@ -1859,7 +1859,7 @@ export function MyModal3(props){
       props.setMsgtext(insertMsg);
     } else if (props.setNote) {
       props.setNote(insertMsg);
-      if (mail_format == 'HTML') {
+      if (mail_format == 'HTML' && insertMsg) {
         editorRef.current.setContentHTML(insertMsg);
       }
     }
