@@ -1,6 +1,6 @@
 import React, { useState,useEffect } from "react";
 import {
-  StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, BackHandler, AppState, KeyboardAvoidingView, ScrollView, Image, Linking, Platform, Button
+  StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, BackHandler, AppState, KeyboardAvoidingView, ScrollView, FlatList,  Image, Linking, Platform, Button
 } from "react-native";
 import RadioButtonRN from 'radio-buttons-react-native';
 import * as Notifications from 'expo-notifications';
@@ -217,29 +217,29 @@ export default function Setting(props) {
       
       // 設定2-6
       if (setting6_flg) {
-        setSetting_list6('1')
+        setSetting_list6('1');
       }
       
       if (setting_list.split(',').includes('6') || setting_list.split(',').includes('6_1') || setting_list.split(',').includes('6_2') || !setting6_flg) {
-        setSetting_list6_staff('')
+        setSetting_list6_staff('');
       }
       if (setting_list.split(',').includes('6_a') || setting_list.split(',').includes('6_1_a') || setting_list.split(',').includes('6_2_a')) {
-        setSetting_list6_staff('1')
+        setSetting_list6_staff('1');
       }
       
       // 設定2-7
       if (setting_list.split(',').includes('7')) {
-        setSetting_list7('1')
+        setSetting_list7('1');
       }
       
       // 設定2-8
       if (setting_list.split(',').includes('8')) {
-        setSetting_list8('1')
+        setSetting_list8('1');
       }
       
       // 設定2-9
       if (setting_list.split(',').includes('10')) {
-        setSetting_list10('1')
+        setSetting_list10('1');
       }
       
     }
@@ -339,9 +339,9 @@ export default function Setting(props) {
 
   // [NEW]20220408
   const [profile_tag, setprofile_tag] = useState({tags: {tag: '', tagsArray: buf_profile_tag}});
-//  const [profile_tag, setprofile_tag] = useState(buf_profile_tag);
-//  const [birthplace, setbirthplace] = useState([]);
-//  const [profile_tag, setprofile_tag] = useState([]);
+  // const [profile_tag, setprofile_tag] = useState(buf_profile_tag);
+  // const [birthplace, setbirthplace] = useState([]);
+  // const [profile_tag, setprofile_tag] = useState([]);
 
   // ファイル選択1
   const [filedata1,setFiledata1] = useState({'uri':photo_1});
@@ -366,7 +366,6 @@ export default function Setting(props) {
   const [photoData2, setphotoData2] = useState(photo_2);
   const [photoData3, setphotoData3] = useState(photo_3);
   const [photoData4, setphotoData4] = useState(photo_4);
-
 
 
 
@@ -724,7 +723,7 @@ console.log("3:"+photoData4);
                 },
                 () => {
                   // 変更失敗
-                  console.log('画像削除できなかったよ')
+                  console.log('画像削除できなかったよ');
                 }
               );
             });
@@ -1138,7 +1137,7 @@ function onSubmit() {
       },
       () => {
         // 変更失敗
-        console.log('変更できなかったよ')
+        console.log('変更できなかったよ');
       }
     );
     
@@ -1290,7 +1289,7 @@ function replaceElement(array, before, after) {
     // ローディング開始
     setLoading(true);
     
-    var err = ''
+    var err = '';
     
     if (password != old_password) {
       err += '\n・元のパスワードが間違っています';
@@ -1349,7 +1348,7 @@ function replaceElement(array, before, after) {
         },
         () => {
           // 変更失敗
-          console.log('変更できなかったよ')
+          console.log('変更できなかったよ');
         }
       );
   
@@ -1379,14 +1378,14 @@ function replaceElement(array, before, after) {
         // ローディング終了
         setLoading(false);
         Alert.alert('パスワードを変更しました');
-        passwordClose()
+        passwordClose();
       })
       .catch((error) => {
         // ローディング終了
         setLoading(false);
         const errorMsg = "パスワードの変更に失敗しました";
         Alert.alert(errorMsg);
-        passwordClose()
+        passwordClose();
       })
       
   }
@@ -1403,7 +1402,7 @@ function replaceElement(array, before, after) {
     // ローディング開始
     setLoading(true);
     
-    var err = ''
+    var err = '';
     
     if (!mail.match(/^([a-zA-Z0-9])+([a-zA-Z0-9\._-])*@([a-zA-Z0-9_-])+([a-zA-Z0-9\._-]+)+$/)) {
       err += 'メールアドレスの形式が間違っています';
@@ -1451,7 +1450,7 @@ function replaceElement(array, before, after) {
         console.log(json)
         if (json == 'true') {
           Alert.alert('','確認メールをお送りしました\n登録されたアドレスの受信メールをご確認頂き、リンクをクリックしてください');
-          mailClose()
+          mailClose();
           
           if (mail_modal == 1) {
             setMail1(mail);
@@ -1483,7 +1482,7 @@ function replaceElement(array, before, after) {
               },
               () => {
                 // 変更失敗
-                console.log('変更できなかったよ')
+                console.log('変更できなかったよ');
               }
             );
         
@@ -1499,7 +1498,7 @@ function replaceElement(array, before, after) {
         setLoading(false);
         const errorMsg = "確認メール送信に失敗しました";
         Alert.alert(errorMsg);
-        mailClose()
+        mailClose();
       })
     
   }
@@ -1568,7 +1567,7 @@ function replaceElement(array, before, after) {
                     },
                     () => {
                       // 変更失敗
-                      console.log('変更できなかったよ')
+                      console.log('変更できなかったよ');
                     }
                   );
               
@@ -1584,11 +1583,11 @@ function replaceElement(array, before, after) {
           
                 // ローディング終了
                 setLoading(false);
-                console.log(json)
+                console.log(json);
                 Alert.alert("削除しました");
               })
               .catch((error) => {
-                console.log(error)
+                console.log(error);
                 Alert.alert("メールアドレス削除に失敗しました");
               })
           }
@@ -1602,14 +1601,16 @@ function replaceElement(array, before, after) {
 
 
   return (
-  
     <>
     <KeyboardAvoidingView style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'position' : null}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 70}
     >
       <Loading isLoading={isLoading} />
-      <ScrollView contentContainerStyle={styles.form}>
+      {/* <ScrollView contentContainerStyle={styles.form}> */}
+      <FlatList
+        style={styles.form}
+        data={[(
         <GestureRecognizer
           onSwipeRight={()=>{backAction()}}
           style={{flex: 1}}
@@ -1666,11 +1667,12 @@ function replaceElement(array, before, after) {
           >
             <KeyboardAvoidingView  style={styles.password_modal} behavior={Platform.OS === "ios" ? "padding" : "height"}>
               <TouchableOpacity
-                style={{position: 'absolute',
-                        top:8,
-                        right:10,
-                        zIndex:999
-                      }}
+                style={{
+                  position: 'absolute',
+                  top:8,
+                  right:10,
+                  zIndex:999
+                }}
                 onPress={() => {passwordClose()}}
               >
                 <Feather name='x-circle' color='gray' size={35} />
@@ -1786,7 +1788,7 @@ function replaceElement(array, before, after) {
             <View style={styles.btn_wrap}>
               <TouchableOpacity
                 onPress={() => {
-                  setMail_modal(3)
+                  setMail_modal(3);
                   setMail(mail3);
                 }}
                 style={styles.btn}
@@ -1828,11 +1830,12 @@ function replaceElement(array, before, after) {
           >
             <KeyboardAvoidingView style={styles.password_modal} behavior={Platform.OS === "ios" ? "padding" : "height"}>
               <TouchableOpacity
-                style={{position: 'absolute',
-                        top:8,
-                        right:10,
-                        zIndex:999
-                      }}
+                style={{
+                  position: 'absolute',
+                  top:8,
+                  right:10,
+                  zIndex:999
+                }}
                 onPress={() => {mailClose()}}
               >
                 <Feather name='x-circle' color='gray' size={35} />
@@ -2332,7 +2335,6 @@ function replaceElement(array, before, after) {
             </View>
           </View>
     
-    
           <TouchableOpacity
             onPress={onSubmit}
             style={styles.submit}
@@ -2341,7 +2343,12 @@ function replaceElement(array, before, after) {
           </TouchableOpacity>
           
         </GestureRecognizer>
-      </ScrollView>
+        )]}
+        renderItem={({ item }) => (
+          <>{item}</>
+        )}
+      />
+      {/* </ScrollView> */}
     </KeyboardAvoidingView>
     </>
   );
