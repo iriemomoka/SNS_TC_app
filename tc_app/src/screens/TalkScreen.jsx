@@ -370,7 +370,6 @@ export default function TalkScreen(props) {
       
       // 反響・来店ともに担当者無し→反響担当者
       if (!customer.reverberation.user_id && customer.main.status == '未対応') {
-        
         setTantou('反響');
         setModal5(true);
       }
@@ -536,7 +535,6 @@ export default function TalkScreen(props) {
           if (rows._array.length) {
             
             db.transaction((tx) => {
-              
               
               communication.map((c) => {
                 
@@ -1160,6 +1158,23 @@ export default function TalkScreen(props) {
       setModal4(true);
     }
   }
+
+  const [filteredFixed, setFilteredFixed] = useState([]);
+
+  // リストからHTML用の定型文をフィルタリング
+  const filterFixedByCategory = (category) => {
+    const filtered = route.fixed.filter((obj) => obj.category !== category);
+    setFilteredFixed(filtered);
+  }
+
+  useEffect(() => {
+    if (modal4) {
+      // チャット画面の入力欄に直接定型文を挿入する時は'HTML用'の定型文は表示しない
+      filterFixedByCategory('HTML用');
+    } else {
+      setFilteredFixed(route.fixed);
+    }
+  }, [modal1, modal4]);
   
   const [menu_height,setMenu_height] = useState(false);
   const getHeight = (e) => {
@@ -1419,7 +1434,7 @@ export default function TalkScreen(props) {
               isVisible={modal4}
               onSwipeComplete={() => { setModal4(false) }}
               onPress={()=>{ setModal4(false) }}
-              fixed={route.fixed}
+              fixed={filteredFixed}
               msgtext={msgtext}
               subject={subject}
               setMsgtext={setMsgtext}

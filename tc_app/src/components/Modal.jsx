@@ -911,6 +911,8 @@ export function MyModal1(props) {
         c_d={c_d}
         setNote={setNote}
         msgtext={note}
+        mail_format={mail_format}
+        editorRef={editorRef}
       />
       <MyModal4 
         isVisible={Fixed}
@@ -1314,7 +1316,7 @@ export function MyModal2(props){
 
 export function MyModal3(props){
   
-  const { route,isVisible,onSwipeComplete,onClose,msgtext,property,station_list,address,c_d } = props;
+  const { route,isVisible,onSwipeComplete,onClose,msgtext,property,station_list,address,c_d,mail_format,editorRef } = props;
   
   const [isRecommended, setRecommended] = useState(false);
 
@@ -1813,6 +1815,32 @@ export function MyModal3(props){
   
   const [search_results,setSearch_results] = useState(false);
   
+  // HTML形式に変換
+  function convertToHTML(text) {
+    let urlPattern = /(^|\s|<.+?>)(https?:\/\/[^\s<>]+)($|\s|<.+?>)/g;
+    let extractedText;
+
+    if (/(<\/?[^>]+(>|$)|&nbsp;)/gi.test(text)) {
+      // 既にHTMLソースの場合
+      extractedText = text.split('”').join('"');
+    } else {
+      // 普通の文字列の場合
+      extractedText = text.replace(/\n/g, '<br />\n');
+    }
+
+    extractedText = extractedText.replace(urlPattern, function(match, p1, p2, p3) {
+      if (p1.startsWith("<a") || p1.startsWith("<img") || p1.startsWith("<area")) {
+        // URLの文字列がa,img,areaのどれかのタグで挟まれていたら、そのままのソースを返す
+        return match;
+      } else {
+        // URLの文字列がその他のHTMLタグかスペースに挟まれていたら、aタグで挟む
+        return p1 + "<a href='" + p2 + "'>" + p2 + "</a>" + p3;
+      }
+    });
+
+    return extractedText;
+  }
+
   const [insertMsg,setInsertMsg] = useState(false);
   
   const proInsert = (item) => {
@@ -1820,7 +1848,9 @@ export function MyModal3(props){
               item.line_name1+"／"+item.station_name1+"駅／徒歩"+item.station_time1+"分／"+
               item.rent/10000+"万円("+item.general+"円)／"+item.exclusive+"㎡"+"\n\n"+
               "https://www.total-cloud.net/show/"+route.customer+"/1/"+item.article_id+"/"+"\n";
-    
+    if (mail_format == 'HTML') {
+      msg = convertToHTML(msg);
+    }
     setInsertMsg(msgtext?msgtext + msg:msg);
   }
   
@@ -1829,6 +1859,9 @@ export function MyModal3(props){
       props.setMsgtext(insertMsg);
     } else if (props.setNote) {
       props.setNote(insertMsg);
+      if (mail_format == 'HTML') {
+        editorRef.current.setContentHTML(insertMsg);
+      }
     }
   },[insertMsg])
   
