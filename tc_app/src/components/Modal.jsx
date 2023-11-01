@@ -351,6 +351,21 @@ export function MyModal1(props) {
     }
   };
 
+  const [disabled, setDisabled] = useState(true);
+
+  useEffect(() => {
+    // HTMLエディタのキーボードが表示されている時だけTouchableWithoutFeedbackのdisabledをtrueにする
+    if (editorRef.current) {
+      if (editorRef.current._focus) {
+        setDisabled(false);
+      } else {
+        setDisabled(true);
+      }
+    } else {
+      setDisabled(true);
+    }
+  }, [keyboardClose])
+
   // RichToolbarのカスタムアイコン
   const H1 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H1</Text>
   const H2 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H2</Text>
@@ -955,7 +970,10 @@ export function MyModal1(props) {
             <Feather name='x-circle' color='gray' size={35} />
           </TouchableOpacity>
           <View style={styles.form}>
-            <TouchableWithoutFeedback onPress={keyboardClose}>
+            <TouchableWithoutFeedback
+              disabled={disabled}
+              onPress={keyboardClose}
+            >
               <View>
                 <FlatList
                   style={{height: mail_format == 'HTML' ? 200 : 500}}
@@ -1049,7 +1067,7 @@ export function MyModal1(props) {
                             <TextInput
                               onChangeText={(text) => {setNote(text)}}
                               value={note}
-                              style={styles.textarea}
+                              style={styles.mail_textarea}
                               multiline={true}
                               disableFullscreenUI={true}
                               numberOfLines={11}
@@ -1075,25 +1093,20 @@ export function MyModal1(props) {
                   iconTint={"black"}
                   selectedIconTint={"white"}
                   actions={[
+                    actions.keyboard,
                     actions.undo,
                     actions.redo,
                     actions.setBold,
                     actions.setItalic,
                     actions.setUnderline,
-                    actions.keyboard,
-                    actions.blockquote,
-                    actions.insertBulletsList,
-                    actions.insertOrderedList,
-                    // actions.fontSize,
+                    actions.insertLine,
+                    actions.setStrikethrough,
                     actions.heading1,
                     actions.heading2,
                     actions.heading3,
                     actions.heading4,
                     actions.heading5,
                     actions.heading6,
-                    actions.insertLine,
-                    actions.setStrikethrough,
-                    actions.insertLink,
                     actions.indent,
                     actions.outdent,
                     actions.alignLeft,
@@ -1102,11 +1115,6 @@ export function MyModal1(props) {
                     actions.alignFull,
                     actions.setSubscript,
                     actions.setSuperscript,
-                    // actions.removeFormat,
-                    // actions.table,
-                    actions.code,
-                    // actions.insertImage,
-                    // actions.insertVideo,
                     actions.checkboxList,
                   ]}
                   iconMap={{
@@ -1879,7 +1887,7 @@ export function MyModal3(props){
       propagateSwipe={true}
       onBackdropPress={onClose}
     >
-      <View  style={[{height:400},styles.template]}>
+      <View style={[{height:400},styles.template]}>
         <TouchableOpacity
           style={styles.close}
           onPress={onClose}
@@ -4664,6 +4672,17 @@ const styles = StyleSheet.create({
     fontSize:16,
     borderWidth: 1.5,
     borderRadius: 8,
+  },
+  mail_textarea: {
+    minHeight: 200,
+    height: 'auto',
+    paddingVertical:10,
+    paddingHorizontal:5,
+    borderColor: '#1f2d53',
+    fontSize:16,
+    borderWidth: 1.5,
+    borderRadius: 8,
+    textAlignVertical: 'top'
   },
   textarea: {
     height:200,
