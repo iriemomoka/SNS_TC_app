@@ -14,7 +14,7 @@ import { Audio } from 'expo-av';
 
 import Loading from '../components/Loading';
 import { MyModal0, MyModal1, MyModal2, MyModal3, MyModal4, MyModal5, MyModal6 } from '../components/Modal';
-import { db } from '../components/Databace';
+import { db,GetDB } from '../components/Databace';
 
 LogBox.ignoreAllLogs()
 
@@ -63,6 +63,9 @@ export default function TalkScreen(props) {
   const [inquiry_text,setInquiry_text] = useState(false);
   const [inquiry_name,setInquiry_name] = useState(false);
   
+  const [station,setStation] = useState([]);
+  const [address,setAddress] = useState([]);
+
   navigation.setOptions({
     headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
   });
@@ -84,8 +87,6 @@ export default function TalkScreen(props) {
                     name: 'CommunicationHistory' ,
                     params: route.params,
                     websocket:route.websocket,
-                    station:route.station,
-                    address:route.address,
                     profile:route.profile,
                     previous:'TalkScreen'
                   }],
@@ -104,8 +105,6 @@ export default function TalkScreen(props) {
             name: 'CommunicationHistory' ,
             params: route.params,
             websocket:route.websocket,
-            station:route.station,
-            address:route.address,
             profile:route.profile,
             previous:'TalkScreen'
           }],
@@ -140,8 +139,6 @@ export default function TalkScreen(props) {
                               name: 'CommunicationHistory' ,
                               params: route.params,
                               websocket:route.websocket,
-                              station:route.station,
-                              address:route.address,
                               profile:route.profile,
                               previous:'TalkScreen'
                             }],
@@ -160,8 +157,6 @@ export default function TalkScreen(props) {
                       name: 'CommunicationHistory' ,
                       params: route.params,
                       websocket:route.websocket,
-                      station:route.station,
-                      address:route.address,
                       profile:route.profile,
                       previous:'TalkScreen'
                     }],
@@ -186,6 +181,9 @@ export default function TalkScreen(props) {
   
   useEffect(() => {
     
+    GetDB('station_mst').then(station_mst=>setStation(station_mst));
+    GetDB('address_mst').then(address_mst=>setAddress(address_mst));
+
     setLoading(true);
     fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
     {
@@ -332,8 +330,6 @@ export default function TalkScreen(props) {
           params: route.params ,
           customer:route.customer,
           websocket:new WebSocket(WS_URL),
-          station:route.station,
-          address:route.address,
           profile:route.profile,
         }],
       });
@@ -1200,8 +1196,8 @@ export default function TalkScreen(props) {
       cus={customer}
       options={options}
       tantou={tantou}
-      station_list={route.station}
-      address={route.address}
+      station_list={station}
+      address={address}
     />
     <MyModal5
       isVisible={modal6?false:modal5}
@@ -1211,8 +1207,8 @@ export default function TalkScreen(props) {
       navigation={navigation}
       options={options}
       tantou={tantou}
-      station_list={route.station}
-      address={route.address}
+      station_list={station}
+      address={address}
     />
     <GiftedChat
       messages={messages}
@@ -1369,8 +1365,8 @@ export default function TalkScreen(props) {
               route={route}
               onSend={onSend}
               property={property}
-              station_list={route.station}
-              address={route.address}
+              station_list={station}
+              address={address}
               c_d={conditions_date}
               fixed={route.fixed}
               hensu={customer.main?[
@@ -1424,8 +1420,8 @@ export default function TalkScreen(props) {
               onClose={()=>{ setModal3(false) }}
               route={route}
               property={property}
-              station_list={route.station}
-              address={route.address}
+              station_list={station}
+              address={address}
               c_d={conditions_date}
               msgtext={props.user.text}
               setMsgtext={setMsgtext}
