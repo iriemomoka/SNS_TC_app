@@ -785,8 +785,6 @@ console.log("3:"+photoData4);
           name: 'CommunicationHistory' ,
           params: route.params,
           websocket:route.websocket,
-          station:route.station,
-          address:route.address,
           profile:route.profile,
           previous:'Setting'
         }],
@@ -812,8 +810,6 @@ console.log("3:"+photoData4);
                   name: 'CommunicationHistory',
                   params: route.params,
                   websocket:route.websocket,
-                  station:route.station,
-                  address:route.address,
                   profile:route.profile,
                   previous:'Setting'
                 }],

@@ -57,8 +57,6 @@ export default function BellScreen(props) {
                     name: 'CommunicationHistory' ,
                     params: route.params,
                     websocket:route.websocket,
-                    station:route.station,
-                    address:route.address,
                     profile:route.profile,
                     previous:'BellScreen'
                   }],
@@ -77,8 +75,6 @@ export default function BellScreen(props) {
             name: 'CommunicationHistory' ,
             params: route.params,
             websocket:route.websocket,
-            station:route.station,
-            address:route.address,
             profile:route.profile,
             previous:'BellScreen'
           }],
@@ -113,8 +109,6 @@ export default function BellScreen(props) {
                               name: 'CommunicationHistory' ,
                               params: route.params,
                               websocket:route.websocket,
-                              station:route.station,
-                              address:route.address,
                               profile:route.profile,
                               previous:'BellScreen'
                             }],
@@ -133,8 +127,6 @@ export default function BellScreen(props) {
                       name: 'CommunicationHistory' ,
                       params: route.params,
                       websocket:route.websocket,
-                      station:route.station,
-                      address:route.address,
                       profile:route.profile,
                       previous:'BellScreen'
                     }],
@@ -298,8 +290,6 @@ export default function BellScreen(props) {
             params: route.params ,
             customer:message._id,
             websocket:route.websocket,
-            station:route.station,
-            address:route.address,
             profile:route.profile,
             cus_name:message.name,
             staff:staffs,

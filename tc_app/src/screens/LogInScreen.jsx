@@ -12,7 +12,9 @@ import * as Notifications from 'expo-notifications';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 
 import Loading from '../components/Loading';
-import { CreateDB, GetDB, db} from '../components/Databace';
+import { CreateDB, GetDB,db_select,db_write} from '../components/Databace';
+
+const db = SQLite.openDatabase("db");
 
 // どうしようもない警告を非表示にしてます、あとから消します
 LogBox.ignoreLogs([
@@ -54,8 +56,8 @@ export default function LogInScreen(props) {
   
   const [fc_flg,setFC_flg] = useState(false);
   
-  const [station,setStation] = useState([]);
-  const [address,setAddress] = useState([]);
+  const [station,setStation] = useState(false);
+  const [address,setAddress] = useState(false);
   
   const [rocalDB,setRocalDB] = useState([]);
   const [rocalDBProfile,setRocalDBProfile] = useState([]);
@@ -77,7 +79,7 @@ export default function LogInScreen(props) {
 
   useEffect(() => {
     
-    registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
+    registerForPushNotificationsAsync();
     
     // メッセージ受信時
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
@@ -150,6 +152,8 @@ export default function LogInScreen(props) {
     // ローカルDBでログイン(同期処理)
     const execute = async() => {
       
+      console.log('--------------------------------')
+
       setLoading(true);
 
       const toast = (text) => Toast.show(text, {
@@ -163,9 +167,10 @@ export default function LogInScreen(props) {
       
       // 駅・沿線
       const set_station = async() => {
-        const station_ = await GetDB('station_mst');
+        var station_ = await db_select(`select count(*) as cnt from station_mst;`);
+        var cnt = station_[0]["cnt"];
         
-        if (station_ == false) {
+        if (cnt == 0) {
           function getStation(){
             return new Promise((resolve, reject)=>{
               fetch(domain+'js/data/reins.json')
@@ -184,15 +189,16 @@ export default function LogInScreen(props) {
           const GS = await getStation();
           if (GS) await Insert_station_db(GS);
         } else {
-          setStation(station_);
+          setStation(true);
         }
       }
       
       // エリア
       const set_area = async() => {
-        const address_ = await GetDB('address_mst');
+        var address_ = await db_select(`select count(*) as cnt from address_mst;`);
+        var cnt = address_[0]["cnt"];
 
-        if (address_ == false) {
+        if (cnt == 0) {
           function getAddress(){
             return new Promise((resolve, reject)=>{
               fetch(domain+'js/data/address.json')
@@ -211,7 +217,7 @@ export default function LogInScreen(props) {
           const GA = await getAddress();
           if (GA) await Insert_area_db(GA);
         } else {
-          setAddress(address_);
+          setAddress(true);
         }
       }
 
@@ -233,9 +239,6 @@ export default function LogInScreen(props) {
 
         setRocalDB(staff_mst);
       }
-
-      // プロフィール情報取得【ローカルDB】
-      //await GetDB(rocalDBProfile,'staff_profile');
       
       setLoading(false);
     }
@@ -243,10 +246,10 @@ export default function LogInScreen(props) {
     
   }, []);
   
-  // 取得したトークンで自動ログイン
+  // ローカルDBまたは取得したトークンで自動ログイン
   useEffect(() => {
     
-    if (station.length > 0 && address.length > 0) {
+    if (station && address) {
       if (rocalDB.length != 0) {
         
         if (rocalDB[0].fc_flg) {
@@ -264,16 +267,12 @@ export default function LogInScreen(props) {
         // ローカルサーバーのデータを更新(サーバーから取得)
         getServerData(rocalDBProfile,rocalDB[0]);
   
-        //GetDB(rocalDBProfile,'staff_profile');
-  
         navigation.reset({
           index: 0,
           routes: [{
             name: 'CommunicationHistory',
             params: rocalDB[0],
             websocket:new WebSocket(WS_URL),
-            station:station,
-            address:address,
             profile:rocalDBProfile,
             flg:'ローカル',
             previous:'LogIn',
@@ -282,7 +281,8 @@ export default function LogInScreen(props) {
         });
   
       } else if (rocalDB.length == 0 && ExpoPushToken && !global.fc_flg) {
-        // fcは使わない
+
+        // ※fcは使わない
         fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
         {
           method: 'POST',
@@ -290,292 +290,146 @@ export default function LogInScreen(props) {
             Accept: 'application/json',
             'Content-Type': 'application/x-www-form-urlencoded'
           },
-          // PHPに送るデータ
           body: JSON.stringify({
             sp_token : ExpoPushToken,
           })
         })
-          .then((response) => response.json())
-          .then((json) => {
-            // 多分使ってない。
-            let toast = Toast.show('自動ログインしています', {
-              duration: Toast.durations.SHORT,
-              position: 200,
-              shadow: true,
-              animation: true,
-              backgroundColor:'#333333',
-            });
-            
-            // ログインデータ保持用
-            global.sp_id = json.staff.account;
-            
-            // // websocket通信
-            const WS_URL = 'ws://54.168.20.149:8080/ws/'+json.staff.shop_id+'/'
-            
-            const staff = json.staff;
-  
-            const staff_data = [
-              staff.account,
-              staff.password,
-              staff.shop_id,
-              staff.name_1,
-              staff.name_2,
-              staff.name,
-              staff.corporations_name,
-              staff.setting_list,
-              staff.app_token,
-              staff.system_mail,
-              staff.yahoomail,
-              staff.gmail,
-              staff.hotmail,
-              staff.outlook,
-              staff.softbank,
-              staff.icloud,
-              staff.original_mail,
-              staff.line_id,
-              staff.mail_name,
-              staff.mail1,
-              staff.mail2,
-              staff.mail3,
-              staff.top_staff_list,
-              staff.setting_list7_mail,
-              null
-            ];
-              
-            Insert_staff_db(staff.account,staff.password,staff_data);
-            
-            // プロフィール情報をサーバーから取得
-            const profile = json.profile;
-            const profile_data = [
-              profile.staff_id,
-              profile.birthplace,
-              profile.birthday,
-              profile.profile_tag,
-              profile.staff_photo1,
-              profile.staff_photo2,
-              profile.staff_photo3,
-              profile.staff_photo4,
-            ];
-            console.log("profile_data02");
-            Insert_profile_db(staff.account,profile_data);
+        .then((response) => response.json())
+        .then(async(json) => {
+          
+          let toast = Toast.show('自動ログインしています', {
+            duration: Toast.durations.SHORT,
+            position: 200,
+            shadow: true,
+            animation: true,
+            backgroundColor:'#333333',
+          });
+          
+          // ログインデータ保持用
+          global.sp_id = json.staff.account;
+          
+          // // websocket通信
+          const WS_URL = 'ws://54.168.20.149:8080/ws/'+json.staff.shop_id+'/'
+          
+          const staff = json.staff;
 
-            navigation.reset({
-              index: 0,
-              routes: [{
-                name: 'CommunicationHistory',
-                params: json.staff,
-                websocket:new WebSocket(WS_URL),
-                station:station,
-                address:address,
-                profile:profile,
-                flg:'トークン',
-                previous:'LogIn',
-                notifications:cus_notifications?cus_notifications:null,
-              }],
-            });
-        
-          })
+          const staff_data = [
+            staff.account,
+            staff.password,
+            staff.shop_id,
+            staff.name_1,
+            staff.name_2,
+            staff.name,
+            staff.corporations_name,
+            staff.setting_list,
+            staff.app_token,
+            staff.system_mail,
+            staff.yahoomail,
+            staff.gmail,
+            staff.hotmail,
+            staff.outlook,
+            staff.softbank,
+            staff.icloud,
+            staff.original_mail,
+            staff.line_id,
+            staff.mail_name,
+            staff.mail1,
+            staff.mail2,
+            staff.mail3,
+            staff.top_staff_list,
+            staff.setting_list7_mail,
+            null
+          ];
+            
+          await Insert_staff_db(staff.account,staff.password,staff_data);
+          
+          // プロフィール情報をサーバーから取得
+          const profile = json.profile;
+          const profile_data = [
+            profile.staff_id,
+            profile.birthplace,
+            profile.birthday,
+            profile.profile_tag,
+            profile.staff_photo1,
+            profile.staff_photo2,
+            profile.staff_photo3,
+            profile.staff_photo4,
+          ];
+          
+          await Insert_profile_db(staff.account,profile_data);
+
+          navigation.reset({
+            index: 0,
+            routes: [{
+              name: 'CommunicationHistory',
+              params: json.staff,
+              websocket:new WebSocket(WS_URL),
+              profile:profile,
+              flg:'トークン',
+              previous:'LogIn',
+              notifications:cus_notifications?cus_notifications:null,
+            }],
+          });
+      
+        })
       }
     }
       
   }, [station,address,rocalDB]);
   
-  function Insert_staff_db(account,pass,data){
-    
-    db.transaction((tx) => {
-      
-      tx.executeSql(
-        `select * from staff_mst where (account = ? and password = ?);`,
-        [account,pass],
-        (_, { rows }) => {
-          
-          if (!rows._array.length) {
-            tx.executeSql(
-              `insert into staff_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`,
-              data,
-              () => {console.log("insert staff_mst");},
-              () => {console.log("staff_mst 失敗");}
-            );
-          } else {
-            // console.log("localDB staff OK");
-          }
-        },
-        () => {console.log("失敗");}
-      );
-      
-    });
+  async function Insert_staff_db(account,pass,data){
+
+    var sql = `select * from staff_mst where (account = '${account}' and password = '${pass}');`;
+    var staff_mst = await db_select(sql);
+
+    if (staff_mst == false) {
+      var insert_staff = `insert into staff_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
+      await db_write(insert_staff,data);
+    }
   
   }
-
-// 臨時用テーブル自体を削除
-function Drop_staff_db(){
-    
-  new Promise((resolve, reject)=>{
-    db.transaction((tx) => {
-      // スタッフプロフィール
-      tx.executeSql(
-        `drop table staff_profile;`,
-        [],
-        () => {console.log("staff_profile [drop]テーブル削除");},
-        () => {console.log("staff_profile [drop]テーブル削除失敗");}
-      );
-      resolve();
-    })
-  });
-}
-
-// テーブルを空にする
-function delete_db(){
-    
-  new Promise((resolve, reject)=>{
-    db.transaction((tx) => {
-      // スタッフ
-      tx.executeSql(
-        `delete from staff_mst;`,
-        [],
-        () => {console.log("staff_mst [delete]テーブル削除");},
-        () => {console.log("staff_mst [delete]テーブル削除失敗");}
-      );
-      // スタッフプロフィール
-      tx.executeSql(
-        `delete from staff_profile;`,
-        [],
-        () => {console.log("staff_profile [delete]テーブル削除");},
-        () => {console.log("staff_profile [delete]テーブル削除失敗");}
-      );
-      resolve();
-    })
-  });
-}
 
   // プロフィール情報をsqlliteに登録
-  function Insert_profile_db(account,data){
+  async function Insert_profile_db(account,data){
     
-    db.transaction((tx) => {
-      
-      tx.executeSql(
-        `select * from staff_profile where (staff_id = ?);`,
-        [account],
-        (_, { rows }) => {
-          if (!rows._array.length) {
-            tx.executeSql(
-              `insert into staff_profile values (?,?,?,?,?,?,?,?);`,
-              data,
-              () => {console.log("insert staff_profile");},
-              () => {console.log("staff_profile 失敗");}
-            );
-          } else {
-            // console.log("localDB staff OK");
-          }
-        },
-        () => {console.log("失敗");}
-      );
-      
-    });
+    var sql = `select * from staff_profile where (staff_id = '${account}');`;
+    var staff_profile = await db_select(sql);
+
+    if (staff_profile == false) {
+      var insert_profile = `insert into staff_profile values (?,?,?,?,?,?,?,?);`;
+      await db_write(insert_profile,data);
+    }
   
   }
-
 
   
   // 駅・沿線データベース登録
-  function Insert_station_db(station){
-    return new Promise((resolve, reject)=>{
-      db.transaction((tx) => {
-        
-        tx.executeSql(
-          `select * from station_mst;`,
-          [],
-          (_, { rows }) => {
-            setLoading(true)
-            if (!rows._array.length) {
-              
-              db.transaction((tx) => {
-                Promise.all(station.map((s) => {
-                  tx.executeSql(
-                    `insert into station_mst values (?,?);`,
-                    [s.id,s.name],
-                    () => {
-                      // console.log("insert station_mst");
-                    },
-                    () => {console.log("station_mst 失敗");}
-                  );
-                })).then(() => {
-                  tx.executeSql(
-                    `select * from station_mst;`,
-                    [],
-                    (_, { rows }) => {
-                      setStation(rows._array);
-                      resolve();
-                    }
-                  );
-                });
-              })
-                
-            }
-            
-            if (rows._array.length) {
-              setStation(rows._array);
-              resolve();
-            }
-          },
-          () => {
-            console.log("失敗b");
-            resolve();
-          }
-        );
-        
-      });
-    });
+  async function Insert_station_db(station){
+
+    var sql = `select * from station_mst;`;
+    var station_mst = await db_select(sql);
+
+    if (station_mst == false) {
+      for (var s=0;s<station.length;s++) {
+        var insert_station = `insert into station_mst values (?,?);`;
+        await db_write(insert_station,[station[s]["id"],station[s]["name"]]);
+      }
+    }
+
   }
   
   // エリアデータベース登録
-  function Insert_area_db(address){
-    return new Promise((resolve, reject)=>{
-      db.transaction((tx) => {
-        tx.executeSql(
-          `select * from address_mst;`,
-          [],
-          (_, { rows }) => {
-            setLoading(true)
-            if (!rows._array.length) {
-              
-              db.transaction((tx) => {
-                Promise.all(address.map((a) => {
-                  tx.executeSql(
-                    `insert into address_mst values (?,?);`,
-                    [a.id,a.name],
-                    () => {
-                      // console.log("insert address_mst");
-                    },
-                    () => {console.log("address_mst 失敗");}
-                  );
-                })).then(() => {
-                  tx.executeSql(
-                    `select * from address_mst;`,
-                    [],
-                    (_, { rows }) => {
-                      setAddress(rows._array);
-                      resolve();
-                    }
-                  );
-                });
-              })
-            }
-            
-            if (rows._array.length) {
-              setAddress(rows._array);
-              resolve(setLoading(false));
-              
-            }
-          },
-          () => {
-            console.log("失敗");
-            resolve();
-          }
-        );
-        
-      });
-    });
+  async function Insert_area_db(address){
+
+    var sql = `select * from address_mst;`;
+    var address_mst = await db_select(sql);
+
+    if (address_mst == false) {
+      for (var a=0;a<address.length;a++) {
+        var insert_address = `insert into address_mst values (?,?);`;
+        await db_write(insert_address,[address[a]["id"],address[a]["name"]]);
+      }
+    }
   }
   
   // ID・PASS記入時のログイン処理
@@ -609,95 +463,88 @@ function delete_db(){
       },
       body: formData
     })
-      .then((response) => response.json())
-      .then((json) => {
-        
-        // ログインデータ保持用
-        global.sp_id = id;
+    .then((response) => response.json())
+    .then(async(json) => {
+      
+      // ログインデータ保持用
+      global.sp_id = id;
 
-        // トークン取得＆登録
-        registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
+      // トークン取得＆登録
+      registerForPushNotificationsAsync();
+      
+      // websocket通信
+      const WS_URL = 'ws://54.168.20.149:8080/ws/'+json.staff.shop_id+'/'
+      
+      const staff = json.staff;
+      
+      const staff_data = [
+        staff.account,
+        staff.password,
+        staff.shop_id,
+        staff.name_1,
+        staff.name_2,
+        staff.name,
+        staff.corporations_name,
+        staff.setting_list,
+        staff.app_token,
+        staff.system_mail,
+        staff.yahoomail,
+        staff.gmail,
+        staff.hotmail,
+        staff.outlook,
+        staff.softbank,
+        staff.icloud,
+        staff.original_mail,
+        staff.line_id,
+        staff.mail_name,
+        staff.mail1,
+        staff.mail2,
+        staff.mail3,
+        staff.top_staff_list,
+        staff.setting_list7_mail,
+        global.fc_flg
+      ];
         
-        // websocket通信
-        const WS_URL = 'ws://54.168.20.149:8080/ws/'+json.staff.shop_id+'/'
-        
-        const staff = json.staff;
-        
-        const staff_data = [
-          staff.account,
-          staff.password,
-          staff.shop_id,
-          staff.name_1,
-          staff.name_2,
-          staff.name,
-          staff.corporations_name,
-          staff.setting_list,
-          staff.app_token,
-          staff.system_mail,
-          staff.yahoomail,
-          staff.gmail,
-          staff.hotmail,
-          staff.outlook,
-          staff.softbank,
-          staff.icloud,
-          staff.original_mail,
-          staff.line_id,
-          staff.mail_name,
-          staff.mail1,
-          staff.mail2,
-          staff.mail3,
-          staff.top_staff_list,
-          staff.setting_list7_mail,
-          global.fc_flg
-        ];
-          
-        Insert_staff_db(staff.account,staff.password,staff_data);
-        
-        // プロフィール情報をサーバーから取得
-        const profile = json.profile;
-        const profile_data = [
-          profile[0].staff_id,
-          profile[0].birthplace,
-          profile[0].birthday,
-          profile[0].profile_tag,
-          profile[0].staff_photo1,
-          profile[0].staff_photo2,
-          profile[0].staff_photo3,
-          profile[0].staff_photo4,
-        ];
+      await Insert_staff_db(staff.account,staff.password,staff_data);
+      
+      // プロフィール情報をサーバーから取得
+      const profile = json.profile;
+      const profile_data = [
+        profile[0].staff_id,
+        profile[0].birthplace,
+        profile[0].birthday,
+        profile[0].profile_tag,
+        profile[0].staff_photo1,
+        profile[0].staff_photo2,
+        profile[0].staff_photo3,
+        profile[0].staff_photo4,
+      ];
 
-        // console.log(profile_data);
+      await Insert_profile_db(staff.account,profile_data);
 
-        console.log("profile_data01");
-        Insert_profile_db(staff.account,profile_data);
-
-        navigation.reset({
-          index: 0,
-          routes: [{
-            name: 'CommunicationHistory',
-            params: json.staff,
-            websocket:new WebSocket(WS_URL),
-            station:station,
-            address:address,
-            profile:profile,
-            flg:'入力',
-            previous:'LogIn'
-          }],
-        });
-        
-      })
-      .catch((error) => {
-        const errorMsg = "IDまたはパスワードが違います";
-        Alert.alert(errorMsg);
-        console.log(error)
-      })
+      navigation.reset({
+        index: 0,
+        routes: [{
+          name: 'CommunicationHistory',
+          params: json.staff,
+          websocket:new WebSocket(WS_URL),
+          profile:profile,
+          flg:'入力',
+          previous:'LogIn'
+        }],
+      });
+      
+    })
+    .catch((error) => {
+      const errorMsg = "IDまたはパスワードが違います";
+      Alert.alert(errorMsg);
+      console.log(error)
+    })
   };
 
   // サーバーからのデータを取得して、ローカルサーバーの中身を更新
   function getServerData(obj,staff){
-    console.log(998877);
-    // console.log(staff);
-    // 
+
     fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
     {
       method: 'POST',
@@ -712,86 +559,80 @@ function delete_db(){
         fc_flg: global.fc_flg
       })
     })
-      .then((response) => response.json())
-      .then((json) => {
+    .then((response) => response.json())
+    .then(async(json) => {
+      
+      const staff = json.staff;
+      
+      // ログインデータ保持用
+      global.sp_id = staff.account;
+
+      // テーブルを空にする
+      await db_write(`delete from staff_mst;`,[]);     // スタッフ
+      await db_write(`delete from staff_profile;`,[]); // スタッフプロフィール
         
-        const staff = json.staff;
+      // スタッフ情報をサーバーから取得
+      const staff_data = [
+        staff.account,
+        staff.password,
+        staff.shop_id,
+        staff.name_1,
+        staff.name_2,
+        staff.name,
+        staff.corporations_name,
+        staff.setting_list,
+        staff.app_token,
+        staff.system_mail,
+        staff.yahoomail,
+        staff.gmail,
+        staff.hotmail,
+        staff.outlook,
+        staff.softbank,
+        staff.icloud,
+        staff.original_mail,
+        staff.line_id,
+        staff.mail_name,
+        staff.mail1,
+        staff.mail2,
+        staff.mail3,
+        staff.top_staff_list,
+        staff.setting_list7_mail,
+        global.fc_flg
+      ];
         
-        // ログインデータ保持用
-        global.sp_id = staff.account;
+      await Insert_staff_db(staff.account,staff.password,staff_data);
 
-        console.log(665544);
-        // console.log(json.staff);
-        
-        // テーブルの中身を空にする
-        delete_db();
-          
-        // スタッフ情報をサーバーから取得
-        const staff_data = [
-          staff.account,
-          staff.password,
-          staff.shop_id,
-          staff.name_1,
-          staff.name_2,
-          staff.name,
-          staff.corporations_name,
-          staff.setting_list,
-          staff.app_token,
-          staff.system_mail,
-          staff.yahoomail,
-          staff.gmail,
-          staff.hotmail,
-          staff.outlook,
-          staff.softbank,
-          staff.icloud,
-          staff.original_mail,
-          staff.line_id,
-          staff.mail_name,
-          staff.mail1,
-          staff.mail2,
-          staff.mail3,
-          staff.top_staff_list,
-          staff.setting_list7_mail,
-          global.fc_flg
-        ];
-          
-        Insert_staff_db(staff.account,staff.password,staff_data);
+      // プロフィール情報をサーバーから取得
+      const profile = json.profile;
+      const profile_data = [
+        profile[0].staff_id,
+        profile[0].birthplace,
+        profile[0].birthday,
+        profile[0].profile_tag,
+        profile[0].staff_photo1,
+        profile[0].staff_photo2,
+        profile[0].staff_photo3,
+        profile[0].staff_photo4,
+      ];
 
-        // プロフィール情報をサーバーから取得
-        const profile = json.profile;
-        const profile_data = [
-          profile[0].staff_id,
-          profile[0].birthplace,
-          profile[0].birthday,
-          profile[0].profile_tag,
-          profile[0].staff_photo1,
-          profile[0].staff_photo2,
-          profile[0].staff_photo3,
-          profile[0].staff_photo4,
-        ];
+      obj.push(profile[0]);
 
-          // console.log(profile_data);
-          console.log("[auto_login]profile_data");
+      await Insert_profile_db(staff.account,profile_data);
 
-          obj.push(profile[0]);
-
-          // サーバーから取ってきたデータを挿入
-          Insert_profile_db(staff.account,profile_data);
-
-      })
-      .catch((error) => {
-        const errorMsg = "[※]自動ログインに失敗しました。";
-        Alert.alert(errorMsg);
-        console.log(error)
-      })
+    })
+    .catch((error) => {
+      const errorMsg = "[※]自動ログインに失敗しました。";
+      Alert.alert(errorMsg);
+      console.log(error)
+    })
     
   }
 
 
   // 20210826 端末トークン取得用(DBに端末情報保存)
   async function registerForPushNotificationsAsync() {
+
     let token;
-    let experienceId = undefined;
     
     if (Platform.OS === 'ios') {
       const { status } = await requestTrackingPermissionsAsync();
@@ -832,8 +673,6 @@ function delete_db(){
       // グローバル変数にトークンを格納
       global.sp_token = token;
       
-      // トークン保存
-      //alert("check1");
       // グローバル変数に、tokenとログインIDがある場合
       if(global.sp_token && global.sp_id){
         
@@ -851,12 +690,13 @@ function delete_db(){
         })
       }
   
-    }
-    else {
+    } else {
       alert('この端末では、プッシュ通知が機能しません。');
     }
-  
-    return token;
+
+    setExpoPushToken(token);
+
+    return;
   }
   
   // Cookieの関係で切り替え処理を先入れる
@@ -877,10 +717,6 @@ function delete_db(){
         },
         body: formData
       })
-      .then((response) => response.json())
-      .then((json) => {
-        console.log(json);
-      })
       .catch((error) => {
         console.log(error)
       })
@@ -900,10 +736,6 @@ function delete_db(){
           'content-type': 'multipart/form-data',
         },
         body: formData
-      })
-      .then((response) => response.json())
-      .then((json) => {
-        console.log(json);
       })
       .catch((error) => {
         console.log(error)
