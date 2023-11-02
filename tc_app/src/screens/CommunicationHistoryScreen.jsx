@@ -70,8 +70,6 @@ export default function CommunicationHistoryScreen(props) {
 
   const [menu, setMenu] = useState(false);
   const deviceScreen = Dimensions.get('window');
-
-  const [fixed, setFixed] = useState(false);
   
   const listRef = useRef([]);
   
@@ -196,7 +194,7 @@ export default function CommunicationHistoryScreen(props) {
   }, []);
 
   useEffect(() => {
-    if (route.notifications && fixed) {
+    if (route.notifications) {
       navigation.reset({
         index: 0,
         routes: [
@@ -212,7 +210,7 @@ export default function CommunicationHistoryScreen(props) {
         ],
       });
     }
-  }, [fixed]);
+  }, []);
 
   // 更新
   const [refreshing, setRefreshing] = useState(false);
@@ -721,10 +719,6 @@ export default function CommunicationHistoryScreen(props) {
         await db_write(fixed_delete,[fixed_id]);
       }
     }
-    
-    const fixed_mst = await GetDB('fixed_mst');
-    if (fixed_mst != false) setFixed(fixed_mst);
-    else setFixed([]);
 
   }
 
@@ -1074,7 +1068,7 @@ export default function CommunicationHistoryScreen(props) {
         />
       )
     }
-  },[memos,fixed])
+  },[memos])
 
   return (
     <SideMenu
