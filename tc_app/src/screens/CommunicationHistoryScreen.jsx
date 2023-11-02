@@ -309,6 +309,8 @@ export default function CommunicationHistoryScreen(props) {
 
   const onRefresh = useCallback(async(flg) => {
 
+    const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
     if (flg) setLoading(true);
 
     setDate('最新データ取得中');
@@ -316,6 +318,9 @@ export default function CommunicationHistoryScreen(props) {
     const startTime = Date.now(); // 開始時間
 
     const json = await getCOM();
+
+    // ログアウトしてたら中断
+    if(!global.sp_token && !global.sp_id) return;
 
     const endTime = Date.now(); // 終了時間
     const time = (endTime - startTime)/1000;
@@ -441,6 +446,9 @@ export default function CommunicationHistoryScreen(props) {
 
     const json = await getCOMNEXT(cnt);
 
+    // ログアウトしてたら中断
+    if(!global.sp_token && !global.sp_id) return;
+    
     if (json != false) {
       // ローカルDB用お客様情報＋最新のコミュニケーション
       await Insert_customer_db(json.search);
