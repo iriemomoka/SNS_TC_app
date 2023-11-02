@@ -293,7 +293,6 @@ export default function BellScreen(props) {
             profile:route.profile,
             cus_name:message.name,
             staff:staffs,
-            fixed:fixed,
           }],
         });
       }}

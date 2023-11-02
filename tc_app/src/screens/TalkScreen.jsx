@@ -65,6 +65,7 @@ export default function TalkScreen(props) {
   
   const [station,setStation] = useState([]);
   const [address,setAddress] = useState([]);
+  const [fixed, setFixed] = useState([]);
 
   navigation.setOptions({
     headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
@@ -181,8 +182,9 @@ export default function TalkScreen(props) {
   
   useEffect(() => {
     
-    GetDB('station_mst').then(station_mst=>setStation(station_mst));
-    GetDB('address_mst').then(address_mst=>setAddress(address_mst));
+    GetDB('station_mst').then(station_mst=>station_mst!=false&&setStation(station_mst));
+    GetDB('address_mst').then(address_mst=>address_mst!=false&&setAddress(address_mst));
+    GetDB('fixed_mst').then(fixed_mst=>fixed_mst!=false&&setFixed(fixed_mst));
 
     setLoading(true);
     fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
@@ -1159,18 +1161,20 @@ export default function TalkScreen(props) {
 
   // リストからHTML用の定型文をフィルタリング
   const filterFixedByCategory = (category) => {
-    const filtered = route.fixed.filter((obj) => obj.category !== category);
+    const filtered = fixed.filter((obj) => obj.category !== category);
     setFilteredFixed(filtered);
   }
 
   useEffect(() => {
-    if (modal4) {
-      // チャット画面の入力欄に直接定型文を挿入する時は'HTML用'の定型文は表示しない
-      filterFixedByCategory('HTML用');
-    } else {
-      setFilteredFixed(route.fixed);
+    if (fixed.length != 0) {
+      if (modal4) {
+        // チャット画面の入力欄に直接定型文を挿入する時は'HTML用'の定型文は表示しない
+        filterFixedByCategory('HTML用');
+      } else {
+        setFilteredFixed(fixed);
+      }
     }
-  }, [modal1, modal4]);
+  }, [modal1, modal4,fixed]);
   
   const [menu_height,setMenu_height] = useState(false);
   const getHeight = (e) => {
@@ -1368,7 +1372,7 @@ export default function TalkScreen(props) {
               station_list={station}
               address={address}
               c_d={conditions_date}
-              fixed={route.fixed}
+              fixed={fixed}
               hensu={customer.main?[
                 // 定型文で使うもの
                 customer.main.name,

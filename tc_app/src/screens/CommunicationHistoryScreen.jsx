@@ -171,38 +171,19 @@ export default function CommunicationHistoryScreen(props) {
         ) {
           const cus_data = response.notification.request.content.data.customer;
 
-          db.transaction((tx) => {
-            tx.executeSql(
-              `select * from fixed_mst;`,
-              // `delete from fixed_mst;`,
-              [],
-              (_, { rows }) => {
-                var noti_fixed = "";
-
-                if (rows._array.length) {
-                  noti_fixed = rows._array;
-                }
-
-                navigation.reset({
-                  index: 0,
-                  routes: [
-                    {
-                      name: "TalkScreen",
-                      params: route.params,
-                      customer: cus_data.customer_id,
-                      websocket: route.websocket,
-                      profile: route.profile,
-                      staff: staffs,
-                      fixed: noti_fixed,
-                      cus_name: cus_data.name,
-                    },
-                  ],
-                });
+          navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: "TalkScreen",
+                params: route.params,
+                customer: cus_data.customer_id,
+                websocket: route.websocket,
+                profile: route.profile,
+                staff: staffs,
+                cus_name: cus_data.name,
               },
-              () => {
-                console.log("通知をタップ失敗");
-              }
-            );
+            ],
           });
         }
       });
@@ -226,7 +207,6 @@ export default function CommunicationHistoryScreen(props) {
             websocket: route.websocket,
             profile: route.profile,
             staff: staffs,
-            fixed: fixed,
             cus_name: route.notifications.name,
           },
         ],
@@ -934,7 +914,6 @@ export default function CommunicationHistoryScreen(props) {
                   websocket: route.websocket,
                   profile: route.profile,
                   staff: staffs,
-                  fixed: fixed,
                 },
               ],
             });
@@ -1051,7 +1030,6 @@ export default function CommunicationHistoryScreen(props) {
                           websocket: route.websocket,
                           profile: route.profile,
                           staff: staffs,
-                          fixed: fixed,
                           cus_name: item.name,
                         },
                       ],
