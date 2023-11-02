@@ -410,10 +410,12 @@ export default function LogInScreen(props) {
     var station_mst = await db_select(sql);
 
     if (station_mst == false) {
+      var insert_station = `insert into station_mst values `;
       for (var s=0;s<station.length;s++) {
-        var insert_station = `insert into station_mst values (?,?);`;
-        await db_write(insert_station,[station[s]["id"],station[s]["name"]]);
+        insert_station += `('${station[s]["id"]}','${station[s]["name"]}'),`;
       }
+      insert_station = insert_station.substring(0, insert_station.length-1); // 最後のコンマ消す
+      await db_write(insert_station,[]);
     }
 
   }
@@ -425,10 +427,12 @@ export default function LogInScreen(props) {
     var address_mst = await db_select(sql);
 
     if (address_mst == false) {
+      var insert_address = `insert into address_mst values `;
       for (var a=0;a<address.length;a++) {
-        var insert_address = `insert into address_mst values (?,?);`;
-        await db_write(insert_address,[address[a]["id"],address[a]["name"]]);
+        insert_address += `('${address[a]["id"]}','${address[a]["name"]}'),`;
       }
+      insert_address = insert_address.substring(0, insert_address.length-1); // 最後のコンマ消す
+      await db_write(insert_address,[]);
     }
   }
   
