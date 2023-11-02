@@ -96,6 +96,8 @@ export function MyModal1(props) {
   const [open, setOpen] = useState(false);
   const [cus_value, setCus_Value] = useState('');
   
+  const [inputCursorPosition, setInputCursorPosition] = useState([]);
+  
   const items1 = cus_mail.filter(Boolean).map((item) => {
     return ({
       label: item,
@@ -136,7 +138,7 @@ export function MyModal1(props) {
     } else {
       setFilteredFixed(fixed);
     }
-  }, [mail_format]);
+  }, [mail_format, fixed]);
 
   // 内容詳細の編集
   const noteEdit = (text) => {
@@ -928,6 +930,7 @@ export function MyModal1(props) {
         msgtext={note}
         mail_format={mail_format}
         editorRef={editorRef}
+        inputCursorPosition={inputCursorPosition}
       />
       <MyModal4 
         isVisible={Fixed}
@@ -1071,6 +1074,7 @@ export function MyModal1(props) {
                               multiline={true}
                               disableFullscreenUI={true}
                               numberOfLines={11}
+                              onSelectionChange={(event) => {setInputCursorPosition(event.nativeEvent.selection);}}
                             />
                           </>
                         ) : (
@@ -1324,7 +1328,7 @@ export function MyModal2(props){
 
 export function MyModal3(props){
   
-  const { route,isVisible,onSwipeComplete,onClose,msgtext,property,station_list,address,c_d,mail_format,editorRef } = props;
+  const { route,isVisible,onSwipeComplete,onClose,msgtext,property,station_list,address,c_d,mail_format,editorRef,inputCursorPosition } = props;
   
   const [isRecommended, setRecommended] = useState(false);
 
@@ -1851,15 +1855,28 @@ export function MyModal3(props){
 
   const [insertMsg,setInsertMsg] = useState(false);
   
+  // 物件挿入
   const proInsert = (item) => {
-    var msg = item.article_name+"／"+item.layout+"／"+item.category+"\n"+
+    let proMsg;
+
+    let msg = item.article_name+"／"+item.layout+"／"+item.category+"\n"+
               item.line_name1+"／"+item.station_name1+"駅／徒歩"+item.station_time1+"分／"+
               item.rent/10000+"万円("+item.general+"円)／"+item.exclusive+"㎡"+"\n\n"+
               "https://www.total-cloud.net/show/"+route.customer+"/1/"+item.article_id+"/"+"\n";
+
     if (mail_format == 'HTML') {
+      // HTMLエディタ
       msg = convertToHTML(msg);
+      proMsg = msgtext + msg;
+    } else if (mail_format == 'テキスト') {
+      // TextInputのカーソル位置に挿入
+      proMsg = msgtext.slice(0, inputCursorPosition.start) + msg + msgtext.slice(inputCursorPosition.end);
+    } else {
+      // トーク画面
+      proMsg = msgtext + msg;
     }
-    setInsertMsg(msgtext?msgtext + msg:msg);
+
+    setInsertMsg(msgtext?proMsg:msg);
   }
   
   useEffect(() => {
