@@ -1870,7 +1870,11 @@ export function MyModal3(props){
       proMsg = msgtext + msg;
     } else if (mail_format == 'テキスト') {
       // TextInputのカーソル位置に挿入
-      proMsg = msgtext.slice(0, inputCursorPosition.start) + msg + msgtext.slice(inputCursorPosition.end);
+      if (inputCursorPosition.length) {
+        proMsg = msgtext.slice(0, inputCursorPosition.start) + msg + msgtext.slice(inputCursorPosition.end);
+      } else {
+        proMsg = msgtext + msg;
+      }
     } else {
       // トーク画面
       proMsg = msgtext + msg;
