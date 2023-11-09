@@ -663,7 +663,7 @@ export function MyModal1(props) {
           ]
         );
       } else {
-        props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata]],'mail');
+        props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata],mail_format],'mail');
         props.setModal1(false);
         setNote('');
         setCus_Value(cus_mail[0]);
