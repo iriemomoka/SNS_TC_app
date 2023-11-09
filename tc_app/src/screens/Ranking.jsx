@@ -91,7 +91,7 @@ export default function Ranking(props) {
   // 参照データ取得日時
   const [date, setDate] = useState('');
 
-  // 店舗売上順位
+  // 売上順位
   const [all, setAll] = useState('-');
   const [overall, setOverall] = useState('-');
   const [rank, setRank] = useState([
@@ -2006,7 +2006,7 @@ export default function Ranking(props) {
         >
           集計中
         </Toast>
-        <View style={{width:'90%',alignSelf: "center",marginBottom:20,zIndex:999 }} >
+        <View style={{width:'90%',alignSelf: "center",marginBottom:10,zIndex:999 }} >
           <View style={{ flexDirection: "row",alignItems:'center',marginVertical:20 }}>
             <Text style={styles.title}>売上順位</Text>
             <Text style={styles.sub_title}>{date?date+' 時点':''}</Text>
@@ -2109,16 +2109,18 @@ export default function Ranking(props) {
             style={{ flex: 1 }}
           >
             <TouchableOpacity activeOpacity={1}>
-              <View style={styles.total}>
+              {/* <View style={styles.total}>
                 <View style={styles.overall}>
                   <Text style={styles.overall_text}>店舗売上順位</Text>
                 </View>
                 <Text style={styles.overallRank}>{overall}位 /</Text>
                 <Text style={styles.overallRank2}> {all}人中</Text>
-              </View>
-              <View style={{marginTop:10}}>
-                <Text style={styles.made}> {made}</Text>
-              </View>
+              </View> */}
+              {made&&(
+                <View style={{marginTop:10}}>
+                  <Text style={styles.made}> {made}</Text>
+                </View>
+              )}
               <View style={{width:'80%',alignSelf:'center',marginBottom:20}}>
                 <FlatList
                   initialNumToRender={7}
