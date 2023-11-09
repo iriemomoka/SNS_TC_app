@@ -602,7 +602,7 @@ export function MyModal1(props) {
     }
     
     setCon_flg(true);
-    props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,checked,checked?formatDate(date):'',res_id,1,true,filedata,del_file]],'mail');
+    props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,checked,checked?formatDate(date):'',res_id,1,true,filedata,del_file],mail_format],'mail');
     props.setModal1(false);
     setNote('');
     setCus_Value(cus_mail[0]);
