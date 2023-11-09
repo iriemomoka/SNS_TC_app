@@ -116,11 +116,11 @@ export function MyModal1(props) {
   });
   
   const [open3, setOpen3] = useState(false);
-  const [mail_format, setMail_Format] = useState('テキスト');
+  const [mail_format, setMail_Format] = useState('0');
   
   const items3 = [
-    { label: 'テキスト', value: 'テキスト' },
-    { label: 'HTML', value: 'HTML' }
+    { label: 'テキスト', value: '0' },
+    { label: 'HTML', value: '1' }
   ];
 
   const [filteredFixed, setFilteredFixed] = useState([]);
@@ -132,7 +132,7 @@ export function MyModal1(props) {
   }
 
   useEffect(() => {
-    if (mail_format === 'テキスト') {
+    if (mail_format === '0') {
       // 形式がテキストの時は'HTML用'の定型文は表示しない
       filterFixedByCategory('HTML用');
     } else {
@@ -348,7 +348,7 @@ export function MyModal1(props) {
 
   // HTMLエディタのキーボードを閉じる
   const keyboardClose = () => {
-    if (mail_format == 'HTML') {
+    if (mail_format == '1') {
       editorRef.current.dismissKeyboard();
     }
   };
@@ -644,7 +644,7 @@ export function MyModal1(props) {
             {
               text: "はい",
               onPress: () => {
-                props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata]],'mail');
+                props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata],mail_format],'mail');
                 props.setModal1(false);
                 setNote('');
                 setCus_Value(cus_mail[0]);
@@ -979,7 +979,7 @@ export function MyModal1(props) {
             >
               <View>
                 <FlatList
-                  style={{height: mail_format == 'HTML' ? 200 : 500}}
+                  style={{height: mail_format == '1' ? 200 : 500}}
                   data={[
                     (<>
                       {rrr()}
@@ -1064,7 +1064,7 @@ export function MyModal1(props) {
                       <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
                       <View zIndex={99}>{mail_reservation()}</View>
                       <View style={styles.input}>
-                        {mail_format !== 'HTML' ? (
+                        {mail_format !== '1' ? (
                           <>
                             <Text style={styles.label}>内容詳細</Text>
                             <TextInput
@@ -1089,7 +1089,7 @@ export function MyModal1(props) {
                 />
               </View>
             </TouchableWithoutFeedback>
-            {mail_format == 'HTML' ? (
+            {mail_format == '1' ? (
               <>
                 <Text style={styles.label}>内容詳細</Text>
                 <RichToolbar
@@ -1864,11 +1864,11 @@ export function MyModal3(props){
               item.rent/10000+"万円("+item.general+"円)／"+item.exclusive+"㎡"+"\n\n"+
               "https://www.total-cloud.net/show/"+route.customer+"/1/"+item.article_id+"/"+"\n";
 
-    if (mail_format == 'HTML') {
+    if (mail_format == '1') {
       // HTMLエディタ
       msg = convertToHTML(msg);
       proMsg = msgtext + msg;
-    } else if (mail_format == 'テキスト') {
+    } else if (mail_format == '0') {
       // TextInputのカーソル位置に挿入
       if (inputCursorPosition.length) {
         proMsg = msgtext.slice(0, inputCursorPosition.start) + msg + msgtext.slice(inputCursorPosition.end);
@@ -1888,7 +1888,7 @@ export function MyModal3(props){
       props.setMsgtext(insertMsg);
     } else if (props.setNote) {
       props.setNote(insertMsg);
-      if (mail_format == 'HTML' && insertMsg) {
+      if (mail_format == '1' && insertMsg) {
         editorRef.current.setContentHTML(insertMsg);
       }
     }
@@ -2541,7 +2541,7 @@ export function MyModal4(props){
     note = note.split("%LINE友達追加%");
     note = note.join('');
 
-    if (mail_format == 'HTML') {
+    if (mail_format == '1') {
       note = convertToHTML(note);
     }
     
@@ -2559,7 +2559,7 @@ export function MyModal4(props){
               } else if (props.setNote && props.setMail_subject) {
                 props.setNote(note);
                 props.setMail_subject(title);
-                if (mail_format == 'HTML') {
+                if (mail_format == '1') {
                   editorRef.current.setContentHTML(note);
                 }
               }

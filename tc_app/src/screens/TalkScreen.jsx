@@ -646,6 +646,7 @@ export default function TalkScreen(props) {
       formData.append('pass',route.params.password);
       formData.append('customer_id',customer.main.customer_id);
       formData.append('mail_flg',1);
+      formData.append('html_flg',add[4]);
       formData.append('act','get_talk');
       formData.append('reservation_flg',add[3][3]?add[3][3]:'');
       formData.append('draft_flg',add[3][6]?add[3][6]:'');
