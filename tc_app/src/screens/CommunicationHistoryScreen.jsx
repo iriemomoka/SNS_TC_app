@@ -1004,15 +1004,18 @@ export default function CommunicationHistoryScreen(props) {
     } else {
       return (
         <FlatList
+          bounces={false}
           ref={listRef}
           onEndReached={endRefresh}
           refreshControl={
+            date != '最新データ取得中' ?
             <RefreshControl
               refreshing={refreshing}
               onRefresh={async()=>{
                 await onRefresh(true);
               }}
             />
+            :<></>
           }
           initialNumToRender={10}
           data={memos}
@@ -1076,7 +1079,7 @@ export default function CommunicationHistoryScreen(props) {
         />
       )
     }
-  },[memos])
+  },[memos,date])
 
   return (
     <SideMenu
