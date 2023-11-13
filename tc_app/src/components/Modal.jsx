@@ -7,7 +7,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Moment from 'moment';
 import * as ImagePicker from 'expo-image-picker';
-import { Feather } from 'react-native-vector-icons';
+import { Feather, MaterialIcons } from 'react-native-vector-icons';
 import { Collapse, CollapseHeader, CollapseBody } from 'accordion-collapse-react-native';
 import { CheckBox } from 'react-native-elements';
 import MaterialChip from "react-native-material-chip";
@@ -22,6 +22,7 @@ import { Audio } from 'expo-av';
 import RenderHtml from 'react-native-render-html';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import ColorPicker from 'react-native-color-picker-ios-android'
 
 // DB接続
 import { db } from './Databace';
@@ -49,7 +50,7 @@ export function MyModal0(props){
       style={{alignItems: 'center'}}
       onBackdropPress={onPress}
     >
-      <View  style={styles.line}>
+      <View style={styles.line}>
         <TouchableOpacity
           style={{
             position: 'absolute',
@@ -368,13 +369,13 @@ export function MyModal1(props) {
     }
   }, [keyboardClose])
 
-  // RichToolbarのカスタムアイコン
-  const H1 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H1</Text>
-  const H2 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H2</Text>
-  const H3 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H3</Text>
-  const H4 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H4</Text>
-  const H5 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H5</Text>
-  const H6 = ({tintColor}) => <Text style={{color: tintColor, fontSize:15}}>H6</Text>
+  // HTMLエディタの文字の色
+  const [color, setColor] = useState(false);
+  const [textColor, setTextColor] = useState('#000033');
+
+  const openTextColor = () => {
+    setColor(!color);
+  };
 
   const CameraPermissionsCheck = async() => {
 
@@ -1091,7 +1092,18 @@ export function MyModal1(props) {
             </TouchableWithoutFeedback>
             {mail_format == '1' ? (
               <>
-                <Text style={styles.label}>内容詳細</Text>
+                <MyModal7 
+                  isVisible={color}
+                  openTextColor={openTextColor}
+                  setTextColor={setTextColor}
+                  textColor={textColor}
+                />
+                <View style={[{marginBottom: 5,flexDirection: 'row',alignItems: 'center'}]}>
+                  <Text style={styles.label}>内容詳細</Text>
+                  <TouchableOpacity style={styles.styleBox} onPress={openTextColor} >
+                    <MaterialIcons name="format-color-text" size={24} color="black" />
+                  </TouchableOpacity>
+                </View>
                 <RichToolbar
                   editor={editorRef}
                   iconTint={"black"}
@@ -1105,12 +1117,6 @@ export function MyModal1(props) {
                     actions.setUnderline,
                     actions.insertLine,
                     actions.setStrikethrough,
-                    // actions.heading1,
-                    // actions.heading2,
-                    // actions.heading3,
-                    // actions.heading4,
-                    // actions.heading5,
-                    // actions.heading6,
                     actions.indent,
                     actions.outdent,
                     actions.alignLeft,
@@ -1121,20 +1127,16 @@ export function MyModal1(props) {
                     actions.setSuperscript,
                     actions.checkboxList,
                   ]}
-                  iconMap={{
-                    [actions.heading1]: H1,
-                    [actions.heading2]: H2,
-                    [actions.heading3]: H3,
-                    [actions.heading4]: H4,
-                    [actions.heading5]: H5,
-                    [actions.heading6]: H6,
-                  }}
                 />
                 <RichEditor
                   ref={editorRef}
                   style={styles.editor}
+                  editorStyle={{
+                    color: textColor,
+                  }}
                   onChange={(text) => noteEdit(text)}
-                  initialHeight={230}
+                  initialHeight={220}
+                  onMessage={(data)=>{setInputCursorPosition(data.data)}}
                 />
               </>
             ) : (
@@ -1282,7 +1284,7 @@ export function MyModal2(props){
       onModalHide={() => {setCon_flg(false)}}
       onBackdropPress={onClose}
     >
-      <KeyboardAvoidingView  behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={[{height:500},styles.bottom,styles.modalInner]}>
           <TouchableOpacity
             style={styles.close}
@@ -1865,9 +1867,13 @@ export function MyModal3(props){
               "https://www.total-cloud.net/show/"+route.customer+"/1/"+item.article_id+"/"+"\n";
 
     if (mail_format == '1') {
-      // HTMLエディタ
+      // HTMLエディタのカーソル位置に挿入
       msg = convertToHTML(msg);
-      proMsg = msgtext + msg;
+      if (inputCursorPosition) {
+        proMsg = msgtext.slice(0, inputCursorPosition) + msg + msgtext.slice(inputCursorPosition);
+      } else {
+        proMsg = msgtext + msg;
+      }
     } else if (mail_format == '0') {
       // TextInputのカーソル位置に挿入
       if (inputCursorPosition.length) {
@@ -2603,7 +2609,7 @@ export function MyModal4(props){
       propagateSwipe={true}
       onBackdropPress={onPress}
     >
-      <View  style={[{height:300},styles.template]}>
+      <View style={[{height:300},styles.template]}>
         <TouchableOpacity
           style={styles.close}
           onPress={onPress}
@@ -3223,7 +3229,7 @@ export function MyModal5(props){
         animationIn={'slideInDown'}
         animationOut={'slideOutUp'}
       >
-        <View  style={[{height:300},styles.template]}>
+        <View style={[{height:300},styles.template]}>
           <TouchableOpacity
             style={styles.close}
             onPress={() => {setCheck_modal(false)}}
@@ -3234,7 +3240,7 @@ export function MyModal5(props){
         </View>
       </Modal>
       
-      <View  style={[{height:530},styles.template]}>
+      <View style={[{height:530},styles.template]}>
         <TouchableOpacity
           style={styles.close}
           onPress={() => {
@@ -4661,6 +4667,36 @@ export function MyModal6(props){
   );
 }
 
+export function MyModal7(props){
+  
+  const { isVisible, openTextColor, setTextColor, textColor } = props;
+  
+  return (
+    <Modal
+      isVisible={isVisible}
+      onBackdropPress={openTextColor}
+    >
+      <View style={styles.modalInner}>
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top:8,
+            right:10,
+            zIndex:1000
+          }}
+          onPress={openTextColor}
+        >
+          <Feather name='x-circle' color='gray' size={35} />
+        </TouchableOpacity>
+        <ColorPicker
+          color={textColor}
+          onColorChangeComplete={(color) => {setTextColor(color)}}
+        />
+      </View>
+    </Modal>
+  );
+}
+
 const styles = StyleSheet.create({
   modalInner: {
     justifyContent: 'center',
@@ -4874,6 +4910,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop:30,
     marginHorizontal:10,
+  },
+  styleBox: {
+    width:35,
+    height:35,
+    backgroundColor:'#fafafa',
+    borderWidth:1,
+    borderColor:'#1f2d53',
+    borderRadius:10,
+    marginHorizontal:10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   iconText: {
     fontSize:12,
