@@ -922,7 +922,7 @@ export function MyModal1(props) {
   
   useEffect(() => {
     if (textColor) {
-      editorRef.current?.setForeColor(textColor)
+      editorRef.current?.setForeColor(textColor);
     }
   }, [textColor])
   
@@ -1119,9 +1119,6 @@ export function MyModal1(props) {
                 />
                 <View style={[{marginBottom: 5,flexDirection: 'row',alignItems: 'center'}]}>
                   <Text style={styles.label}>内容詳細</Text>
-                  {/* <TouchableOpacity style={styles.styleBox} onPress={openTextColor} >
-                    <MaterialIcons name="format-color-text" size={24} color="black" />
-                  </TouchableOpacity> */}
                 </View>
                 <RichToolbar
                   editor={editorRef}
@@ -1170,9 +1167,6 @@ export function MyModal1(props) {
                 <RichEditor
                   ref={editorRef}
                   style={styles.editor}
-                  // editorStyle={{
-                  //   color: textColor,
-                  // }}
                   onChange={(text) => noteEdit(text)}
                   initialHeight={220}
                   onMessage={(data)=>{setInputCursorPosition(data.data)}}
