@@ -23,6 +23,7 @@ import RenderHtml from 'react-native-render-html';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import ColorPicker from 'react-native-color-picker-ios-android'
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // DB接続
 import { db } from './Databace';
@@ -371,7 +372,7 @@ export function MyModal1(props) {
 
   // HTMLエディタの文字の色
   const [color, setColor] = useState(false);
-  const [textColor, setTextColor] = useState('#000033');
+  const [textColor, setTextColor] = useState('#000');
 
   const openTextColor = () => {
     setColor(!color);
@@ -907,6 +908,24 @@ export function MyModal1(props) {
     }
   }
 
+  const [fontsize,setFontsize] = useState(3);
+
+  const fontSize = (size) => {
+    // 1= 10px, 2 = 13px, 3 = 16px, 4 = 18px, 5 = 24px, 6 = 32px, 7 = 48px;
+    const newSize = size ? fontsize + 1 : fontsize - 1;
+    
+    const clampedSize = Math.min(7, Math.max(1, newSize));
+    
+    editorRef.current?.setFontSize(clampedSize);
+    setFontsize(clampedSize);
+  };
+  
+  useEffect(() => {
+    if (textColor) {
+      editorRef.current?.setForeColor(textColor)
+    }
+  }, [textColor])
+  
   return (
     <Modal
       isVisible={isVisible}
@@ -1117,6 +1136,9 @@ export function MyModal1(props) {
                     actions.setUnderline,
                     actions.insertLine,
                     actions.setStrikethrough,
+                    'fontSize_add',
+                    'fontSize_pull',
+                    'ForeColor',
                     actions.indent,
                     actions.outdent,
                     actions.alignLeft,
@@ -1127,6 +1149,23 @@ export function MyModal1(props) {
                     actions.setSuperscript,
                     actions.checkboxList,
                   ]}
+                  iconMap={{
+                    fontSize_add: ({ tintColor }) => (
+                      <TouchableOpacity onPress={()=>fontSize(true)}>
+                        <MaterialCommunityIcons name="format-font-size-increase" size={24} color={tintColor} />
+                      </TouchableOpacity>
+                    ),
+                    fontSize_pull: ({ tintColor }) => (
+                      <TouchableOpacity onPress={()=>fontSize(false)}>
+                        <MaterialCommunityIcons name="format-font-size-decrease" size={24} color={tintColor} />
+                      </TouchableOpacity>
+                    ),
+                    ForeColor: ({ tintColor }) => (
+                      <TouchableOpacity onPress={openTextColor}>
+                        <MaterialIcons name="format-color-text" size={24} color={tintColor} />
+                      </TouchableOpacity>
+                    ),
+                  }}
                 />
                 <RichEditor
                   ref={editorRef}
