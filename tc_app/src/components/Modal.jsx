@@ -173,49 +173,51 @@ export function MyModal1(props) {
   
   // 形式を変更した場合は件名と内容を空にする
   const changeMailFormat = (value) => {
-    Alert.alert(
-      "送信内容の形式を変更しますがよろしいですか？",
-      "",
-      [
-        {
-          text: "はい",
-          onPress: () => {
-            if (note) {
-              Alert.alert(
-                "入力されている【件名】と【送信内容】が削除されますがよろしいですか？",
-                "",
-                [
-                  {
-                    text: "はい",
-                    onPress: () => {
-                      setMail_Format(value);
-                      setNote('');
-                      setMail_subject('');
-                    }
-                  },
-                  {
-                    text: "いいえ",
-                    onPress: () => {
-                      return;
-                    }
-                  },
-                ]
-              );
-            } else {
-              setMail_Format(value);
-              setNote('');
-              setMail_subject('');
+    if (mail_format != value) {
+      Alert.alert(
+        "送信内容の形式を変更しますがよろしいですか？",
+        "",
+        [
+          {
+            text: "はい",
+            onPress: () => {
+              if (note) {
+                Alert.alert(
+                  "入力されている【件名】と【送信内容】が削除されますがよろしいですか？",
+                  "",
+                  [
+                    {
+                      text: "はい",
+                      onPress: () => {
+                        setMail_Format(value);
+                        setNote('');
+                        setMail_subject('');
+                      }
+                    },
+                    {
+                      text: "いいえ",
+                      onPress: () => {
+                        return;
+                      }
+                    },
+                  ]
+                );
+              } else {
+                setMail_Format(value);
+                setNote('');
+                setMail_subject('');
+              }
             }
-          }
-        },
-        {
-          text: "いいえ",
-          onPress: () => {
-            return;
-          }
-        },
-      ]
-    );
+          },
+          {
+            text: "いいえ",
+            onPress: () => {
+              return;
+            }
+          },
+        ]
+      );
+    }
   }
   
   useEffect(() => {
@@ -1048,13 +1050,14 @@ export function MyModal1(props) {
                               value={mail_format}
                               items={items3}
                               setOpen={setOpen3}
-                              setValue={changeMailFormat}
+                              // setValue={setMail_Format}
                               style={[styles.inputInner,{width: 200}]}
                               dropDownContainerStyle={{width: 200}}
                               placeholder={'----------------'}
                               onOpen={() => {
                                 setOpen3(!open3);
                               }}
+                              onSelectItem={(item)=>changeMailFormat(item.value)}
                             />
                           </View>
                         </>
@@ -1169,7 +1172,16 @@ export function MyModal1(props) {
                   style={styles.editor}
                   onChange={(text) => noteEdit(text)}
                   initialHeight={220}
-                  onMessage={(data)=>{setInputCursorPosition(data.data)}}
+                  onMessage={(data)=>{
+                    var txt = data.data;
+                    var check_txt = '';
+                    if (txt.length > 5) {
+                      check_txt = txt.slice(-5);
+                    } else {
+                      check_txt = txt;
+                    }
+                    setInputCursorPosition(check_txt);
+                  }}
                 />
               </>
             ) : (
@@ -1902,10 +1914,17 @@ export function MyModal3(props){
     if (mail_format == '1') {
       // HTMLエディタのカーソル位置に挿入
       msg = convertToHTML(msg);
-      if (inputCursorPosition) {
-        proMsg = msgtext.slice(0, inputCursorPosition) + msg + msgtext.slice(inputCursorPosition);
+      
+      if (inputCursorPosition.length > 0) {
+        var index = msgtext.indexOf(inputCursorPosition);
+        if (index != -1) {
+          msg = '\n' + '<div>' + msg + '</div>';
+          proMsg = msgtext.slice(0, index + inputCursorPosition.length) + msg + msgtext.slice(index + inputCursorPosition.length);
+        } else {
+          proMsg = msgtext + msg;
+        }
       } else {
-        proMsg = msgtext + msg;
+        proMsg = msg + msgtext;
       }
     } else if (mail_format == '0') {
       // TextInputのカーソル位置に挿入
