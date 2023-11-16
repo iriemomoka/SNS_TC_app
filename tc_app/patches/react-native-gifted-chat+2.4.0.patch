@@ -255,7 +255,7 @@ index 2ff651d..c6ae2db 100644
  });
  export function InputToolbar(props) {
 diff --git a/node_modules/react-native-gifted-chat/lib/MessageText.js b/node_modules/react-native-gifted-chat/lib/MessageText.js
-index dd834d6..3cb07fb 100644
+index dd834d6..54fdf7a 100644
 --- a/node_modules/react-native-gifted-chat/lib/MessageText.js
 +++ b/node_modules/react-native-gifted-chat/lib/MessageText.js
 @@ -1,6 +1,7 @@
@@ -263,7 +263,7 @@ index dd834d6..3cb07fb 100644
  import React from 'react';
 -import { Linking, StyleSheet, View, } from 'react-native';
 +import { Linking, StyleSheet, View,useWindowDimensions } from 'react-native';
-+import RenderHtml from 'react-native-render-html';
++import RenderHtml, { HTMLElementModel, HTMLContentModel } from 'react-native-render-html';
  // @ts-ignore
  import ParsedText from 'react-native-parsed-text';
  import { StylePropType } from './utils';
@@ -294,7 +294,7 @@ index dd834d6..3cb07fb 100644
              textDecorationLine: 'underline',
          },
      }),
-@@ -94,23 +95,71 @@ export function MessageText({ currentMessage = {}, optionTitles = DEFAULT_OPTION
+@@ -94,23 +95,108 @@ export function MessageText({ currentMessage = {}, optionTitles = DEFAULT_OPTION
          styles[position].link,
          linkStyleProp && linkStyleProp[position],
      ];
@@ -317,7 +317,43 @@ index dd834d6..3cb07fb 100644
 +
 +      // 改行の変換
 +      source = source.split("\n").join("<br>");
-+      
++
++      const fontElementModel = HTMLElementModel.fromCustomModel({
++        tagName: 'font',
++        contentModel: HTMLContentModel.mixed,
++        getUADerivedStyleFromAttributes({face, color, size}) {
++          let style = {};
++          if (face) {
++            style.fontFamily = face;
++          }
++          if (color) {
++            style.color = color;
++          }
++          if (size) {
++            if (size == 1) {
++              style.fontSize = 10;
++            } else if (size == 2) {
++              style.fontSize = 13;
++            } else if (size == 3) {
++              style.fontSize = 16;
++            } else if (size == 4) {
++              style.fontSize = 18;
++            } else if (size == 5) {
++              style.fontSize = 24;
++            } else if (size == 6) {
++              style.fontSize = 32;
++            } else if (size == 7) {
++              style.fontSize = 48;
++            } else {
++              style.fontSize = 16;
++            } 
++          }
++          return style;
++        },
++      });
++
++      const customHTMLElementModels = {font: fontElementModel};
++
 +      return (<View style={[
              styles[position].container,
 -            containerStyle && containerStyle[position],
@@ -346,6 +382,7 @@ index dd834d6..3cb07fb 100644
 +            source={{
 +              html: `${source}`,
 +            }}
++            customHTMLElementModels={customHTMLElementModels}
 +          />
 +        </View>
 +      </View>);

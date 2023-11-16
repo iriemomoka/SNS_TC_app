@@ -30,7 +30,7 @@ index 14bea22..d934170 100644
          {Platform.OS === 'android' && <TextInput ref={ref => (that._input = ref)} style={styles._input} />}
        </>
 diff --git a/node_modules/react-native-pell-rich-editor/src/editor.js b/node_modules/react-native-pell-rich-editor/src/editor.js
-index 92079ad..a2d215f 100644
+index 92079ad..d7a2342 100644
 --- a/node_modules/react-native-pell-rich-editor/src/editor.js
 +++ b/node_modules/react-native-pell-rich-editor/src/editor.js
 @@ -322,7 +322,7 @@ function createHTML(options = {}) {
@@ -64,7 +64,7 @@ index 92079ad..a2d215f 100644
 +                        tmp = document.createElement("div");
 +
 +                    preCaretRange.selectNodeContents(node);
-+                    preCaretRange.setEnd(range.endContainer, range.endOffset);
++                    preCaretRange.setEndAfter(range.endContainer, range.endOffset);
 +                    tmp.appendChild(preCaretRange.cloneContents());
 +                    caretPosition = tmp.innerHTML.length;
 +                    return caretPosition;
