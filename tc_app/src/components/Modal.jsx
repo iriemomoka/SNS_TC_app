@@ -1180,7 +1180,7 @@ export function MyModal1(props) {
                     } else {
                       check_txt = txt;
                     }
-                    setInputCursorPosition(check_txt);
+                    setInputCursorPosition(check_txt.trim());
                   }}
                 />
               </>
