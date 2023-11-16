@@ -67,6 +67,8 @@ export default function TalkScreen(props) {
   const [station,setStation] = useState([]);
   const [address,setAddress] = useState([]);
   const [fixed, setFixed] = useState([]);
+  
+  const [inputCursorPosition, setInputCursorPosition] = useState(null);
 
   navigation.setOptions({
     headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
@@ -695,6 +697,8 @@ export default function TalkScreen(props) {
         Alert.alert("送信に失敗しました");
       })
     }
+
+    setInputCursorPosition(null);
   }
   
   if(menu){
@@ -1151,7 +1155,15 @@ export default function TalkScreen(props) {
             </TouchableOpacity>
           )
         } else {
-          return (<Composer {...props}/>)
+          return (
+            <Composer
+              {...props}
+              textInputProps={{
+                ...props.textInputProps,
+                onSelectionChange: (event) => setInputCursorPosition(event.nativeEvent.selection)
+              }}
+            />
+          )
         }
       }}
       user={{_id: 1,text:msgtext}}
@@ -1172,26 +1184,22 @@ export default function TalkScreen(props) {
       // ↑を押したときのイベント
       onPressActionButton={() => setMenu(!menu)}
       // メニュー開いたらメッセージも上に表示する
+      minInputToolbarHeight={30}
       messagesContainerStyle={[
-        menu?
-          Platform.select({
-            ios: {height:400},
-            android: {height:550},
-          })
-          :null,
-        menu&&menu_height?
-          Platform.select({
-            ios: {height:400-menu_height},
-            android: {height:550-menu_height},
-          })
-          :null,
+        menu&&{paddingBottom:190}
+        // menu&&menu_height?
+        //   Platform.select({
+        //     ios: {height:400-menu_height},
+        //     android: {height:550-menu_height},
+        //   })
+        //   :null,
       ]}
       
       onLayout={(e) => getHeight(e)}
       maxComposerHeight={150}
       
       // 入力欄の下のスペース
-      bottomOffset={Platform.select({ios: 35})} // 入力欄下の謎のすき間埋める(iosのみ)
+      bottomOffset={Platform.select({ios: 15})} // 入力欄下の謎のすき間埋める(iosのみ)
       renderInputToolbar={(props) => (
           <InputToolbar {...props}
           editable={false}
@@ -1319,6 +1327,8 @@ export default function TalkScreen(props) {
               c_d={conditions_date}
               msgtext={props.user.text}
               setMsgtext={setMsgtext}
+              inputCursorPosition={inputCursorPosition}
+              mail_format={'0'}
             />
             <MyModal4
               isVisible={modal4}

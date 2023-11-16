@@ -98,7 +98,7 @@ export function MyModal1(props) {
   const [open, setOpen] = useState(false);
   const [cus_value, setCus_Value] = useState('');
   
-  const [inputCursorPosition, setInputCursorPosition] = useState([]);
+  const [inputCursorPosition, setInputCursorPosition] = useState(null);
   
   const items1 = cus_mail.filter(Boolean).map((item) => {
     return ({
@@ -616,6 +616,7 @@ export function MyModal1(props) {
     setCheck(false);
     setFilename('');
     setFiledata(null);
+    setInputCursorPosition(null);
   }
 
   const onSubmit = () => {
@@ -658,6 +659,7 @@ export function MyModal1(props) {
                 setCheck(false);
                 setFilename('');
                 setFiledata(null);
+                setInputCursorPosition(null);
               }
             },
             {
@@ -677,6 +679,7 @@ export function MyModal1(props) {
         setCheck(false);
         setFilename('');
         setFiledata(null);
+        setInputCursorPosition(null);
       }
     } else {
       Alert.alert('送信内容が記入されていません');
@@ -726,6 +729,7 @@ export function MyModal1(props) {
             setCheck(false);
             setFilename('');
             setFiledata(null);
+            setInputCursorPosition(null);
           }
         },
         {
@@ -745,6 +749,7 @@ export function MyModal1(props) {
     setCheck(false);
     setFilename('');
     setFiledata(null);
+    setInputCursorPosition(null);
   }
   
   const img_Delete = () => {
@@ -1915,7 +1920,7 @@ export function MyModal3(props){
       // HTMLエディタのカーソル位置に挿入
       msg = convertToHTML(msg);
       
-      if (inputCursorPosition.length > 0) {
+      if (inputCursorPosition != null) {
         var index = msgtext.indexOf(inputCursorPosition);
         if (index != -1) {
           msg = '\n' + '<div>' + msg + '</div>';
@@ -1928,7 +1933,7 @@ export function MyModal3(props){
       }
     } else if (mail_format == '0') {
       // TextInputのカーソル位置に挿入
-      if (inputCursorPosition.length) {
+      if (inputCursorPosition != null) {
         proMsg = msgtext.slice(0, inputCursorPosition.start) + msg + msgtext.slice(inputCursorPosition.end);
       } else {
         proMsg = msgtext + msg;
