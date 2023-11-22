@@ -13,6 +13,7 @@ import Setting from './src/screens/Setting';
 import Loading from './src/components/Loading';
 import BellScreen from './src/screens/BellScreen';
 import Ranking from './src/screens/Ranking';
+import Schedule from './src/screens/Schedule';
 
 const Stack = createStackNavigator();
 LogBox.ignoreLogs(['Setting a timer']);
@@ -59,6 +60,10 @@ export default function App() {
         <Stack.Screen
           name="Ranking"
           component={Ranking}
+        />
+        <Stack.Screen
+          name="Schedule"
+          component={Schedule}
         />
       </Stack.Navigator>
     </NavigationContainer>

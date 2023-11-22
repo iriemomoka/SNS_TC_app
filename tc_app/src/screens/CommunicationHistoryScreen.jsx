@@ -961,6 +961,29 @@ export default function CommunicationHistoryScreen(props) {
               index: 0,
               routes: [
                 {
+                  name: "Schedule",
+                  params: route.params,
+                  websocket: route.websocket,
+                  profile: route.profile,
+                },
+              ],
+            });
+          }}
+        >
+          <MaterialCommunityIcons
+            name="clock"
+            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            size={35}
+          />
+          <Text style={styles.menutext}>スケジュール</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menulist}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
                   name: "Ranking",
                   params: route.params,
                   websocket: route.websocket,
@@ -1004,7 +1027,7 @@ export default function CommunicationHistoryScreen(props) {
     } else {
       return (
         <FlatList
-          bounces={false}
+          bounces={true}
           ref={listRef}
           onEndReached={endRefresh}
           refreshControl={
