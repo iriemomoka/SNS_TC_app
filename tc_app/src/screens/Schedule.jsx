@@ -443,9 +443,9 @@ export default function Schedule(props) {
       name_ = title.split(":")[1];
       if (name_.indexOf('(担当者') != -1) {
         name_ = name_.split("(担当者")[0];
-        if (name_.indexOf('【') != -1) {
-          name_ = name_.split("【")[0];
-        }
+      }
+      if (name_.indexOf('【') != -1) {
+        name_ = name_.split("【")[0];
       }
     }
 
@@ -799,7 +799,7 @@ const styles = StyleSheet.create({
     borderRadius:5
   },
   datalist: {
-    height:50,
+    height:60,
     backgroundColor:'#fff',
     borderWidth:1,
     borderTopWidth:0,

@@ -371,48 +371,51 @@ export default function TalkScreen(props) {
   
   useEffect(() => {
     
-    const msg = talk.map(com => {
-      
-      if (com.del_flg){
-        return
-      }
-      
-      if (com.speaker === 'お客様') {
-        const data = {
-          _id:  com.communication_id,
-          text: com.note+(com.line_note && com.title !== 'スタンプ'?com.line_note:''),
-          image:com.file_path?com.file_path:com.title === 'スタンプ'?'https://stickershop.line-scdn.net/stickershop/v1/sticker/'+com.line_note+'/iphone/sticker@2x.png':''
-          ,
-          createdAt: com.time,
-          user: {
-            _id: 2,
-            name: com.speaker,
-            avatar:null,
-            status:com.status,
-            title:com.title,
-            html_flg:com.html_flg,
-          }
+    if (talk != null) {
+      const msg = talk.map(com => {
+        
+        if (com.del_flg){
+          return
         }
-        return data;
-      }else if (com.speaker === '店舗') {
-        const data = {
-          _id:  com.communication_id,
-          text: com.note+(com.line_note?com.line_note:''),
-          image:com.file_path?com.file_path:'',
-          createdAt: com.time,
-          user: {
-            _id: 1,
-            name: com.speaker,
-            avatar:null,
-            status:com.status,
-            title:com.title,
-            html_flg:com.html_flg,
+        
+        if (com.speaker === 'お客様') {
+          const data = {
+            _id:  com.communication_id,
+            text: com.note+(com.line_note && com.title !== 'スタンプ'?com.line_note:''),
+            image:com.file_path?com.file_path:com.title === 'スタンプ'?'https://stickershop.line-scdn.net/stickershop/v1/sticker/'+com.line_note+'/iphone/sticker@2x.png':''
+            ,
+            createdAt: com.time,
+            user: {
+              _id: 2,
+              name: com.speaker,
+              avatar:null,
+              status:com.status,
+              title:com.title,
+              html_flg:com.html_flg,
+            }
           }
+          return data;
+        }else if (com.speaker === '店舗') {
+          const data = {
+            _id:  com.communication_id,
+            text: com.note+(com.line_note?com.line_note:''),
+            image:com.file_path?com.file_path:'',
+            createdAt: com.time,
+            user: {
+              _id: 1,
+              name: com.speaker,
+              avatar:null,
+              status:com.status,
+              title:com.title,
+              html_flg:com.html_flg,
+            }
+          }
+          return data;
         }
-        return data;
-      }
-    }).filter(data => data);
-    setMessages(msg);
+      }).filter(data => data);
+      setMessages(msg);
+    }
+
   }, [talk])
   
   const renderBubble = props => {
@@ -443,7 +446,7 @@ export default function TalkScreen(props) {
             maxWidth: '75%',
           },
           left: {
-            backgroundColor: (stamp==='スタンプ'||image!==''?'transparent':'#346cb8'),
+            backgroundColor: (stamp==='スタンプ'?'transparent':'#346cb8'),
             marginLeft: 5,
             marginVertical: 5,
             borderBottomLeftRadius: 1,
