@@ -217,10 +217,8 @@ export default function Schedule(props) {
         key,
         ...value,
       }));
-    
-      const filteredData = customerData.filter(item => item.send_check !== '1');
       
-      newArray.push({ [customerId]: filteredData });
+      newArray.push({ [customerId]: customerData });
     }
     
     setSchedules(newArray);
@@ -338,7 +336,7 @@ export default function Schedule(props) {
                       if (key2 == item.customer_id) {
                         const data = cus[key2];
                         for (var c=0;c<data.length;c++) {
-                          if (item.title != data[c]["title"]) {
+                          if (item.title != data[c]["title"] && data[c]["send_check"] != '1') {
                             array2.push(data[c]);
                           }
                         }
@@ -359,7 +357,8 @@ export default function Schedule(props) {
                 }}
               >
                 <View style={styles.ListInner}>
-                  <Text style={styles.name}>{item.title}</Text>
+                  <Text style={[{fontSize:16},item.send_check=='1'?{width:'57%'}:{width:'65%'}]}>{item.title}</Text>
+                  <Text style={{color:'red',fontSize:14}}>{item.send_check=='1'&&'【済】'}</Text>
                   <Text style={styles.date}>{item.start_day}</Text>
                 </View>
               </TouchableOpacity>
@@ -399,7 +398,7 @@ export default function Schedule(props) {
           </View>
           <View style={{flexDirection:'row',justifyContent:'center'}}>
             <TouchableOpacity style={styles.buttonContainer2} onPress={()=>check_customer_on_off_db(sub)}>
-              <Text style={styles.buttonLabel}>完了にする</Text>
+              <Text style={styles.buttonLabel}>{sub.send_check=='1'?'未完了にする':'完了にする'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.buttonContainer2,{marginLeft:10}]}
@@ -472,10 +471,10 @@ export default function Schedule(props) {
 
   async function check_customer_on_off_db(sub) {
     
-    const AsyncAlert = async () => new Promise((resolve) => {
+    const AsyncAlert = async (txt) => new Promise((resolve) => {
       Alert.alert(
         '確認',
-        `${sub["title"]}を【完了】にしてよろしいですか？`,
+        `${sub["title"]}を【${txt}】にしてよろしいですか？`,
         [
           {
             text: 'はい',
@@ -494,7 +493,11 @@ export default function Schedule(props) {
       );
     });
 
-    if (!await AsyncAlert()) return;
+    var txt = sub.send_check == '1' ? '未完了' : '完了';
+
+    if (!await AsyncAlert(txt)) return;
+
+    var flg = sub.send_check == '1' ? '' : '1';
 
     let formData = new FormData();
     formData.append('ID',route.params.account);
@@ -504,7 +507,7 @@ export default function Schedule(props) {
     formData.append('val[id]',sub.customer_id);
     formData.append('val[selecter]',sub.customer_select);
     formData.append('val[key]',sub.key);
-    formData.append('val[flg]',1);
+    formData.append('val[flg]',flg);
     
     fetch(domain+'php/ajax/update.php',
     {
@@ -731,10 +734,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection:'row',
     alignItems:'center'
-  },
-  name: {
-    width:'65%',
-    fontSize: 16,
   },
   date: {
     color:'#999',
