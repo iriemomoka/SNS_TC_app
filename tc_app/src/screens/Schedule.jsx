@@ -308,6 +308,18 @@ export default function Schedule(props) {
         }
       }
 
+      if (array.length == 0) {
+        return (
+          <View style={styles.noschedule}>
+            <Text style={styles.buttonReloadLabel}>スケジュールはありません</Text>
+          </View>
+        )
+      }
+
+      // 時間でソートする
+      const sortStartDay = (a, b) => new Date(a.start_day) - new Date(b.start_day);
+      array = array.sort(sortStartDay);
+
       return (
         <FlatList
           ref={listRef}
@@ -332,6 +344,12 @@ export default function Schedule(props) {
                         }
                       }
                     }
+                  }
+
+                  // 時間でソートする
+                  if (array2.length > 0) {
+                    const sortStartDay = (a, b) => new Date(a.start_day) - new Date(b.start_day);
+                    array2 = array2.sort(sortStartDay);
                   }
 
                   getName(item.customer_id,item.title);
