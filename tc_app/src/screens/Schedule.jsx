@@ -536,109 +536,102 @@ export default function Schedule(props) {
 
   return (
     <View style={styles.container}>
-      <GestureRecognizer
-        onSwipeRight={() => {
-          backAction();
-        }}
-        style={{ flex: 1 }}
-      >
-        <Loading isLoading={isLoading} />
-        <View style={{zIndex: 500,flexDirection:'row'}}>
-          <View>
-            <DropDownPicker
-              style={styles.DropDown}
-              dropDownContainerStyle={styles.dropDownContainer}
-              open={open}
-              value={staff_value}
-              items={staffList}
-              setOpen={setOpen}
-              setValue={setStaff_Value}
-              placeholder="▼　担当者"
-            />
-          </View>
-          <TouchableOpacity style={styles.Datebtn} onPress={()=>setShow(true)}>
-            <Text style={styles.Datebtn_text}>{Moment(date).format("YYYY-MM-DD")}</Text>
-          </TouchableOpacity>
-          {(show && Platform.OS === 'android') && (
-            <DateTimePicker
-              value={date}
-              mode={'date'}
-              display="default"
-              locale={'ja'}
-              onChange={(event, selectedDate) => {
-                const currentDate = selectedDate || date;
-                setDate(currentDate);
-                setShow(false);
-              }}
-            />
-          )}
-          {Platform.OS === 'ios'&& (
-            <Modal
-              isVisible={show}
-              swipeDirection={null}
-              backdropOpacity={0.5}
-              animationInTiming={300}
-              animationOutTiming={500}
-              animationIn={'slideInDown'}
-              animationOut={'slideOutUp'}
-              propagateSwipe={true}
-              style={{alignItems: 'center'}}
-              onBackdropPress={()=>setShow(false)}
-            >
-              <View style={styles.iosdate}>
-                <TouchableOpacity
-                  style={{
-                    position: 'absolute',
-                    top:8,
-                    right:10,
-                    zIndex:999
-                  }}
-                  onPress={()=>setShow(false)}
-                >
-                  <Feather name='x-circle' color='#ccc' size={35} />
-                </TouchableOpacity>
-                <DateTimePicker
-                  value={date}
-                  mode={'date'}
-                  display="spinner"
-                  locale={'ja'}
-                  onChange={(event, selectedDate) => {
-                    const currentDate = selectedDate || date;
-                    setDate(currentDate);
-                  }}
-                />
-              </View>
-            </Modal>
-          )}
-          <TouchableOpacity
-            style={styles.buttonContainer}
-            onPress={()=>{
-              setLoading(true);
-              onRefresh();
+      <Loading isLoading={isLoading} />
+      <View style={{zIndex: 500,flexDirection:'row'}}>
+        <View>
+          <DropDownPicker
+            style={styles.DropDown}
+            dropDownContainerStyle={styles.dropDownContainer}
+            open={open}
+            value={staff_value}
+            items={staffList}
+            setOpen={setOpen}
+            setValue={setStaff_Value}
+            placeholder="▼　担当者"
+          />
+        </View>
+        <TouchableOpacity style={styles.Datebtn} onPress={()=>setShow(true)}>
+          <Text style={styles.Datebtn_text}>{Moment(date).format("YYYY-MM-DD")}</Text>
+        </TouchableOpacity>
+        {(show && Platform.OS === 'android') && (
+          <DateTimePicker
+            value={date}
+            mode={'date'}
+            display="default"
+            locale={'ja'}
+            onChange={(event, selectedDate) => {
+              const currentDate = selectedDate || date;
+              setDate(currentDate);
+              setShow(false);
             }}
+          />
+        )}
+        {Platform.OS === 'ios'&& (
+          <Modal
+            isVisible={show}
+            swipeDirection={null}
+            backdropOpacity={0.5}
+            animationInTiming={300}
+            animationOutTiming={500}
+            animationIn={'slideInDown'}
+            animationOut={'slideOutUp'}
+            propagateSwipe={true}
+            style={{alignItems: 'center'}}
+            onBackdropPress={()=>setShow(false)}
           >
-            <Text style={styles.buttonLabel}>表　示</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={{zIndex: 100,flex:1}}>
-          {comList}
-        </View>
-        
-        <Modal
-          isVisible={modal}
-          swipeDirection={null}
-          backdropOpacity={0.5}
-          animationInTiming={300}
-          animationOutTiming={500}
-          animationIn={'slideInDown'}
-          animationOut={'slideOutUp'}
-          propagateSwipe={true}
-          style={{alignItems: 'center'}}
-          onBackdropPress={()=>setModal(false)}
+            <View style={styles.iosdate}>
+              <TouchableOpacity
+                style={{
+                  position: 'absolute',
+                  top:8,
+                  right:10,
+                  zIndex:999
+                }}
+                onPress={()=>setShow(false)}
+              >
+                <Feather name='x-circle' color='#ccc' size={35} />
+              </TouchableOpacity>
+              <DateTimePicker
+                value={date}
+                mode={'date'}
+                display="spinner"
+                locale={'ja'}
+                onChange={(event, selectedDate) => {
+                  const currentDate = selectedDate || date;
+                  setDate(currentDate);
+                }}
+              />
+            </View>
+          </Modal>
+        )}
+        <TouchableOpacity
+          style={styles.buttonContainer}
+          onPress={()=>{
+            setLoading(true);
+            onRefresh();
+          }}
         >
-          {scheduleList}
-        </Modal>
-      </GestureRecognizer>
+          <Text style={styles.buttonLabel}>表　示</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{zIndex: 100,flex:1}}>
+        {comList}
+      </View>
+      
+      <Modal
+        isVisible={modal}
+        swipeDirection={null}
+        backdropOpacity={0.5}
+        animationInTiming={300}
+        animationOutTiming={500}
+        animationIn={'slideInDown'}
+        animationOut={'slideOutUp'}
+        propagateSwipe={true}
+        style={{alignItems: 'center'}}
+        onBackdropPress={()=>setModal(false)}
+      >
+        {scheduleList}
+      </Modal>
     </View>
   );
 }
@@ -816,7 +809,6 @@ const styles = StyleSheet.create({
     borderRadius:5
   },
   datalist: {
-    height:60,
     backgroundColor:'#fff',
     borderWidth:1,
     borderTopWidth:0,
