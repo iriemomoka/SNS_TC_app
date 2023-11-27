@@ -2454,7 +2454,7 @@ export function MyModal4(props){
       if (category == f.category) {
         return (
           <TouchableOpacity onPress={() => tmp_send(f)} key={f.fixed_id}>
-            <Text style={styles.CollapseBodyText}>{f.title}</Text>
+            <Text style={styles.CollapseBodyText}>　⇒ {f.title}</Text>
           </TouchableOpacity>
         )
       }
@@ -2685,7 +2685,7 @@ export function MyModal4(props){
                 <Collapse>
                   <CollapseHeader>
                     <View>
-                      <Text style={styles.CollapseHeader}>{item}</Text>
+                      <Text style={styles.CollapseHeader}>〇 {item}</Text>
                     </View>
                   </CollapseHeader>
                   <CollapseBody>
@@ -4942,8 +4942,9 @@ const styles = StyleSheet.create({
     marginVertical:5,
   },
   CollapseBodyText: {
-    fontSize:15,
-    marginVertical:3
+    fontSize:16,
+    marginVertical:3,
+    color:'#191970'
   },
   close: {
     position: 'absolute',

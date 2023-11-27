@@ -374,18 +374,18 @@ export default function Ranking(props) {
               const data = rows._array[0];
               setBarChart_flg(true);
               setBarChart([
-                data["Jan"],
-                data["Feb"],
-                data["Mar"],
-                data["Apr"],
-                data["May"],
-                data["Jun"],
-                data["Jul"],
-                data["Aug"],
-                data["Sep"],
-                data["Oct"],
-                data["Nov"],
-                data["Dec"]
+                data["Jan"]/10000,
+                data["Feb"]/10000,
+                data["Mar"]/10000,
+                data["Apr"]/10000,
+                data["May"]/10000,
+                data["Jun"]/10000,
+                data["Jul"]/10000,
+                data["Aug"]/10000,
+                data["Sep"]/10000,
+                data["Oct"]/10000,
+                data["Nov"]/10000,
+                data["Dec"]/10000
               ]);
 
               resolve(true);
@@ -1807,7 +1807,8 @@ export default function Ranking(props) {
       for (var m=1; m<=12; m++) {
         var god = await get_other_data(scopeData_A[m]); // 他業者付け等その他売上データ
         var sales = cnt_salesTable(key,scopeData_B[m],god);
-        obj[m-1] = sales["black_sales"];
+        var bs = sales["black_sales"]/10000; // 表示は万単位
+        obj[m-1] = bs;
         newArr.push(sales["black_sales"]);
       }
     }
@@ -2260,6 +2261,7 @@ export default function Ranking(props) {
                       width={screenWidth*0.9}
                       height={220}
                       yAxisLabel={'¥'}
+                      yAxisSuffix={'万'}
                       chartConfig={{
                         backgroundColor: '#fff',
                         backgroundGradientFrom: "#fff",
@@ -2268,16 +2270,17 @@ export default function Ranking(props) {
                         color: (opacity = 1) => `rgba(255, 100, 100, 1)`,
                         labelColor:(opacity = 1) => '#373737',
                         style: {
-                          borderRadius: 16
+                          borderRadius: 16,
                         },
                         fillShadowGradientOpacity: 1,
                         decimalPlaces: 0, // 左の小数点以下の桁数
-                        barPercentage:0.5,
-                        paddingVertical:50
+                        barPercentage:0.4,
+                        paddingVertical:50,
                       }}
                       style={{
                         marginVertical: 8,
                         borderRadius: 0,
+                        transform: [{ translateX: -10 }],
                       }}
                       // verticalLabelRotation={-45}
                     />
