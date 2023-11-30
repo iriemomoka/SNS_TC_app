@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   StyleSheet, Text, View, LogBox, TouchableOpacity, Alert, BackHandler, AppState, KeyboardAvoidingView, ScrollView, Image, Dimensions, Platform, FlatList, TextInput } from "react-native";
 import Modal from "react-native-modal";
@@ -182,6 +182,49 @@ export default function Ranking(props) {
     },
   ];
 
+  const flg = useRef('');
+  const appState = useRef(AppState.currentState);
+  const abortControllerRef = useRef(new AbortController());
+
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      const handleAppStateChange = (nextAppState) => {
+        if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+          resumeFetchWithDelay();
+        } else if (nextAppState === 'background') {
+          // アプリがバックグラウンドになった場合の処理
+          pauseFetch();
+        }
+        appState.current = nextAppState;
+      };
+
+      const Listener = AppState.addEventListener('change', handleAppStateChange);
+
+      return () => {
+        Listener.remove();
+      };
+    }
+  }, []);
+
+  const pauseFetch = () => {
+    console.log('バックグラウンドになりました1');
+    abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
+  };
+
+  const resumeFetchWithDelay = async() => {
+    if (flg.current == '1') {
+      const getR = await getRanking(true);
+      if (getR == false) return;
+      await getRankingAll(getR);
+    } else {
+      const getR = await getRanking(true);
+      if (getR == false) return;
+      await getBlackyear();
+    }
+    flg.current = '';
+  };
+
   //*******************************************************
   // 
   // 数値変換(Number Convert)
@@ -216,12 +259,48 @@ export default function Ranking(props) {
   var scopeData_N;    // 反響・来店・決定分析
   var tax = 1.1;      // 消費税
 
+  const getAPI = useCallback((month_,flg) => {
+
+    const signal = abortControllerRef.current.signal;
+    
+    return new Promise((resolve, reject)=>{
+      fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: JSON.stringify({
+          ID: route.params.account,
+          pass: route.params.password,
+          act: "ranking",
+          month: month_,
+          fc_flg: global.fc_flg,
+          flg:flg,
+        }),
+        signal
+      })
+      .then((response) => response.json())
+      .then((json) => {
+        resolve(json);
+      })
+      .catch((error) => {
+        if (error.name == 'AbortError') {
+          resolve('AbortError');
+        } else {
+          console.log(error);
+          resolve(false);
+        }
+      });
+    })
+  },[abortControllerRef])
+
   //********************************************************
   // 
   // 売上データを取得する
   // 
   //********************************************************
-  async function getRanking(flg) {
+  const getRanking = useCallback(async(flg) => {
 
     console.log('-----getRanking-----');
 
@@ -247,36 +326,11 @@ export default function Ranking(props) {
       }
     }
 
-    const getAPI = () => {
+    var DATA = await getAPI(month_,"0");
 
-      return new Promise((resolve, reject)=>{
-        fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: JSON.stringify({
-            ID: route.params.account,
-            pass: route.params.password,
-            act: "ranking",
-            month: month_,
-            fc_flg: global.fc_flg,
-            flg:"0",
-          }),
-        })
-        .then((response) => response.json())
-        .then((json) => {
-          resolve(json);
-        })
-        .catch((error) => {
-          console.log(error);
-          resolve(false);
-        });
-      })
+    if (DATA == 'AbortError') {
+      return false;
     }
-
-    const DATA = await getAPI();
 
     scopeData_S = DATA["gwp"]["staff"];              // 業務進捗データ(スタッフ情報)
     scopeData_C = DATA["gwp"]["customer"];           // 業務進捗データ(顧客情報)
@@ -357,7 +411,8 @@ export default function Ranking(props) {
     if (!flg) setLoading(false);
 
     return result;
-  }
+
+  },[])
 
   function getDBBarChart(month) {
     return new Promise((resolve, reject) => {
@@ -604,7 +659,7 @@ export default function Ranking(props) {
   // 各売上の順位を取得する
   // 
   //********************************************************
-  async function getRankingAll(rankData) {
+  const getRankingAll = useCallback(async(rankData) => {
 
     var shop_id = route.params.shop_id;
 
@@ -625,43 +680,18 @@ export default function Ranking(props) {
       month_ = (date.getFullYear()).toString() + "-" + addZero(month,2);
     }
 
-    const getAPI = () => {
-
-      return new Promise((resolve, reject)=>{
-        fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: JSON.stringify({
-            ID: route.params.account,
-            pass: route.params.password,
-            act: "ranking",
-            month: month_,
-            fc_flg: global.fc_flg,
-            flg:"3",
-          }),
-        })
-        .then((response) => response.json())
-        .then((json) => {
-          resolve(json);
-        })
-        .catch((error) => {
-          console.log(error);
-          resolve(false);
-        });
-      })
-    }
-
     var startTime = Date.now(); // 開始時間
     console.log('-----getRankingALL-----')
 
-    const DATA = await getAPI();
+    const DATA = await getAPI(month_,"3");
 
     var endTime = Date.now(); // 終了時間
     var time = (endTime - startTime)/1000;
     console.log('データ取得①：' + time + '秒')
+
+    if (DATA == 'AbortError') {
+      return;
+    }
 
     if (!DATA) {
       Alert.alert('エラーコード：5','売上順位取得に失敗しました');
@@ -680,14 +710,14 @@ export default function Ranking(props) {
     var time = (endTime - startTime)/1000;
     console.log('順位：' + time + '秒')
 
-  }
+  },[])
 
   //********************************************************
   // 
   // 年間売上データを取得する（バックグラウンド）
   // 
   //********************************************************
-  async function getBlackyear() {
+  const getBlackyear = useCallback(async() => {
     
     setKaishi(true);
 
@@ -698,43 +728,18 @@ export default function Ranking(props) {
       month_ = (date.getFullYear()).toString() + "-" + addZero(month,2);
     }
 
-    const getAPI = () => {
-
-      return new Promise((resolve, reject)=>{
-        fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: JSON.stringify({
-            ID: route.params.account,
-            pass: route.params.password,
-            act: "ranking",
-            month: month_,
-            fc_flg: global.fc_flg,
-            flg:"1",
-          }),
-        })
-        .then((response) => response.json())
-        .then((json) => {
-          resolve(json);
-        })
-        .catch((error) => {
-          console.log(error);
-          resolve(false);
-        });
-      })
-    }
-
     var startTime = Date.now(); // 開始時間
     console.log('-----getBlackyear-----')
 
-    const DATA = await getAPI();
+    const DATA = await getAPI(month_,"1");
 
     var endTime = Date.now(); // 終了時間
     var time = (endTime - startTime)/1000;
     console.log('データ取得②：' + time + '秒')
+
+    if (DATA == 'AbortError') {
+      return;
+    }
 
     if (!DATA) {
       Alert.alert('エラー','年間売上データ取得に失敗しました');
@@ -759,7 +764,7 @@ export default function Ranking(props) {
 
     return
 
-  }
+  },[])
 
   //********************************************************
   // 
@@ -2038,6 +2043,7 @@ export default function Ranking(props) {
                     {
                       text: "はい",
                       onPress: async() => {
+                        flg.current = '1';
                         Toast.show('集計処理中は広告が流れます\nそのままお待ちください', {
                           duration: Toast.durations.SHORT,
                           position: 0,
@@ -2080,6 +2086,7 @@ export default function Ranking(props) {
                         // }
 
                         const getR = await getRanking(true);
+                        if (getR == false) return;
                         await getRankingAll(getR);
 
                       }
@@ -2143,6 +2150,7 @@ export default function Ranking(props) {
                       {
                         text: "はい",
                         onPress: async() => {
+                          flg.current = '2';
                           Toast.show('集計処理中は広告が流れます\nそのままお待ちください', {
                             duration: Toast.durations.SHORT,
                             position: 0,
@@ -2184,7 +2192,8 @@ export default function Ranking(props) {
 
                           // }
 
-                          await getRanking(true);
+                          const getR = await getRanking(true);
+                          if (getR == false) return;
                           await getBlackyear();
 
                         }

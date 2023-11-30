@@ -876,79 +876,84 @@ async function Delete_staff_db(){
 
 }
   
-function logout() {
+async function logout() {
     
-  Alert.alert(
+  const logoutCheck = async () => new Promise((resolve) => {
+    Alert.alert(
       "ログアウトしますか？",
       "",
       [
         {
           text: "はい",
-          onPress: async() => {
-            
-            storage.save({
-              key: 'GET-DATA',
-              data: '',
-            });
-            
-            await Delete_staff_db();
-            
-            if(global.sp_token && global.sp_id){
-              
-              // サーバーに情報送信して、DBから削除
-              await fetch(domain+'app/app_system/set_staff_app_token.php', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  id: global.sp_id,
-                  token: global.sp_token,
-                  del_flg:1,
-                  fc_flg: global.fc_flg
-                }),
-              })
-              
-            }
-            
-            if(global.fc_flg){
-              
-              let formData = new FormData();
-              formData.append('fc_logout',1);
-              
-              await fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-              {
-                method: 'POST',
-                header: {
-                  'content-type': 'multipart/form-data',
-                },
-                body: formData
-              })
-              .then((response) => response.json())
-              .then((json) => {
-                console.log(json);
-              })
-              .catch((error) => {
-                console.log(error)
-              })
-              
-            }
-            
-            global.sp_token = ''; // スマホトークン
-            global.sp_id = '';    // ログインID
-            global.fc_flg = '';   // fcフラグ
-            
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'LogIn' }],
-            });
-          }
+          onPress: async() => {resolve(true);}
         },
         {
           text: "いいえ",
+          style: "cancel",
+          onPress:() => {resolve(false);}
         },
       ]
     );
+  })
+
+  if (!await logoutCheck()) false;
+
+  storage.save({
+    key: 'GET-DATA',
+    data: '',
+  });
+
+  await Delete_staff_db();
+  
+  if(global.sp_token && global.sp_id){
+    
+    // サーバーに情報送信して、DBから削除
+    await fetch(domain+'app/app_system/set_staff_app_token.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: global.sp_id,
+        token: global.sp_token,
+        del_flg:1,
+        fc_flg: global.fc_flg
+      }),
+    })
+    
+  }
+  
+  if(global.fc_flg){
+    
+    let formData = new FormData();
+    formData.append('fc_logout',1);
+    
+    await fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+    {
+      method: 'POST',
+      header: {
+        'content-type': 'multipart/form-data',
+      },
+      body: formData
+    })
+    .then((response) => response.json())
+    .then((json) => {
+      console.log(json);
+    })
+    .catch((error) => {
+      console.log(error)
+    })
+    
+  }
+  
+  global.sp_token = ''; // スマホトークン
+  global.sp_id = '';    // ログインID
+  global.fc_flg = '';   // fcフラグ
+  
+  navigation.reset({
+    index: 0,
+    routes: [{ name: 'LogIn' }],
+  });
   
 }
   

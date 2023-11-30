@@ -192,6 +192,12 @@ export default function Schedule(props) {
     const time = (endTime - startTime)/1000;
     console.log('onRefreshschedule：'+time + '秒')
     
+    if (schedule == false) {
+      setSchedules([]);
+      setLoading(false);
+      return;
+    }
+
     var customer = schedule[0]["customer"];
 
     var list = {};
@@ -358,7 +364,7 @@ export default function Schedule(props) {
               >
                 <View style={styles.ListInner}>
                   <Text style={[{fontSize:16},item.send_check=='1'?{width:'57%'}:{width:'65%'}]}>{item.title}</Text>
-                  <Text style={{color:'red',fontSize:14}}>{item.send_check=='1'&&'【済】'}</Text>
+                  <Text style={{color:'red',fontSize:14}}>{item.send_check=='1'&&'[済]'}</Text>
                   <Text style={styles.date}>{item.start_day}</Text>
                 </View>
               </TouchableOpacity>
