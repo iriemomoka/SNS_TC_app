@@ -14,7 +14,6 @@ import {
   Alert,
   FlatList,
   TextInput,
-  Button,
   ScrollView,
   RefreshControl,
   BackHandler,
@@ -28,7 +27,7 @@ import DropDownPicker, { Item } from "react-native-dropdown-picker";
 import * as Notifications from "expo-notifications";
 import { Feather } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as Permissions from "expo-permissions";
+import Autocomplete from 'react-native-autocomplete-input';
 import SideMenu from 'react-native-side-menu-updated';
 import * as SQLite from "expo-sqlite";
 
@@ -52,19 +51,16 @@ let domain = "https://www.total-cloud.net/";
 
 Notifications.setBadgeCountAsync(0);
 
-export default function CommunicationHistoryScreen(props) {
+export default function Company(props) {
 
   const [isLoading, setLoading] = useState(false);
 
   const { navigation, route } = props;
 
-  const [memos, setMemos] = useState([]);
+  const [shop_staffs, setShop_staffs] = useState([]);
 
-  const [name, setName] = useState("");
-
-  const [open, setOpen] = useState(false);
-  const [staff_value, setStaff_Value] = useState(null);
   const [staffs, setStaffs] = useState([]);
+  const [filteredStaffs, setFilteredStaffs] = useState([]);
 
   const [bell_count, setBellcount] = useState(null);
 
@@ -75,28 +71,6 @@ export default function CommunicationHistoryScreen(props) {
   
   // 参照データ取得日時
   const [date, setDate] = useState('');
-  
-  var staffList = useMemo(()=>{
-
-    var items = [];
-
-    for (var s=0;s<staffs.length;s++) {
-      var item = staffs[s];
-      if (item.account != "all") {
-        var data = {
-          label:item.name_1 + "　" + (item.name_2 ? item.name_2 : ""),
-          value: item.account,
-        }
-        items.push(data);
-      }
-    }
-
-    items.unshift({ label: "全員", value: "all" });
-    items.unshift({ label: "担当無し", value: "" });
-
-    return items;
-
-  },[staffs]);
   
   useLayoutEffect(() => {
 
@@ -109,7 +83,7 @@ export default function CommunicationHistoryScreen(props) {
         ? { backgroundColor: "#1d449a", height: 110 }
         : { backgroundColor: "#fd2c77", height: 110 },
       headerTitle: () => (
-        <Text style={styles.headertitle}>お客様一覧</Text>
+        <Text style={styles.headertitle}>社内チャット</Text>
       ),
       headerRight: () => (
         <View style={{marginRight:15}}>
@@ -139,20 +113,7 @@ export default function CommunicationHistoryScreen(props) {
 
     console.log('--------------------------')
 
-    // ログイン時のみサーバーDB見に行く
-    if (route.previous == "LogIn") {
-
-      navigation.setOptions({
-        gestureDirection: "vertical-inverted",
-      });
-
-      Display(true);
-
-    } else {
-
-      Display(false);
-
-    }
+    Display();
 
     // 通知をタップしたらお客様一覧 → トーク画面 (ログイン済)
     const notificationInteractionSubscription =
@@ -209,64 +170,9 @@ export default function CommunicationHistoryScreen(props) {
   // 更新
   const [refreshing, setRefreshing] = useState(false);
 
-  async function Display(flg) {
+  async function Display() {
 
-    if (flg) {
-      onRefresh(false);
-    } else {
-      storage.load({
-        key : 'GET-DATA'
-      })
-      .then(data => {
-    
-        if (data) {
-  
-          var parts = data.split(/-|:/);
-          
-          // 年、月、日、時、分を取得
-          var year = parts[0];
-          var month = parts[1];
-          var day = parts[2];
-          var hour = parts[3];
-          var minute = parts[4];
-          
-          // 新しいフォーマットの日付文字列を作成
-          var newDate = year + "-" + month + "-" + day + " " + hour + ":" + minute;
-  
-          setDate(newDate+' 時点');
-        }
-      })
-      .catch(err => {
-        storage.save({
-          key: 'GET-DATA',
-          data: '',
-        });
-      })
-    }
-
-    var loadflg = false;
-
-    var sql = `select count(*) as count from customer_mst;`;
-    var customer = await db_select(sql);
-    const cnt = customer[0]["count"];
-
-    if (cnt == 0) loadflg = true;
-
-    loadflg&&setLoading(true);
-
-    // ローカルDB用スタッフリスト
-    const staff_ = await Insert_staff_list_db("");
-
-    // ローカルDB用お客様情報＋最新のコミュニケーション
-    await Insert_customer_db("");
-    
-    await searchCustomer(staff_,true);
-
-    await Insert_fixed_db("");
-
-    await getBELL();
-
-    loadflg&&setLoading(false);
+    onRefresh(false);
 
   }
 
@@ -305,7 +211,7 @@ export default function CommunicationHistoryScreen(props) {
 
     const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    if (flg) setLoading(true);
+    setLoading(true);
 
     setDate('最新データ取得中');
 
@@ -326,46 +232,7 @@ export default function CommunicationHistoryScreen(props) {
 
     if (json != false) {
 
-      // ローカルDB用スタッフリスト
-      const staff_ = await Insert_staff_list_db(json.staff);
-
-      // ローカルDB用お客様情報＋最新のコミュニケーション
-      await Insert_customer_db(json.search);
-      await searchCustomer(staff_,true);
-
-      // ローカルDB用定型文
-      const fixed_mst_data = Object.entries(json.fixed_array).map(
-        ([key, value]) => {
-          return { key, value };
-        }
-      );
-
-      // 登録用に一つ一つ配列化
-      const fixed_mst = [];
-
-      fixed_mst_data.map((f) => {
-        if (!f.value.length) {
-          fixed_mst.push({
-            fixed_id: "",
-            category: f.key,
-            title: "",
-            mail_title: "",
-            note: "",
-          });
-        } else {
-          f.value.map((v) => {
-            fixed_mst.push({
-              fixed_id: v.fixed_id,
-              category: f.key,
-              title: v.title,
-              mail_title: v.note.substring(0, v.note.indexOf("<[@]>")),
-              note: v.note.substr(v.note.indexOf("<[@]>") + 5),
-            });
-          });
-        }
-      });
-
-      await Insert_fixed_db(fixed_mst);
+      await Insert_staff_all_db(json);
 
       function addZero(num, length) {
         var minus = "";
@@ -502,7 +369,7 @@ export default function CommunicationHistoryScreen(props) {
         body: JSON.stringify({
           ID: route.params.account,
           pass: route.params.password,
-          act: "customer_list",
+          act: "company",
           fc_flg: global.fc_flg,
           page:0,
         }),
@@ -585,20 +452,17 @@ export default function CommunicationHistoryScreen(props) {
   });
 
   // スタッフリストデータベース登録
-  async function Insert_staff_list_db(staff_list) {
+  async function Insert_staff_all_db(staff_all) {
 
-    if (staff_list) {
+    if (staff_all) {
 
       var sql = `select * from staff_list where (account != 'all');`;
       var stf = await db_select(sql);
-
-      var check_flg = "";
 
       // ローカルDBのスタッフ情報
       var DBstf = [];
       if (stf != false) {
         DBstf = stf.map((s) => {
-          if (s.check) check_flg = s.account;
           return s.account
         })
       }
@@ -606,10 +470,10 @@ export default function CommunicationHistoryScreen(props) {
       // 最新のスタッフ情報
       var APIstf = [];
 
-      for (var s=0;s<staff_list.length;s++) {
-        var staff = staff_list[s];
-        var staff_insert = `insert or replace into staff_list values (?,?,?,?);`
-        var staff_data = [staff.account, staff.name_1, staff.name_2, check_flg==staff.account?"1":""]
+      for (var s=0;s<staff_all.length;s++) {
+        var staff = staff_all[s];
+        var staff_insert = `insert or replace into staff_all values (?,?,?,?,?,?);`
+        var staff_data = [staff.account, staff.shop_id, staff.name, staff.name_1, staff.name_2, staff.staff_photo1];
         await db_write(staff_insert,staff_data);
         APIstf.push(staff.account);
       }
@@ -619,38 +483,28 @@ export default function CommunicationHistoryScreen(props) {
       
       for (var d=0;d<DELstf.length;d++) {
         var account = DELstf[d];
-        var staff_delete = `delete from staff_list where ( account = ? );`;
+        var staff_delete = `delete from staff_all where ( account = ? );`;
         await db_write(staff_delete,[account]);
       }
     }
-    
-    // スタッフリストの中に「全員」を追加する
-    var sql = `select * from staff_list where (account = 'all');`;
-    var allcheck = await db_select(sql);
-    if (allcheck == false) {
-      var sql = `insert or replace into staff_list values ('all','','','');`;
-      await db_write(sql,[]);
-    }
 
-    const sl = await GetDB('staff_list');
-    var result = null;
+    const sl = await GetDB('staff_all');
 
     if (sl != false) {
-      
       setStaffs(sl);
-
-      for (var s=0;s<sl.length;s++) {
-        if (sl[s].check) {
-          result = sl[s].account;
-          setStaff_Value(sl[s].account);
-        }
-      }
       
+      var sql = `select * from staff_all where shop_id = '${route.params.shop_id}';`;
+      var shop_staff = await db_select(sql);
+
+      if (shop_staff != false) {
+        setShop_staffs(shop_staff);
+      } else {
+        setShop_staffs([]);
+      }
+
     } else {
       setStaffs([]);
     }
-
-    return result;
 
   }
 
@@ -729,118 +583,11 @@ export default function CommunicationHistoryScreen(props) {
 
   }
 
-  // 定型文データベース登録
-  async function Insert_fixed_db(fixed) {
-
-    if (fixed) {
-
-      const fixed_mst = await GetDB('fixed_mst');
-
-      // ローカルDBの定型文情報
-      var DBfix = [];
-      if (fixed_mst != false) {
-        DBstf = fixed_mst.map((f) => {
-          return f.fixed_id
-        })
-      }
-
-      // 最新の定型文情報
-      var APIfix = [];
-
-      for (var f=0;f<fixed.length;f++) {
-        var fix_ = fixed[f];
-        var fixed_insert = `insert or replace into fixed_mst values (?,?,?,?,?);`;
-        var fixed_data = [fix_.fixed_id, fix_.category, fix_.title, fix_.mail_title, fix_.note];
-        await db_write(fixed_insert,fixed_data);
-        APIfix.push(fix_.fixed_id);
-      }
-
-      // 削除する定型文情報
-      const DELfix = DBfix.filter(fix => !APIfix.includes(fix));
-      
-      for (var d=0;d<DELfix.length;d++) {
-        var fixed_id = DELfix[d];
-        var fixed_delete = `delete from fixed_mst where ( fixed_id = ? );`;
-        await db_write(fixed_delete,[fixed_id]);
-      }
-    }
-
-  }
-
-  async function onSubmit() {
-
-    Keyboard.dismiss();
-    setLoading(true);
-    await searchCustomer(staff_value);
-    setLoading(false);
-    
-  }
-
-  async function searchCustomer(staff,scrollTOP) {
-
-    var customer_list = []; // 格納する顧客リスト
-    var staff_check   = ""; // チェックするスタッフ
-
-    // 一旦すべてチェック外す
-    var check_null = `update staff_list set "check" = null;`;
-    await db_write(check_null,[]);
-
-    if (staff == "all" || staff == null) {
-
-      var sql = `select * from customer_mst where (name||kana)  like '%${name}%' order by time desc;`;
-      var customer_mst = await db_select(sql);
-
-      if (customer_mst != false) {
-        customer_list = customer_mst;
-      }
-
-      if (staff == "all") {
-        staff_check = "all";
-      }
-
-    } else if (staff_value == "") {
-
-      var sql = `select * from customer_mst where (name||kana)  like '%${name}%' and ((reverberation_user_id = '' or reverberation_user_id is null) and (coming_user_id = '' or coming_user_id is null)) order by time desc;`
-      var customer_mst = await db_select(sql);
-
-      if (customer_mst != false) {
-        customer_list = customer_mst;
-      }
-
-    } else {
-      
-      var sql = `select * from customer_mst where (name||kana)  like '%${name}%' and ((reverberation_user_id = '${staff}') or (coming_user_id = '${staff}')) order by time desc;`;
-      var customer_mst = await db_select(sql);
-
-      if (customer_mst != false) {
-        customer_list = customer_mst;
-      }
-
-      staff_check = staff;
-
-    }
-
-    setMemos(customer_list);
-
-    if (customer_list.length > 0) {
-      if (listRef.current != null && scrollTOP) {
-        listRef.current.scrollToIndex({animated:true,index:0,viewPosition:0});
-      }
-    }
-
-    if (staff_check) {
-      var check = `update staff_list set "check" = '1' where ( account = ? );`;
-      var data = [staff_check]
-      await db_write(check,data);
-    }
-
-  }
-
   async function Delete_staff_db(){
 
     const dbList = [
       "staff_mst",
-      "staff_list",
+      "staff_all",
       "customer_mst",
       "communication_mst",
       "fixed_mst",
@@ -958,7 +705,7 @@ export default function CommunicationHistoryScreen(props) {
                   websocket: route.websocket,
                   profile: route.profile,
                   staff: staffs,
-                  previous:'CommunicationHistory'
+                  previous:'Company'
                 },
               ],
             });
@@ -985,7 +732,7 @@ export default function CommunicationHistoryScreen(props) {
                   params: route.params,
                   websocket: route.websocket,
                   profile: route.profile,
-                  previous:'CommunicationHistory'
+                  previous:'Company'
                 },
               ],
             });
@@ -1009,7 +756,7 @@ export default function CommunicationHistoryScreen(props) {
                   params: route.params,
                   websocket: route.websocket,
                   profile: route.profile,
-                  previous:'CommunicationHistory'
+                  previous:'Company'
                 },
               ],
             });
@@ -1038,7 +785,7 @@ export default function CommunicationHistoryScreen(props) {
   },[bell_count])
 
   const comList = useMemo(() => {
-    if (memos.length == 0) {
+    if (shop_staffs.length == 0) {
       return (
         <View style={{marginTop:150}}>
           <TouchableOpacity style={styles.buttonReload} onPress={()=>onRefresh(true)}>
@@ -1051,7 +798,7 @@ export default function CommunicationHistoryScreen(props) {
         <FlatList
           bounces={true}
           ref={listRef}
-          onEndReached={endRefresh}
+          // onEndReached={endRefresh}
           refreshControl={
             date != '最新データ取得中' ?
             <RefreshControl
@@ -1063,68 +810,96 @@ export default function CommunicationHistoryScreen(props) {
             :<></>
           }
           initialNumToRender={10}
-          data={memos}
+          data={shop_staffs}
           renderItem={({ item }) => {
             if (!item.del_flg) {
               return (
                 <TouchableOpacity
                   style={styles.ListItem}
                   onPress={() => {
-                    navigation.reset({
-                      index: 0,
-                      routes: [
-                        {
-                          name: "TalkScreen",
-                          params: route.params,
-                          customer: item.customer_id,
-                          websocket: route.websocket,
-                          profile: route.profile,
-                          staff: staffs,
-                          cus_name: item.name,
-                        },
-                      ],
-                    });
                   }}
                 >
+                  {item.staff_photo1?
+                  (
+                    <Image
+                      style={styles.icon}
+                      source={{uri:"https://www.total-cloud.net/img/staff_img/"+item.staff_photo1}}
+                    />
+                  ):(
+                    <Image
+                      style={styles.icon}
+                      source={require('../../assets/photo4.png')}
+                    />
+                  )
+                  }
                   <View style={styles.ListInner}>
-                    <View style={{ flexDirection: "row" }}>
-                      <Text
-                        style={
-                          item.status == "未対応"
-                            ? { color: "red", fontSize: 18 }
-                            : { display: "none" }
-                        }
-                      >
-                        ●
-                      </Text>
-                      <Text style={styles.name} numberOfLines={1}>
-                        {item.name
-                          ? item.name.length < 10
-                            ? item.name
-                            : item.name.substring(0, 10) + "..."
-                          : ""}
-                      </Text>
-                    </View>
+                    <Text style={styles.shop} numberOfLines={1}>
+                      {item.shop_name}
+                    </Text>
+                    <Text style={styles.name} numberOfLines={1}>
+                      {item.name_1}{item.name_2}
+                    </Text>
                     <Text style={styles.date}>
-                      {item.time ? item.time.slice(0, -3) : ""}
+                      0000/00/00
                     </Text>
                     <Text style={styles.message} numberOfLines={1}>
-                      {item.title === "スタンプ"
-                        ? "スタンプを送信しました"
-                        : !item.note
-                        ? item.title
-                        : item.note}
+                      abcdefgijklmnopqrstuvwxyz
                     </Text>
                   </View>
                 </TouchableOpacity>
               );
             }
           }}
-          keyExtractor={(item) => `${item.customer_id}`}
+          keyExtractor={(item) => `${item.account}`}
         />
       )
     }
-  },[memos,date])
+  },[shop_staffs,date])
+
+  const bgc = !global.fc_flg?"#fff4b3":"#f5d3df";
+
+  const findStaff = (query) => {
+    if (staffs.length > 0 && query.length > 0) {
+      const regex = new RegExp(`${query.trim()}`, 'i');
+      setFilteredStaffs(
+        staffs.filter((staff) => {
+          const name1Match = staff.name_1 && staff.name_1.search(regex) >= 0;
+          const name2Match = staff.name_2 && staff.name_2.search(regex) >= 0;
+          const shopNameMatch = staff.shop_name && staff.shop_name.search(regex) >= 0;
+      
+          return name1Match || name2Match || shopNameMatch;
+        })
+      );
+    } else {
+      setFilteredStaffs([]);
+    }
+  };
+
+  async function addStaff(item) {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+        `確認`,
+        `${item.name_1}${item.name_2}さん(${item.shop_name})を連絡先登録しますか？\n登録すると相手側にも通知がいきます`,
+        [
+          {
+            text: "いいえ",
+            style: "cancel",
+            onPress:() => {resolve(false);}
+          },
+          {
+            text: "はい",
+            onPress: () => {resolve(true);}
+          }
+        ]
+      );
+    });
+
+    if (!await AsyncAlert()) return;
+
+    setShop_staffs([item, ...shop_staffs])
+    setFilteredStaffs([]);
+  }
 
   return (
     <SideMenu
@@ -1136,56 +911,51 @@ export default function CommunicationHistoryScreen(props) {
       menuPosition={'right'}
       openMenuOffset={deviceScreen.width * 0.5}
     >
-      <View style={styles.container}>
+      <View style={[styles.container,{backgroundColor:bgc}]}>
         <Loading isLoading={isLoading} />
-        <View style={styles.search}>
-          <View style={styles.searchinner}>
-            <TextInput
-              style={styles.searchInput}
-              value={name}
-              onChangeText={(text) => {
-                setName(text);
-              }}
-              placeholder="  お客様名検索"
-              placeholderTextColor="#b3b3b3"
-            />
-            <TouchableOpacity style={styles.buttonContainer} onPress={onSubmit}>
-              <Text style={styles.buttonLabel}>検　索</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={{zIndex: 500,flexDirection:'row'}}>
-          <DropDownPicker
-            style={styles.DropDown}
-            dropDownContainerStyle={styles.dropDownContainer}
-            open={open}
-            value={staff_value}
-            items={staffList}
-            setOpen={setOpen}
-            setValue={setStaff_Value}
-            placeholder="▼　担当者"
-            onSelectItem={(item) => searchCustomer(item.value,true)}
+        <View style={{backgroundColor:bgc,zIndex:999,padding:10}}>
+          <Autocomplete
+            data={filteredStaffs}
+            placeholder="店舗名、名前が検索できます"
+            placeholderTextColor="#b3b3b3"
+            onChangeText={(text) => findStaff(text)}
+            style={styles.searchInput}
+            flatListProps={{
+              style:{maxHeight:200},
+              keyExtractor: (item) => `${item.account}`,
+              renderItem: ({ item }) =>
+              <TouchableOpacity
+                onPress={() => {
+                  addStaff(item);
+                }}>
+                <Text style={styles.suggestText}>
+                {item.shop_name}：{item.name_1}{item.name_2}
+                </Text>
+              </TouchableOpacity>,
+            }}
           />
+        </View>
+        <View style={{height:20,marginRight:10}}>
           <Text style={styles.sub_title}>{date}</Text>
         </View>
         {comList}
         <View style={{height:80}}>
         </View>
         <Footer
-          onPress0={() => {}}
-          onPress1={() => {
+          onPress0={() => {
             navigation.reset({
               index: 0,
               routes: [{
-                name: 'Company' ,
+                name: 'CommunicationHistory' ,
                 params: route.params,
                 websocket:route.websocket,
                 profile:route.profile,
-                previous:'CommunicationHistory',
+                previous:'Company',
                 withAnimation: true
               }],
             });
           }}
+          onPress1={() => {}}
           onPress2={() => {
             navigation.reset({
               index: 0,
@@ -1200,7 +970,7 @@ export default function CommunicationHistoryScreen(props) {
               ],
             });
           }}
-          active={[true,false,false]}
+          active={[false,true,false]}
         />
       </View>
     </SideMenu>
@@ -1219,40 +989,26 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor:'#f1f1f1'
-  },
-  search: {
-    backgroundColor: "#f1f1f1",
-  },
-  searchinner: {
-    margin: 10,
   },
   searchInput: {
     fontSize: 16,
-    width: "75%",
+    width: "100%",
     height: 48,
     paddingHorizontal: 10,
     borderColor: "#dddddd",
     borderWidth: 1,
     backgroundColor: "#ffffff",
   },
-  DropDown: {
-    width: 200,
-    fontSize: 16,
-    height: 40,
-    marginLeft: 10,
-    marginBottom:20
-  },
-  dropDownContainer: {
-    width: 200,
-    marginLeft: 10,
+  suggestText: {
+    fontSize: 15,
+    paddingTop: 5,
+    paddingBottom: 5,
+    margin: 2,
   },
   sub_title: {
     fontSize: 13,
     color: "#9B9B9B",
-    position: "absolute",
-    right: 10,
-    bottom:10
+    marginLeft:'auto',
   },
   buttonContainer: {
     backgroundColor: "#b3b3b3",
@@ -1281,11 +1037,11 @@ const styles = StyleSheet.create({
     color: "#000000",
   },
   ListItem: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff",
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 20,
-    paddingHorizontal: 19,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
     alignItems: "center",
     borderBottomWidth: 1,
     borderColor: "rgba(0,0,0,0.15)",
@@ -1293,14 +1049,23 @@ const styles = StyleSheet.create({
   ListInner: {
     flex: 1,
   },
+  icon: {
+    width:50,
+    height:50,
+    borderRadius:100,
+    marginRight:10,
+  },
+  shop: {
+    fontSize: 12,
+  },
   name: {
-    fontSize: 18,
+    fontSize: 16,
     marginBottom: 5,
   },
   date: {
     position: "absolute",
     right: 0,
-    bottom: 30,
+    top: 0,
   },
   message: {
     fontSize: 14,

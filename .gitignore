@@ -9,6 +9,8 @@ tc_app/*.key
 tc_app/*.mobileprovision
 tc_app/*.orig.*
 tc_app/web-build/
+tc_app/google-services.json
+tc_app/GoogleService-Info.plist
 
 # macOS
 tc_app/.DS_Store

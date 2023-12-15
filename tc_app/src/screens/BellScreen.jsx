@@ -106,7 +106,7 @@ export default function BellScreen(props) {
                           navigation.reset({
                             index: 0,
                             routes: [{
-                              name: 'CommunicationHistory' ,
+                              name: route.previous,
                               params: route.params,
                               websocket:route.websocket,
                               profile:route.profile,
@@ -124,7 +124,7 @@ export default function BellScreen(props) {
                   navigation.reset({
                     index: 0,
                     routes: [{
-                      name: 'CommunicationHistory' ,
+                      name: route.previous,
                       params: route.params,
                       websocket:route.websocket,
                       profile:route.profile,

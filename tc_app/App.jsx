@@ -14,6 +14,7 @@ import Loading from './src/components/Loading';
 import BellScreen from './src/screens/BellScreen';
 import Ranking from './src/screens/Ranking';
 import Schedule from './src/screens/Schedule';
+import Company from './src/screens/Company';
 
 const Stack = createStackNavigator();
 LogBox.ignoreLogs(['Setting a timer']);
@@ -27,12 +28,14 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName="LogIn"
-        screenOptions={{
+        screenOptions={({route: {withAnimation}}) => ({
           headerTitleAlign: 'left',
           gestureEnabled: true,
           gestureDirection: 'horizontal',
-          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-        }}
+          cardStyleInterpolator: !withAnimation
+          ? CardStyleInterpolators.forHorizontalIOS
+          : CardStyleInterpolators.forNoAnimation,
+        })}
       >
         <Stack.Screen
           name="LogIn"
@@ -40,7 +43,7 @@ export default function App() {
         />
         <Stack.Screen
           name="CommunicationHistory"
-          component={CommunicationHistoryScreen} 
+          component={CommunicationHistoryScreen}
           options={{
             gestureDirection: "horizontal-inverted",
           }}
@@ -64,6 +67,16 @@ export default function App() {
         <Stack.Screen
           name="Schedule"
           component={Schedule}
+          options={{
+            gestureDirection: "horizontal-inverted",
+          }}
+        />
+        <Stack.Screen
+          name="Company"
+          component={Company}
+          options={{
+            gestureDirection: "horizontal-inverted",
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

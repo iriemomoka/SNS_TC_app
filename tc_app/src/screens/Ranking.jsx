@@ -1859,7 +1859,7 @@ export default function Ranking(props) {
                 index: 0,
                 routes: [
                   {
-                    name: "CommunicationHistory",
+                    name: route.previous,
                     params: route.params,
                     websocket: route.websocket,
                     profile: route.profile,

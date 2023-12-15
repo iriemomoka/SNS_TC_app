@@ -31,11 +31,12 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as SQLite from "expo-sqlite";
 import Moment from 'moment';
 import Modal from "react-native-modal";
-import GestureRecognizer from "react-native-swipe-gestures";
+import SideMenu from 'react-native-side-menu-updated';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import Loading from "../components/Loading";
 import { GetDB,db_select,db_write } from '../components/Databace';
-import { set } from "react-native-reanimated";
+import Footer from "../components/Footer";
 
 import Storage from 'react-native-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -115,30 +116,28 @@ export default function Schedule(props) {
         ? { backgroundColor: "#1d449a", height: 110 }
         : { backgroundColor: "#fd2c77", height: 110 },
       headerTitle:() => (<Text style={styles.header_name}>スケジュール</Text>),
-      headerLeft: () => (
-          <Feather
-            name='chevron-left'
-            color='white'
-            size={30}
+      headerRight: () => (
+        <View style={{marginRight:15}}>
+          <View style={bell_count?styles.bell:{display:'none'}}>
+            <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
+          </View>
+          <TouchableOpacity
+            style={{width:60,height:60,justifyContent:'center',alignItems:'center'}}
             onPress={() => {
-              navigation.reset({
-                index: 0,
-                routes: [{
-                  name: 'CommunicationHistory' ,
-                  params: route.params,
-                  websocket:route.websocket,
-                  profile:route.profile,
-                  previous:'Schedule'
-                }],
-              });
+              setMenu(!menu);
             }}
-            style={{paddingHorizontal:15,paddingVertical:10}}
-          />
+          >
+            <Feather
+              name="menu"
+              color="white"
+              size={35}
+            />
+          </TouchableOpacity>
+        </View>
       ),
-
     });
 
-  },[]);
+  },[bell_count]);
 
     
   useEffect(() => {
@@ -178,6 +177,8 @@ export default function Schedule(props) {
     await Insert_staff_list_db();
 
     await onRefresh();
+
+    await getBELL();
 
   }
 
@@ -261,6 +262,37 @@ export default function Schedule(props) {
     })
 
   }, [date,staff_value]);
+
+  const getBELL = useCallback(() => {
+    return new Promise((resolve, reject)=>{
+      fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: JSON.stringify({
+          ID: route.params.account,
+          pass: route.params.password,
+          act: "new_bell_cnt",
+          fc_flg: global.fc_flg,
+        }),
+      })
+      .then((response) => response.json())
+      .then((json) => {
+        if (json.bell_count.cnt != "0") {
+          setBellcount(json.bell_count.cnt);
+        } else {
+          setBellcount(null);
+        }
+        resolve()
+      })
+      .catch((error) => {
+        setBellcount(null);
+        resolve()
+      });
+    })
+  });
 
   // スタッフリスト取得
   async function Insert_staff_list_db() {
@@ -540,105 +572,346 @@ export default function Schedule(props) {
 
   }
 
-  return (
-    <View style={styles.container}>
-      <Loading isLoading={isLoading} />
-      <View style={{zIndex: 500,flexDirection:'row'}}>
-        <View>
-          <DropDownPicker
-            style={styles.DropDown}
-            dropDownContainerStyle={styles.dropDownContainer}
-            open={open}
-            value={staff_value}
-            items={staffList}
-            setOpen={setOpen}
-            setValue={setStaff_Value}
-            placeholder="▼　担当者"
-          />
-        </View>
-        <TouchableOpacity style={styles.Datebtn} onPress={()=>setShow(true)}>
-          <Text style={styles.Datebtn_text}>{Moment(date).format("YYYY-MM-DD")}</Text>
-        </TouchableOpacity>
-        {(show && Platform.OS === 'android') && (
-          <DateTimePicker
-            value={date}
-            mode={'date'}
-            display="default"
-            locale={'ja'}
-            onChange={(event, selectedDate) => {
-              const currentDate = selectedDate || date;
-              setDate(currentDate);
-              setShow(false);
-            }}
-          />
-        )}
-        {Platform.OS === 'ios'&& (
-          <Modal
-            isVisible={show}
-            swipeDirection={null}
-            backdropOpacity={0.5}
-            animationInTiming={300}
-            animationOutTiming={500}
-            animationIn={'slideInDown'}
-            animationOut={'slideOutUp'}
-            propagateSwipe={true}
-            style={{alignItems: 'center'}}
-            onBackdropPress={()=>setShow(false)}
-          >
-            <View style={styles.iosdate}>
-              <TouchableOpacity
-                style={{
-                  position: 'absolute',
-                  top:8,
-                  right:10,
-                  zIndex:999
-                }}
-                onPress={()=>setShow(false)}
-              >
-                <Feather name='x-circle' color='#ccc' size={35} />
-              </TouchableOpacity>
-              <DateTimePicker
-                value={date}
-                mode={'date'}
-                display="spinner"
-                locale={'ja'}
-                onChange={(event, selectedDate) => {
-                  const currentDate = selectedDate || date;
-                  setDate(currentDate);
-                }}
-              />
-            </View>
-          </Modal>
-        )}
+  async function Delete_staff_db(){
+
+    const dbList = [
+      "staff_mst",
+      "staff_list",
+      "customer_mst",
+      "communication_mst",
+      "fixed_mst",
+      "staff_profile",
+      "ranking_mst",
+      "black_sales_mst",
+    ]
+    
+    for (var d=0;d<dbList.length;d++) {
+      var table = dbList[d];
+      var delete_sql = `delete from ${table};`;
+      const del_res = await db_write(delete_sql,[]);
+      if (del_res) {
+        console.log(`${table} 削除 成功`);
+      } else {
+        console.log(`${table} 削除 失敗`);
+      }
+    }
+  
+  }
+  
+  async function logout() {
+    
+    const logoutCheck = async () => new Promise((resolve) => {
+      Alert.alert(
+        "ログアウトしますか？",
+        "",
+        [
+          {
+            text: "はい",
+            onPress: async() => {resolve(true);}
+          },
+          {
+            text: "いいえ",
+            style: "cancel",
+            onPress:() => {resolve(false);}
+          },
+        ]
+      );
+    })
+
+    if (!await logoutCheck()) return;
+
+    storage.save({
+      key: 'GET-DATA',
+      data: '',
+    });
+
+    await Delete_staff_db();
+    
+    if(global.sp_token && global.sp_id){
+      
+      // サーバーに情報送信して、DBから削除
+      await fetch(domain+'app/app_system/set_staff_app_token.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: global.sp_id,
+          token: global.sp_token,
+          del_flg:1,
+          fc_flg: global.fc_flg
+        }),
+      })
+      
+    }
+    
+    if(global.fc_flg){
+      
+      let formData = new FormData();
+      formData.append('fc_logout',1);
+      
+      await fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+      {
+        method: 'POST',
+        header: {
+          'content-type': 'multipart/form-data',
+        },
+        body: formData
+      })
+      .then((response) => response.json())
+      .then((json) => {
+        console.log(json);
+      })
+      .catch((error) => {
+        console.log(error)
+      })
+      
+    }
+    
+    global.sp_token = ''; // スマホトークン
+    global.sp_id = '';    // ログインID
+    global.fc_flg = '';   // fcフラグ
+    
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'LogIn' }],
+    });
+    
+  }
+
+  const headerRight = useMemo(() => {
+    return (
+      <View style={{backgroundColor:'#fff',flex:1,paddingTop:25}}>
         <TouchableOpacity
-          style={styles.buttonContainer}
-          onPress={()=>{
-            setLoading(true);
-            onRefresh();
+          style={styles.menulist}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "BellScreen",
+                  params: route.params,
+                  websocket: route.websocket,
+                  profile: route.profile,
+                  staff: staffs,
+                  previous:'Schedule',
+                },
+              ],
+            });
           }}
         >
-          <Text style={styles.buttonLabel}>表　示</Text>
+          <MaterialCommunityIcons
+            name="bell"
+            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            size={35}
+          />
+          <Text style={styles.menutext}>通知</Text>
+          <View style={bell_count?styles.bell2:{display:'none'}}>
+            <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menulist}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "Setting",
+                  params: route.params,
+                  websocket: route.websocket,
+                  profile: route.profile,
+                  previous:'Schedule',
+                },
+              ],
+            });
+          }}
+        >
+          <MaterialCommunityIcons
+            name="account"
+            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            size={35}
+          />
+          <Text style={styles.menutext}>設定</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menulist}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "Ranking",
+                  params: route.params,
+                  websocket: route.websocket,
+                  profile: route.profile,
+                  previous:'Schedule',
+                },
+              ],
+            });
+          }}
+        >
+          <MaterialCommunityIcons
+            name="crown"
+            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            size={35}
+          />
+          <Text style={styles.menutext}>売上順位</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menulist}
+          onPress={() => logout()}
+        >
+          <MaterialCommunityIcons
+            name="logout"
+            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            size={35}
+          />
+          <Text style={styles.menutext}>ログアウト</Text>
         </TouchableOpacity>
       </View>
-      <View style={{zIndex: 100,flex:1}}>
-        {comList}
+    )
+  },[bell_count])
+
+  return (
+    <SideMenu
+      menu={headerRight}
+      isOpen={menu}
+      onChange={isOpen => {
+        setMenu(isOpen);
+      }}
+      menuPosition={'right'}
+      openMenuOffset={deviceScreen.width * 0.5}
+    >
+      <View style={styles.container}>
+        <Loading isLoading={isLoading} />
+        <View style={{zIndex: 500,flexDirection:'row'}}>
+          <View>
+            <DropDownPicker
+              style={styles.DropDown}
+              dropDownContainerStyle={styles.dropDownContainer}
+              open={open}
+              value={staff_value}
+              items={staffList}
+              setOpen={setOpen}
+              setValue={setStaff_Value}
+              placeholder="▼　担当者"
+            />
+          </View>
+          <TouchableOpacity style={styles.Datebtn} onPress={()=>setShow(true)}>
+            <Text style={styles.Datebtn_text}>{Moment(date).format("YYYY-MM-DD")}</Text>
+          </TouchableOpacity>
+          {(show && Platform.OS === 'android') && (
+            <DateTimePicker
+              value={date}
+              mode={'date'}
+              display="default"
+              locale={'ja'}
+              onChange={(event, selectedDate) => {
+                const currentDate = selectedDate || date;
+                setDate(currentDate);
+                setShow(false);
+              }}
+            />
+          )}
+          {Platform.OS === 'ios'&& (
+            <Modal
+              isVisible={show}
+              swipeDirection={null}
+              backdropOpacity={0.5}
+              animationInTiming={300}
+              animationOutTiming={500}
+              animationIn={'slideInDown'}
+              animationOut={'slideOutUp'}
+              propagateSwipe={true}
+              style={{alignItems: 'center'}}
+              onBackdropPress={()=>setShow(false)}
+            >
+              <View style={styles.iosdate}>
+                <TouchableOpacity
+                  style={{
+                    position: 'absolute',
+                    top:8,
+                    right:10,
+                    zIndex:999
+                  }}
+                  onPress={()=>setShow(false)}
+                >
+                  <Feather name='x-circle' color='#ccc' size={35} />
+                </TouchableOpacity>
+                <DateTimePicker
+                  value={date}
+                  mode={'date'}
+                  display="spinner"
+                  locale={'ja'}
+                  onChange={(event, selectedDate) => {
+                    const currentDate = selectedDate || date;
+                    setDate(currentDate);
+                  }}
+                />
+              </View>
+            </Modal>
+          )}
+          <TouchableOpacity
+            style={styles.buttonContainer}
+            onPress={()=>{
+              setLoading(true);
+              onRefresh();
+            }}
+          >
+            <Text style={styles.buttonLabel}>表　示</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{zIndex: 100,flex:1}}>
+          {comList}
+        </View>
+        
+        <Footer
+          onPress0={() => {
+            navigation.reset({
+              index: 0,
+              routes: [{
+                name: 'CommunicationHistory' ,
+                params: route.params,
+                websocket:route.websocket,
+                profile:route.profile,
+                previous:'Schedule',
+                withAnimation: true
+              }],
+            });
+          }}
+          onPress1={() => {
+            navigation.reset({
+              index: 0,
+              routes: [{
+                name: 'Company' ,
+                params: route.params,
+                websocket:route.websocket,
+                profile:route.profile,
+                previous:'Schedule',
+                withAnimation: true
+              }],
+            });
+          }}
+          onPress2={() => {}}
+          active={[false,false,true]}
+        />
+        <Modal
+          isVisible={modal}
+          swipeDirection={null}
+          backdropOpacity={0.5}
+          animationInTiming={300}
+          animationOutTiming={500}
+          animationIn={'slideInDown'}
+          animationOut={'slideOutUp'}
+          propagateSwipe={true}
+          style={{alignItems: 'center'}}
+          onBackdropPress={()=>setModal(false)}
+        >
+          {scheduleList}
+        </Modal>
       </View>
-      
-      <Modal
-        isVisible={modal}
-        swipeDirection={null}
-        backdropOpacity={0.5}
-        animationInTiming={300}
-        animationOutTiming={500}
-        animationIn={'slideInDown'}
-        animationOut={'slideOutUp'}
-        propagateSwipe={true}
-        style={{alignItems: 'center'}}
-        onBackdropPress={()=>setModal(false)}
-      >
-        {scheduleList}
-      </Modal>
-    </View>
+    </SideMenu>
   );
 }
 
@@ -660,6 +933,12 @@ const styles = StyleSheet.create({
     flex:1,
     justifyContent:'center',
     alignItems:'center'
+  },
+  buttonReloadLabel : {
+    fontSize: 16,
+    justifyContent:'center',
+    alignItems:'center',
+    color: "#000000",
   },
   DropDown: {
     width: 150,
