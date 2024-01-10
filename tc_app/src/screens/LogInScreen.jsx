@@ -14,6 +14,15 @@ import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import Loading from '../components/Loading';
 import { CreateDB, GetDB,db_select,db_write} from '../components/Databace';
 
+import Storage from 'react-native-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// ローカルストレージ読み込み
+const storage = new Storage({
+  storageBackend: AsyncStorage,
+  defaultExpires: null,
+});
+
 const db = SQLite.openDatabase("db");
 
 // どうしようもない警告を非表示にしてます、あとから消します
@@ -66,7 +75,7 @@ export default function LogInScreen(props) {
   const [notification, setNotification] = useState(false);
   const notificationListener = useRef();
   const responseListener = useRef();
-  
+
   useEffect(() => {
     navigation.setOptions({
       headerStyle: !fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
@@ -164,7 +173,7 @@ export default function LogInScreen(props) {
         backgroundColor:'#333333',
         opacity:0.6,
       });
-      
+
       // 駅・沿線
       const set_station = async() => {
         var station_ = await db_select(`select count(*) as cnt from station_mst;`);
@@ -258,10 +267,11 @@ export default function LogInScreen(props) {
         }
         
         // websocket通信
-        const WS_URL = 'ws://54.168.20.149:8080/ws/'+rocalDB[0].shop_id+'/'
+        const WS_URL  = 'ws://54.168.20.149:8080/ws/'+rocalDB[0].shop_id+'/'
+        const WS_URL2 = 'ws://54.168.20.149:8080/ws/'+rocalDB[0].account+'/'
         
         // ログインデータ保持用
-        global.sp_id = rocalDB.account;
+        global.sp_id = rocalDB[0].account;
         setLoading(false);
   
         // ローカルサーバーのデータを更新(サーバーから取得)
@@ -273,6 +283,7 @@ export default function LogInScreen(props) {
             name: 'CommunicationHistory',
             params: rocalDB[0],
             websocket:new WebSocket(WS_URL),
+            websocket2:new WebSocket(WS_URL2),
             profile:rocalDBProfile,
             flg:'ローカル',
             previous:'LogIn',
@@ -309,7 +320,8 @@ export default function LogInScreen(props) {
           global.sp_id = json.staff.account;
           
           // // websocket通信
-          const WS_URL = 'ws://54.168.20.149:8080/ws/'+json.staff.shop_id+'/'
+          const WS_URL  = 'ws://54.168.20.149:8080/ws/'+json.staff.shop_id+'/'
+          const WS_URL2 = 'ws://54.168.20.149:8080/ws/'+json.staff.account+'/'
           
           const staff = json.staff;
 
@@ -358,12 +370,16 @@ export default function LogInScreen(props) {
           
           await Insert_profile_db(staff.account,profile_data);
 
+          const staff_list = json.staff_list;
+          await Insert_staff_all_db(staff_list);
+
           navigation.reset({
             index: 0,
             routes: [{
               name: 'CommunicationHistory',
               params: json.staff,
               websocket:new WebSocket(WS_URL),
+              websocket2:new WebSocket(WS_URL2),
               profile:profile,
               flg:'トークン',
               previous:'LogIn',
@@ -402,6 +418,118 @@ export default function LogInScreen(props) {
   
   }
 
+  // スタッフリストデータベース登録
+  async function Insert_staff_all_db(staff_all) {
+
+    setLoading(true);
+
+    const staffcheck = async () => new Promise((resolve) => {
+
+      storage.load({
+        key : 'GET-ALLSTAFF'
+      })
+      .then(data => {
+        
+        if (data) {
+          
+          var GET_ALLSTAFF = new Date(data.replace(/-/g, '/')); // 直近の取得時間
+          var currentDate = new Date(); // 現在時間
+  
+          var timeDifference = currentDate - GET_ALLSTAFF;
+          
+          // 直近取得時間から24時間以上たってたらDB更新かける
+          if (timeDifference >= 24 * 60 * 60 * 1000) {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+  
+        } else {
+          resolve(true);
+        }
+  
+      })
+      .catch(err => {
+        resolve(true);
+        storage.save({
+          key: 'GET-ALLSTAFF',
+          data: '',
+        });
+      })
+
+    })
+
+    const SC = await staffcheck();
+    
+    var sql = `select * from staff_all;`;
+    var stf = await db_select(sql);
+
+    // 直近取得時間から24時間以内かつゼンスタッフデータあり
+    if (!SC && stf != false) {
+      console.log('データあるよん')
+      setLoading(false);
+      return
+    }
+
+    console.log('データないよう')
+
+    // ローカルDBのスタッフ情報
+    var DBstf = [];
+    if (stf != false) {
+      DBstf = stf.map((s) => {
+        return s.account
+      })
+    }
+
+    // 最新のスタッフ情報
+    var APIstf = [];
+
+    for (var s=0;s<staff_all.length;s++) {
+      var staff = staff_all[s];
+      var staff_insert = `insert or replace into staff_all values (?,?,?,?,?,?);`
+      var staff_data = [staff.account, staff.shop_id, staff.name, staff.name_1, staff.name_2, staff.staff_photo1];
+      await db_write(staff_insert,staff_data);
+      APIstf.push(staff.account);
+    }
+
+    // 削除するスタッフ情報
+    const DELstf = DBstf.filter(stf => !APIstf.includes(stf));
+    
+    for (var d=0;d<DELstf.length;d++) {
+      var account = DELstf[d];
+      var staff_delete = `delete from staff_all where ( account = ? );`;
+      await db_write(staff_delete,[account]);
+    }
+
+    function addZero(num, length) {
+      var minus = "";
+      var zero = ('0'.repeat(length)).slice(-length);
+      if (parseInt(num) < 0) {
+        // マイナス値の場合
+        minus = "-";
+        num = -num;
+        zero = zero.slice(-(length - 1 - String(num).length));	// -の1桁+数値の桁数分引く
+      }
+    
+      return (minus + zero + num).slice(-length);
+    }
+
+    // データ取得日時
+    var date = new Date();
+    var date_ = (date.getFullYear()).toString() + "-" 
+    + addZero((date.getMonth() + 1).toString(),2) + "-" 
+    + addZero((date.getDate()).toString(),2) + "-" 
+    + addZero((date.getHours()).toString(),2) + "-" 
+    + addZero((date.getMinutes()).toString(),2) + "-" 
+    + addZero((date.getSeconds()).toString(),2);
+
+    storage.save({
+      key: 'GET-ALLSTAFF',
+      data: date_,
+    });
+    
+    setLoading(false);
+  }
   
   // 駅・沿線データベース登録
   async function Insert_station_db(station){
@@ -477,7 +605,8 @@ export default function LogInScreen(props) {
       registerForPushNotificationsAsync();
       
       // websocket通信
-      const WS_URL = 'ws://54.168.20.149:8080/ws/'+json.staff.shop_id+'/'
+      const WS_URL  = 'ws://54.168.20.149:8080/ws/'+json.staff.shop_id+'/'
+      const WS_URL2 = 'ws://54.168.20.149:8080/ws/'+json.staff.account+'/'
       
       const staff = json.staff;
       
@@ -526,12 +655,16 @@ export default function LogInScreen(props) {
 
       await Insert_profile_db(staff.account,profile_data);
 
+      const staff_list = json.staff_list;
+      await Insert_staff_all_db(staff_list);
+
       navigation.reset({
         index: 0,
         routes: [{
           name: 'CommunicationHistory',
           params: json.staff,
           websocket:new WebSocket(WS_URL),
+          websocket2:new WebSocket(WS_URL2),
           profile:profile,
           flg:'入力',
           previous:'LogIn'
@@ -622,6 +755,9 @@ export default function LogInScreen(props) {
       obj.push(profile[0]);
 
       await Insert_profile_db(staff.account,profile_data);
+
+      const staff_list = json.staff_list;
+      await Insert_staff_all_db(staff_list);
 
     })
     .catch((error) => {

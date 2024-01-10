@@ -11,6 +11,7 @@ import GestureRecognizer from 'react-native-swipe-gestures';
 import RenderHtml from 'react-native-render-html';
 import { Camera } from 'expo-camera';
 import { Audio } from 'expo-av';
+import * as Clipboard from 'expo-clipboard';
 
 import Loading from '../components/Loading';
 import { MyModal0, MyModal1, MyModal2, MyModal3, MyModal4, MyModal5, MyModal6 } from '../components/Modal';
@@ -55,6 +56,11 @@ export default function TalkScreen(props) {
   const [mail, setMail] = useState([]);
   const [msgtext,setMsgtext] = useState('');
   const [subject,setSubject] = useState('');
+
+  // 返信用
+  const [note_ret,setNoto_ret] = useState('');
+  const [send_mail,setSend_mail] = useState('');
+  const [receive_mail,setReceive_mail] = useState('');
   
   const [add, setAdd] = useState([]);
   
@@ -91,6 +97,7 @@ export default function TalkScreen(props) {
                     name: 'CommunicationHistory' ,
                     params: route.params,
                     websocket:route.websocket,
+                    websocket2: route.websocket2,
                     profile:route.profile,
                     previous:'TalkScreen'
                   }],
@@ -109,6 +116,7 @@ export default function TalkScreen(props) {
             name: 'CommunicationHistory' ,
             params: route.params,
             websocket:route.websocket,
+            websocket2: route.websocket2,
             profile:route.profile,
             previous:'TalkScreen'
           }],
@@ -143,6 +151,7 @@ export default function TalkScreen(props) {
                               name: 'CommunicationHistory' ,
                               params: route.params,
                               websocket:route.websocket,
+                              websocket2: route.websocket2,
                               profile:route.profile,
                               previous:'TalkScreen'
                             }],
@@ -161,6 +170,7 @@ export default function TalkScreen(props) {
                       name: 'CommunicationHistory' ,
                       params: route.params,
                       websocket:route.websocket,
+                      websocket2: route.websocket2,
                       profile:route.profile,
                       previous:'TalkScreen'
                     }],
@@ -246,6 +256,7 @@ export default function TalkScreen(props) {
       var sql = `select * from communication_mst where ( customer_id = '${route.customer}' ) order by time desc;`;
       var talk_ = await db_select(sql);
 
+      if (talk_ == false) talk_ = [];
       setTalk(talk_);
       
       const errTitle = 'ネットワークの接続に失敗しました';
@@ -313,6 +324,7 @@ export default function TalkScreen(props) {
           params: route.params ,
           customer:route.customer,
           websocket:new WebSocket(WS_URL),
+          websocket2: route.websocket2,
           profile:route.profile,
         }],
       });
@@ -371,7 +383,7 @@ export default function TalkScreen(props) {
   
   useEffect(() => {
     
-    if (talk != null) {
+    if (talk.length > 0) {
       const msg = talk.map(com => {
         
         if (com.del_flg){
@@ -392,6 +404,7 @@ export default function TalkScreen(props) {
               status:com.status,
               title:com.title,
               html_flg:com.html_flg,
+              user_read:0,
             }
           }
           return data;
@@ -408,6 +421,7 @@ export default function TalkScreen(props) {
               status:com.status,
               title:com.title,
               html_flg:com.html_flg,
+              user_read:0,
             }
           }
           return data;
@@ -479,7 +493,7 @@ export default function TalkScreen(props) {
           continue talklist;
         }
 
-        var sql = `insert or replace into communication_mst values (?,?,?,?,?,?,?,?,?,?);`;
+        var sql = `insert or replace into communication_mst values (?,?,?,?,?,?,?,?,?,?,?,?);`;
 
         var data = [
           com.communication_id,
@@ -491,7 +505,9 @@ export default function TalkScreen(props) {
           com.line_note,
           com.file_path,
           com.status,
-          com.html_flg
+          com.html_flg,
+          com.receive_mail,
+          com.send_mail,
         ];
 
         count_++;
@@ -538,6 +554,7 @@ export default function TalkScreen(props) {
         name: '店舗',
         status: '',
         title: '',
+        user_read:0,
       }
     }
     
@@ -1056,22 +1073,22 @@ export default function TalkScreen(props) {
 
   const [filteredFixed, setFilteredFixed] = useState([]);
 
-  // リストからHTML用の定型文をフィルタリング
-  const filterFixedByCategory = (category) => {
-    const filtered = fixed.filter((obj) => obj.category !== category);
+  // リストからHTMLの定型文をフィルタリング
+  const filterFixedByCategory = () => {
+    const filtered = fixed.filter((obj) => obj.html_flg != '1');
     setFilteredFixed(filtered);
   }
 
   useEffect(() => {
     if (fixed.length != 0) {
       if (modal4) {
-        // チャット画面の入力欄に直接定型文を挿入する時は'HTML用'の定型文は表示しない
-        filterFixedByCategory('HTML用');
+        // チャット画面の入力欄に直接定型文を挿入する時はHTMLの定型文は表示しない
+        filterFixedByCategory();
       } else {
         setFilteredFixed(fixed);
       }
     }
-  }, [modal1, modal4,fixed]);
+  }, [modal4,fixed]);
   
   const [menu_height,setMenu_height] = useState(false);
   const getHeight = (e) => {
@@ -1081,6 +1098,84 @@ export default function TalkScreen(props) {
     } else {
       setMenu_height(0);
     }
+  }
+
+  useEffect(() => {
+    if (modal1 == false) {
+      setSubject("");
+      setNoto_ret("");
+      setSend_mail("");
+      setReceive_mail("");
+    }
+  }, [modal1]);
+
+  const onLongPress = (context, message) => {
+    var options = [];
+
+    if (message.user.status == 'メール受信') {
+      options = ['返信','コピー','キャンセル'];
+    } else {
+      options = ['コピー','キャンセル'];
+    }
+
+    const cancelButtonIndex = options.length - 1;
+
+    context.actionSheet().showActionSheetWithOptions({
+      options,
+      cancelButtonIndex
+    }, (buttonIndex) => {
+      switch (options[buttonIndex]) {
+        case '返信':
+
+          var sql = `select * from communication_mst where customer_id = '${route.customer}' and communication_id = '${message._id}';`;
+          db_select(sql).then(function(data) {
+            if (data != false) {
+              var result = data[0];
+
+              // 件名
+              setSubject("Re:"+result.title);
+
+              // 本文
+              var note  = "-----Original Message-----\n";
+              note += "Sent:"+result.time+"\n";
+              note += "Subject:"+result.title+"\n\n";
+              note += result.note;
+              setNoto_ret(note);
+
+              // 送信元（お客様のアドレス）
+              setSend_mail(result.send_mail);
+
+              // 宛先（スタッフ）
+              setReceive_mail(result.receive_mail);
+
+              setMenu(true);
+              setModal1(true);
+            } else {
+              
+              // 件名
+              setSubject("Re:"+message.user.title);
+
+              // 本文
+              var note  = "-----Original Message-----\n";
+              note += "Sent:"+message.createdAt+"\n";
+              note += "Subject:"+message.user.title+"\n\n";
+              note += message.text;
+              setNoto_ret(note);
+              
+              setMenu(true);
+              setModal1(true);
+            }
+          })
+
+          break;
+        case 'コピー':
+          Clipboard.setStringAsync(message.text);
+          break;
+        default:
+          break;
+      }
+    });
+
   }
   
   return (
@@ -1121,6 +1216,7 @@ export default function TalkScreen(props) {
       placeholder={customer.line?"テキストを入力してください":""}
       disableComposer={!customer.line?true:false}
       onSend={() => onSend(['LINE送信',msgtext],'line')}
+      dateFormat={'MM/DD(ddd)'}
       renderMessage={(props) => {
         return (
           <GestureRecognizer
@@ -1136,6 +1232,7 @@ export default function TalkScreen(props) {
         );
       }}
       renderBubble={renderBubble}
+      onLongPress={(context, message)=>onLongPress(context, message)}
       renderUsernameOnMessage={false}
       renderStatus={true}
       renderTitle={true}
@@ -1267,6 +1364,8 @@ export default function TalkScreen(props) {
               ]:[]}
               setMail={setMail}
               subject={subject}
+              note_ret={note_ret}
+              send_mail={send_mail}
               route={route}
               onSend={onSend}
               property={property}
@@ -1288,10 +1387,19 @@ export default function TalkScreen(props) {
                 inquiry_name,
                 customer.reverberation.inquiry_day,
               ]:[]}
-              mail_set={customer.main?{
-                brower_mail:customer.main.brower_mail,
-                mail_select:staff.mail_select,
-              }:''}
+              mail_set={
+                receive_mail?
+                {
+                  brower_mail:receive_mail,
+                  mail_select:staff.mail_select,
+                }:
+                customer.main?
+                {
+                  brower_mail:customer.main.brower_mail,
+                  mail_select:staff.mail_select,
+                }
+                :
+                ''}
               options={video_option}
               options2={options}
             />

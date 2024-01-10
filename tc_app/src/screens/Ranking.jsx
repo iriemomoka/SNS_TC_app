@@ -21,6 +21,7 @@ LogBox.ignoreAllLogs(true)
 
 const screenWidth = Dimensions.get('window').width;
 
+// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = "https://www.total-cloud.net/";
 
 // // 本番
@@ -1862,6 +1863,7 @@ export default function Ranking(props) {
                     name: route.previous,
                     params: route.params,
                     websocket: route.websocket,
+                    websocket2: route.websocket2,
                     profile: route.profile,
                     previous: "Ranking",
                   },
@@ -1910,9 +1912,10 @@ export default function Ranking(props) {
         index: 0,
         routes: [
           {
-            name: "CommunicationHistory",
+            name: route.previous,
             params: route.params,
             websocket: route.websocket,
+            websocket2: route.websocket2,
             profile: route.profile,
             previous: "Ranking",
           },

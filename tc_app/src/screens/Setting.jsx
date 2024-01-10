@@ -27,6 +27,7 @@ const storage = new Storage({
 
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = 'https://www.total-cloud.net/';
+
 let photo_path = domain + 'img/staff_img/';
 
 // 画像用変数をグローバル変数にする
@@ -276,7 +277,7 @@ export default function Setting(props) {
       && profile.staff_photo1 != null 
       && profile.staff_photo1 != ""
     ){
-      var photo_1 = "https://www.total-cloud.net/img/staff_img/"+profile.staff_photo1;
+      var photo_1 = photo_path+profile.staff_photo1;
       // 削除ボタン表示
       //setphotoDisplay1(false);
       photo1_del_flg = false;
@@ -288,7 +289,7 @@ export default function Setting(props) {
       && profile.staff_photo2 != null
       && profile.staff_photo2 != ""
     ){
-      var photo_2 = "https://www.total-cloud.net/img/staff_img/"+profile.staff_photo2;
+      var photo_2 = photo_path+profile.staff_photo2;
       // 削除ボタン表示
       //setphotoDisplay2(false);
       photo2_del_flg = false;
@@ -300,7 +301,7 @@ export default function Setting(props) {
       && profile.staff_photo3 != null
       && profile.staff_photo3 != ""
     ){
-      var photo_3 = "https://www.total-cloud.net/img/staff_img/"+profile.staff_photo3;
+      var photo_3 = photo_path+profile.staff_photo3;
       // 削除ボタン表示
       //setphotoDisplay3(false);
       photo3_del_flg = false;
@@ -312,7 +313,7 @@ export default function Setting(props) {
       && profile.staff_photo4 != null
       && profile.staff_photo4 != ""
     ){
-      var photo_4 = "https://www.total-cloud.net/img/staff_img/"+profile.staff_photo4;
+      var photo_4 = photo_path+profile.staff_photo4;
       // 削除ボタン表示
       //setphotoDisplay3(false);
       photo4_del_flg = false;
@@ -473,7 +474,7 @@ export default function Setting(props) {
         .then((response) => response.json())
         .then((json) => {
         // 成功時？
-        //console.log(json);
+        console.log(json);
         // ※上記の変数結合版
           // [setFiledata] + [1～3]
           //{'setFiledata'+img_no}(result);
@@ -774,20 +775,20 @@ console.log("3:"+photoData4);
     }
   }
 
-
-
   // 端末の戻るボタン
   const backAction = () => {
     if (!isLoading) {
       navigation.reset({
         index: 0,
-        routes: [{
-          name: 'CommunicationHistory' ,
-          params: route.params,
-          websocket:route.websocket,
-          profile:route.profile,
-          previous:'Setting'
-        }],
+        routes: [
+          {
+            name: route.previous,
+            params: route.params,
+            websocket: route.websocket,
+            websocket2: route.websocket2,
+            profile: route.profile,
+            previous: "Ranking",
+          },],
       });
     }
     return true;
@@ -810,6 +811,7 @@ console.log("3:"+photoData4);
                   name: route.previous,
                   params: route.params,
                   websocket:route.websocket,
+                  websocket2: route.websocket2,
                   profile:route.profile,
                   previous:'Setting'
                 }],
@@ -861,6 +863,9 @@ async function Delete_staff_db(){
     "staff_profile",
     "ranking_mst",
     "black_sales_mst",
+    "staff_all",
+    "chat_room",
+    "chat_message",
   ]
   
   for (var d=0;d<dbList.length;d++) {
@@ -903,6 +908,16 @@ async function logout() {
     data: '',
   });
 
+  storage.save({
+    key: 'GET-DATA2',
+    data: '',
+  });
+
+  storage.save({
+    key: 'GET-ALLSTAFF',
+    data: '',
+  });
+  
   await Delete_staff_db();
   
   if(global.sp_token && global.sp_id){

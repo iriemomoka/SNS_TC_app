@@ -80,8 +80,8 @@ export function MyModal0(props){
 
 export function MyModal1(props) {
   
-  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_set,options,options2 } = props;
-  
+  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,note_ret,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_set,options,options2,send_mail } = props;
+
   const [res,setRes] = useState(props.reservation);
   const editorRef = useRef();
 
@@ -94,10 +94,31 @@ export function MyModal1(props) {
   const [res_id, setRes_id] = useState(null);
   const [draft, setDraft] = useState(null);
   const [note, setNote] = useState('');
+
+  useEffect(() => {
+    if (note_ret != "") {
+      setNote(note_ret);
+    }
+  }, [note_ret])
   
   const [open, setOpen] = useState(false);
   const [cus_value, setCus_Value] = useState('');
   
+  useEffect(() => {
+    // 宛先
+    if (cus_mail.length>0) {
+      if (send_mail != "") {
+        if (cus_mail.includes(send_mail)) {
+          setCus_Value(send_mail);
+        } else {
+          setCus_Value(cus_mail[0]);
+        }
+      } else {
+        setCus_Value(cus_mail[0]);
+      }
+    }
+  }, [cus_mail,send_mail])
+
   const [inputCursorPosition, setInputCursorPosition] = useState(null);
   
   const items1 = cus_mail.filter(Boolean).map((item) => {
@@ -127,16 +148,16 @@ export function MyModal1(props) {
 
   const [filteredFixed, setFilteredFixed] = useState([]);
 
-  // リストからHTML用の定型文をフィルタリング
-  const filterFixedByCategory = (category) => {
-    const filtered = fixed.filter((obj) => obj.category !== category);
+  // リストからHTMLの定型文をフィルタリング
+  const filterFixedByCategory = () => {
+    const filtered = fixed.filter((obj) => obj.html_flg != '1');
     setFilteredFixed(filtered);
   }
 
   useEffect(() => {
     if (mail_format === '0') {
-      // 形式がテキストの時は'HTML用'の定型文は表示しない
-      filterFixedByCategory('HTML用');
+      // 形式がテキストの時はHTMLの定型文は表示しない
+      filterFixedByCategory();
     } else {
       setFilteredFixed(fixed);
     }
@@ -221,12 +242,7 @@ export function MyModal1(props) {
   }
   
   useEffect(() => {
-    
-    // 宛先
-    if (cus_mail.length>0) {
-      setCus_Value(cus_mail[0]);
-    }
-    
+
     // 送信元セット
     if (mail_set) {
       
@@ -617,6 +633,7 @@ export function MyModal1(props) {
     setFilename('');
     setFiledata(null);
     setInputCursorPosition(null);
+    setMail_Format('0');
   }
 
   const onSubmit = () => {
@@ -660,6 +677,7 @@ export function MyModal1(props) {
                 setFilename('');
                 setFiledata(null);
                 setInputCursorPosition(null);
+                setMail_Format('0');
               }
             },
             {
@@ -680,6 +698,7 @@ export function MyModal1(props) {
         setFilename('');
         setFiledata(null);
         setInputCursorPosition(null);
+        setMail_Format('0');
       }
     } else {
       Alert.alert('送信内容が記入されていません');
@@ -750,6 +769,7 @@ export function MyModal1(props) {
     setFilename('');
     setFiledata(null);
     setInputCursorPosition(null);
+    setMail_Format('0');
   }
   
   const img_Delete = () => {
@@ -1173,6 +1193,7 @@ export function MyModal1(props) {
                   }}
                 />
                 <RichEditor
+                  initialContentHTML={note!=''?note:''}
                   ref={editorRef}
                   style={styles.editor}
                   onChange={(text) => noteEdit(text)}
@@ -1947,12 +1968,14 @@ export function MyModal3(props){
   }
   
   useEffect(() => {
-    if(props.setMsgtext) {
-      props.setMsgtext(insertMsg);
-    } else if (props.setNote) {
-      props.setNote(insertMsg);
-      if (mail_format == '1' && insertMsg) {
-        editorRef.current.setContentHTML(insertMsg);
+    if (insertMsg) {
+      if(props.setMsgtext) {
+        props.setMsgtext(insertMsg);
+      } else if (props.setNote) {
+        props.setNote(insertMsg);
+        if (mail_format == '1' && insertMsg) {
+          editorRef.current.setContentHTML(insertMsg);
+        }
       }
     }
   },[insertMsg])

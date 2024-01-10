@@ -14,12 +14,12 @@ import {
   Alert,
   FlatList,
   TextInput,
-  ScrollView,
+  StatusBar,
   RefreshControl,
   BackHandler,
   AppState,
-  Platform,
-  Keyboard,
+  Platform ,
+  KeyboardAvoidingView,
   Image,
   Dimensions,
 } from "react-native";
@@ -27,9 +27,11 @@ import DropDownPicker, { Item } from "react-native-dropdown-picker";
 import * as Notifications from "expo-notifications";
 import { Feather } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Autocomplete from 'react-native-autocomplete-input';
 import SideMenu from 'react-native-side-menu-updated';
 import * as SQLite from "expo-sqlite";
+import Modal from "react-native-modal";
+import { useHeaderHeight } from '@react-navigation/elements';
+import Constants from 'expo-constants';
 
 import Loading from "../components/Loading";
 import { GetDB,db_select,db_write } from '../components/Databace';
@@ -51,16 +53,21 @@ let domain = "https://www.total-cloud.net/";
 
 Notifications.setBadgeCountAsync(0);
 
+const Width = Dimensions.get("window").width;
+
 export default function Company(props) {
 
   const [isLoading, setLoading] = useState(false);
 
   const { navigation, route } = props;
 
-  const [shop_staffs, setShop_staffs] = useState([]);
+  const [addchat, setAddchat] = useState(false);
+
+  const [all_data, setAlldata] = useState([]); // 全件格納用
+  const [shop_staffs, setShop_staffs] = useState([]); // 表示用
 
   const [staffs, setStaffs] = useState([]);
-  const [filteredStaffs, setFilteredStaffs] = useState([]);
+  const [filteredStaffs, setFilteredStaffs] = useState("");
 
   const [bell_count, setBellcount] = useState(null);
 
@@ -72,6 +79,13 @@ export default function Company(props) {
   // 参照データ取得日時
   const [date, setDate] = useState('');
   
+  var headerHeight = useHeaderHeight();
+  const statusBarHeight = Constants.statusBarHeight;
+
+  if (Platform.OS === 'android') {
+    headerHeight = headerHeight - StatusBar.currentHeight;
+  }
+  
   useLayoutEffect(() => {
 
     if (AppState.currentState === "active") {
@@ -80,19 +94,34 @@ export default function Company(props) {
 
     navigation.setOptions({
       headerStyle: !global.fc_flg
-        ? { backgroundColor: "#1d449a", height: 110 }
-        : { backgroundColor: "#fd2c77", height: 110 },
+        ? { backgroundColor: "#1d449a", height: 110}
+        : { backgroundColor: "#fd2c77", height: 110},
       headerTitle: () => (
         <Text style={styles.headertitle}>社内チャット</Text>
       ),
       headerRight: () => (
-        <View style={{marginRight:15}}>
+        <View style={{marginRight:5,flexDirection:'row'}}>
+          <TouchableOpacity
+            style={{width:50,height:50,justifyContent:'center',alignItems:'center'}}
+            onPress={() => {
+              setAddchat(!addchat);
+              setMenu(false);
+            }}
+          >
+            <MaterialCommunityIcons
+              name="chat-plus-outline"
+              color="white"
+              size={35}
+            />
+          </TouchableOpacity>
+          <>
           <View style={bell_count?styles.bell:{display:'none'}}>
             <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
           </View>
           <TouchableOpacity
-            style={{width:60,height:60,justifyContent:'center',alignItems:'center'}}
+            style={{width:50,height:50,justifyContent:'center',alignItems:'center'}}
             onPress={() => {
+              setAddchat(false);
               setMenu(!menu);
             }}
           >
@@ -102,12 +131,12 @@ export default function Company(props) {
               size={35}
             />
           </TouchableOpacity>
+          </>
         </View>
       ),
     });
 
-  },[bell_count]);
-
+  },[addchat,bell_count]);
     
   useEffect(() => {
 
@@ -115,9 +144,9 @@ export default function Company(props) {
 
     Display();
 
-    // 通知をタップしたらお客様一覧 → トーク画面 (ログイン済)
+    // 通知をタップしたらチャット一覧 → トーク画面 (ログイン済)
     const notificationInteractionSubscription =
-      Notifications.addNotificationResponseReceivedListener((response) => {
+      Notifications.addNotificationResponseReceivedListener(async(response) => {
         if (
           response.notification.request.content.data.customer &&
           global.sp_id
@@ -132,12 +161,65 @@ export default function Company(props) {
                 params: route.params,
                 customer: cus_data.customer_id,
                 websocket: route.websocket,
+                websocket2: route.websocket2,
                 profile: route.profile,
                 staff: staffs,
                 cus_name: cus_data.name,
+                previous:'Company'
               },
             ],
           });
+        }
+        if (
+          response.notification.request.content.data.room_id &&
+          global.sp_id
+        ) {
+          const room_id = response.notification.request.content.data.room_id;
+
+          var sql = `select * from chat_room where del_flg != '1' and room_id = '${room_id}';`;
+          var rooms_ = await db_select(sql);
+          
+          if (rooms_ != false) {
+            var room = rooms_[0];
+    
+            if (room["room_type"] == "0") {
+    
+              var user_id = room["user_id"].split(',');
+    
+              var account = user_id.filter(function(id) {
+                return id !== route.params.account;
+              });
+    
+              var sql = `select * from staff_all where account = '${account[0]}';`;
+              var staff = await db_select(sql);
+    
+              if (staff != false) {
+                room["account"]      = account[0];
+                room["name_1"]       = staff[0]["name_1"];
+                room["name_2"]       = staff[0]["name_2"];
+                room["shop_id"]      = staff[0]["shop_id"];
+                room["shop_name"]    = staff[0]["shop_name"];
+                room["staff_photo1"] = staff[0]["staff_photo1"];
+              }
+    
+            }
+
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "ChatTalk",
+                  params: route.params,
+                  websocket: route.websocket,
+                  websocket2: route.websocket2,
+                  profile: route.profile,
+                  room: room,
+                  previous:'Company'
+                },
+              ],
+            });
+
+          }
         }
       });
 
@@ -148,59 +230,96 @@ export default function Company(props) {
 
   }, []);
 
-  useEffect(() => {
-    if (route.notifications) {
-      navigation.reset({
-        index: 0,
-        routes: [
-          {
-            name: "TalkScreen",
-            params: route.params,
-            customer: route.notifications.customer_id,
-            websocket: route.websocket,
-            profile: route.profile,
-            staff: staffs,
-            cus_name: route.notifications.name,
-          },
-        ],
-      });
-    }
-  }, []);
-
   // 更新
   const [refreshing, setRefreshing] = useState(false);
 
   async function Display() {
 
-    onRefresh(false);
+    const sl = await GetDB('staff_all');
 
+    if (sl != false) {
+      setStaffs(sl);
+    } else {
+      setStaffs([]);
+    }
+
+    storage.load({
+      key : 'GET-DATA2'
+    })
+    .then(data => {
+      
+      if (data) {
+        
+        var GET_DATA2 = new Date(data.replace(/-/g, '/')); // 直近の取得時間
+        var currentDate = new Date(); // 現在時間
+
+        var timeDifference = currentDate - GET_DATA2;
+        
+        // 直近取得時間から30分以上空いてたら更新かける
+        if (timeDifference < 30 * 60 * 1000 || route.previous == "ChatTalk" || route.previous == "Staffs") {
+          onRefresh(false);
+        }
+
+        var parts = data.split(/-|:/);
+        
+        // 年、月、日、時、分を取得
+        var year = parts[0];
+        var month = parts[1];
+        var day = parts[2];
+        var hour = parts[3];
+        var minute = parts[4];
+        
+        // 新しいフォーマットの日付文字列を作成
+        var newDate = year + "-" + month + "-" + day + " " + hour + ":" + minute;
+
+        setDate(newDate+' 時点');
+      } else {
+        onRefresh(true);
+      }
+
+    })
+    .catch(err => {
+      storage.save({
+        key: 'GET-DATA2',
+        data: '',
+      });
+      onRefresh(true);
+    })
+
+    await Insert_chatroom_db();
+    
+    await getBELL();
+
+    setLoading(false);
   }
 
   // websocket通信(繋がった)
-  route.websocket.onopen = (open) => {
-    console.log("open");
+  route.websocket2.onopen = (open) => {
+    console.log("open2");
   };
 
   // websocket通信(メール届いたら更新)
-  route.websocket.onmessage = (message) => {
-    // route.websocket.send(JSON.stringify( { "flg": 'hello' } ));
+  route.websocket2.onmessage = (message) => {
     let catchmail_flg = JSON.parse(message.data);
-    console.log(catchmail_flg.message);
-    onRefresh(true);
+    console.log("websocket2::"+catchmail_flg.message);
+    onRefresh(false);
   };
 
   // websocket通信(切断したら再接続)
-  route.websocket.onclose = (close) => {
+  route.websocket2.onclose = (close) => {
     if (global.sp_token & global.sp_id) {
       console.log("closed");
-      const WS_URL = "ws://54.168.20.149:8080/ws/" + route.params.shop_id + "/";
+      const WS_URL2 = 'ws://54.168.20.149:8080/ws/'+route.params.account+'/'
       navigation.reset({
         index: 0,
         routes: [
           {
-            name: "CommunicationHistory",
+            name: "Company",
             params: route.params,
-            websocket: new WebSocket(WS_URL),
+            websocket: route.websocket,
+            websocket2: new WebSocket(WS_URL2),
+            profile:route.profile,
+            previous:'Company'
           },
         ],
       });
@@ -211,7 +330,7 @@ export default function Company(props) {
 
     const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    setLoading(true);
+    if (flg) setLoading(true);
 
     setDate('最新データ取得中');
 
@@ -224,7 +343,7 @@ export default function Company(props) {
 
     const endTime = Date.now(); // 終了時間
     const time = (endTime - startTime)/1000;
-    console.log('onRefresh：'+time + '秒');
+    console.log('onRefresh2：'+time + '秒');
 
     if (json == 'AbortError') {
       return;
@@ -232,7 +351,7 @@ export default function Company(props) {
 
     if (json != false) {
 
-      await Insert_staff_all_db(json);
+      await Insert_chatroom_db(json);
 
       function addZero(num, length) {
         var minus = "";
@@ -257,7 +376,7 @@ export default function Company(props) {
       + addZero((date.getSeconds()).toString(),2);
 
       storage.save({
-        key: 'GET-DATA',
+        key: 'GET-DATA2',
         data: date_,
       });
 
@@ -276,10 +395,10 @@ export default function Company(props) {
       setDate(newDate+' 時点');
 
     } else {
-      
-      setDate('');
 
-      var sql = `select count(*) as count from customer_mst;`;
+      setDate('');
+      
+      var sql = `select count(*) as count from chat_room;`;
       var customer = await db_select(sql);
       const cnt = customer[0]["count"];
 
@@ -299,30 +418,6 @@ export default function Company(props) {
     return;
 
   }, [abortControllerRef]);
-
-  const endRefresh = useCallback(async() => {
-    
-    var sql = `select count(*) as count from customer_mst;`;
-    var customer = await db_select(sql);
-    const cnt = customer[0]["count"];
-    
-    if (cnt >= 500) return;
-
-    setLoading(true);
-
-    const json = await getCOMNEXT(cnt);
-
-    // ログアウトしてたら中断
-    if(!global.sp_token && !global.sp_id) return;
-    
-    if (json != false) {
-      // ローカルDB用お客様情報＋最新のコミュニケーション
-      await Insert_customer_db(json.search);
-      await searchCustomer(staff_value,false);
-    }
-
-    setLoading(false);
-  });
 
   const appState = useRef(AppState.currentState);
   const abortControllerRef = useRef(new AbortController());
@@ -371,7 +466,6 @@ export default function Company(props) {
           pass: route.params.password,
           act: "company",
           fc_flg: global.fc_flg,
-          page:0,
         }),
         signal
       })
@@ -390,35 +484,6 @@ export default function Company(props) {
     })
 
   },[abortControllerRef]);
-
-  const getCOMNEXT = useCallback((page) => {
-    
-    return new Promise((resolve, reject)=>{
-      fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: JSON.stringify({
-          ID: route.params.account,
-          pass: route.params.password,
-          act: "customer_list",
-          fc_flg: global.fc_flg,
-          page:page,
-        }),
-      })
-      .then((response) => response.json())
-      .then((json) => {
-        resolve(json);
-      })
-      .catch((error) => {
-        console.log(error);
-        resolve(false);
-      });
-    })
-
-  });
 
   const getBELL = useCallback(() => {
     return new Promise((resolve, reject)=>{
@@ -451,149 +516,153 @@ export default function Company(props) {
     })
   });
 
-  // スタッフリストデータベース登録
-  async function Insert_staff_all_db(staff_all) {
+  // チャットルーム登録
+  async function Insert_chatroom_db(rooms) {
 
-    if (staff_all) {
+    if (rooms) {
+      
+      const chat_room = await GetDB('chat_room');
 
-      var sql = `select * from staff_list where (account != 'all');`;
-      var stf = await db_select(sql);
-
-      // ローカルDBのスタッフ情報
-      var DBstf = [];
-      if (stf != false) {
-        DBstf = stf.map((s) => {
-          return s.account
+      // ローカルDBのチャットルーム情報
+      var DBroom = [];
+      if (chat_room != false) {
+        DBroom = chat_room.map((f) => {
+          return f.room_id
         })
       }
 
-      // 最新のスタッフ情報
-      var APIstf = [];
-
-      for (var s=0;s<staff_all.length;s++) {
-        var staff = staff_all[s];
-        var staff_insert = `insert or replace into staff_all values (?,?,?,?,?,?);`
-        var staff_data = [staff.account, staff.shop_id, staff.name, staff.name_1, staff.name_2, staff.staff_photo1];
-        await db_write(staff_insert,staff_data);
-        APIstf.push(staff.account);
-      }
-
-      // 削除するスタッフ情報
-      const DELstf = DBstf.filter(stf => !APIstf.includes(stf));
-      
-      for (var d=0;d<DELstf.length;d++) {
-        var account = DELstf[d];
-        var staff_delete = `delete from staff_all where ( account = ? );`;
-        await db_write(staff_delete,[account]);
-      }
-    }
-
-    const sl = await GetDB('staff_all');
-
-    if (sl != false) {
-      setStaffs(sl);
-      
-      var sql = `select * from staff_all where shop_id = '${route.params.shop_id}';`;
-      var shop_staff = await db_select(sql);
-
-      if (shop_staff != false) {
-        setShop_staffs(shop_staff);
-      } else {
-        setShop_staffs([]);
-      }
-
-    } else {
-      setStaffs([]);
-    }
-
-  }
-
-  // お客様情報＋最新のコミュニケーションデータベース登録
-  async function Insert_customer_db(customer) {
-    
-    if (customer) {
+      // 最新のチャットルーム情報
+      var APIroom = [];
 
       // 最新のお客様情報
-      for (var c=0;c<customer.length;c++) {
+      for (var r=0;r<rooms.length;r++) {
 
-        var cus = customer[c];
+        var room = rooms[r]
 
-        if (
-          cus.html_flg ||
-          (cus.communication_title === "入居申込書" &&
-            cus.communication_status === "その他")
-        ) {
-          cus.communication_note = cus.communication_note.replace(
-            /<("[^"]*"|'[^']*'|[^'">])*>/g,
-            ""
-          );
-        }
+        var sql = `insert or replace into chat_room values (?,?,?,?,?,?,?,?,?,?,?,?);`;
 
-        let status = cus.status;
+        var data = [
+          room.room_id,
+          room.user_id,
+          room.user_list,
+          room.room_type,
+          room.room_name,
+          room.ins_date,
+          room.upd_date,
+          room.del_flg,
+          room.note,
+          room.time,
+          room.message_flg,
+          room.unread,
+        ]
+        
+        await db_write(sql,data);
+        APIroom.push(room.room_id);
 
-        if (status == "未対応" && cus.SENPUKI_autofollow) {
-          status = "メールモンスター";
-        } else if (!status) {
-          status = "未対応";
-        }
+      }
 
-        // 賃貸のみ
-        if (cus.category_number != "1") {
+      // 削除フラグ立っているルームは削除
+      var room_delete_flg = `delete from chat_room where del_flg = '1';`;
+      await db_write(room_delete_flg,[]);
 
-          var sql = `insert or replace into customer_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
-
-          var data = [
-            cus.customer_user_id,
-            cus.name,
-            cus.kana,
-            cus.communication_time,
-            cus.communication_title,
-            cus.line_note
-              ? cus.line_note
-              : cus.communication_note,
-            cus.mail1,
-            cus.mail2,
-            cus.mail3,
-            cus.line,
-            cus.staff_name,
-            cus.media,
-            cus.article_url,
-            cus.reverberation_user_id,
-            cus.coming_user_id,
-            cus.coming_day1,
-            status,
-          ];
-          
-          await db_write(sql,data);
-        }
-
+      // サーバーDBにないのは削除
+      const DELroom = DBroom.filter(r => !APIroom.includes(r));
+      for (var d=0;d<DELroom.length;d++) {
+        var room_id = DELroom[d];
+        var room_delete = `delete from chat_room where ( room_id = ? );`;
+        await db_write(room_delete,[room_id]);
       }
 
       // 500件超えたら古いものから削除する
-      var sql = `select count(*) as count from customer_mst;`;
+      var sql = `select count(*) as count from chat_room;`;
       var customer = await db_select(sql);
       const cnt = customer[0]["count"];
 
       if (cnt > 500) {
-        var delcus = `DELETE FROM customer_mst WHERE customer_id IN (SELECT customer_id FROM customer_mst ORDER BY time LIMIT (SELECT COUNT(*) - 500 FROM customer_mst));`;
+        var delcus = `DELETE FROM chat_room WHERE room_id IN (SELECT room_id FROM chat_room ORDER BY time LIMIT (SELECT COUNT(*) - 500 FROM chat_room));`;
         await db_write(delcus,[]);
       }
 
     }
 
+    var sql = `select * from chat_room where del_flg != '1' order by time desc;`;
+    var rooms_ = await db_select(sql);
+    
+    if (rooms_ != false) {
+
+      for (var r=0;r<rooms_.length;r++) {
+        var room = rooms_[r];
+
+        if (room["room_type"] == "0") {
+
+          var user_id = room["user_id"].split(',');
+
+          var account = user_id.filter(function(id) {
+            return id !== route.params.account;
+          });
+
+          var sql = `select * from staff_all where account = '${account[0]}';`;
+          var staff = await db_select(sql);
+
+          // 退職したスタッフとのトークルームは削除
+          if(!staff) {
+            var room_delete = `delete from chat_room where ( room_id = ? );`;
+            await db_write(room_delete,[room["room_id"]]);
+            continue;
+          }
+
+          room["account"]      = account[0];
+          room["name_1"]       = staff[0]["name_1"];
+          room["name_2"]       = staff[0]["name_2"];
+          room["shop_id"]      = staff[0]["shop_id"];
+          room["shop_name"]    = staff[0]["shop_name"];
+          
+          if (staff[0]["staff_photo1"]) {
+            const imageUrl = domain+"img/staff_img/"+staff[0]["staff_photo1"];
+            room["staff_photo1"] = {uri:imageUrl};
+          } else {
+            room["staff_photo1"] = require('../../assets/photo4.png');
+          }
+
+        } else if (room["room_type"] == "1") {
+
+          const imageUrl = domain+"chat_tmp/"+room["room_id"]+"/chatroom_"+room["room_id"]+".jpg";
+
+          const response = await fetch(imageUrl, { method: 'HEAD' });
+
+          if (response.ok) {
+            room["room_img"] = {uri:imageUrl};
+          } else {
+            room["room_img"] = require('../../assets/group.jpg');
+          }
+
+        }
+
+      }
+
+      setShop_staffs(rooms_);
+      setAlldata(rooms_);
+    } else {
+      setShop_staffs([]);
+      setAlldata([]);
+    }
   }
+
 
   async function Delete_staff_db(){
 
     const dbList = [
       "staff_mst",
-      "staff_all",
+      "staff_list",
       "customer_mst",
       "communication_mst",
       "fixed_mst",
       "staff_profile",
       "ranking_mst",
       "black_sales_mst",
+      "staff_all",
+      "chat_room",
+      "chat_message",
     ]
     
     for (var d=0;d<dbList.length;d++) {
@@ -636,6 +705,16 @@ export default function Company(props) {
       data: '',
     });
 
+    storage.save({
+      key: 'GET-DATA2',
+      data: '',
+    });
+
+    storage.save({
+      key: 'GET-ALLSTAFF',
+      data: '',
+    });
+    
     await Delete_staff_db();
     
     if(global.sp_token && global.sp_id){
@@ -703,6 +782,7 @@ export default function Company(props) {
                   name: "BellScreen",
                   params: route.params,
                   websocket: route.websocket,
+                  websocket2: route.websocket2,
                   profile: route.profile,
                   staff: staffs,
                   previous:'Company'
@@ -731,6 +811,7 @@ export default function Company(props) {
                   name: "Setting",
                   params: route.params,
                   websocket: route.websocket,
+                  websocket2: route.websocket2,
                   profile: route.profile,
                   previous:'Company'
                 },
@@ -755,6 +836,7 @@ export default function Company(props) {
                   name: "Ranking",
                   params: route.params,
                   websocket: route.websocket,
+                  websocket2: route.websocket2,
                   profile: route.profile,
                   previous:'Company'
                 },
@@ -785,7 +867,8 @@ export default function Company(props) {
   },[bell_count])
 
   const comList = useMemo(() => {
-    if (shop_staffs.length == 0) {
+    
+    if (shop_staffs.length == 0 && !filteredStaffs) {
       return (
         <View style={{marginTop:150}}>
           <TouchableOpacity style={styles.buttonReload} onPress={()=>onRefresh(true)}>
@@ -798,7 +881,6 @@ export default function Company(props) {
         <FlatList
           bounces={true}
           ref={listRef}
-          // onEndReached={endRefresh}
           refreshControl={
             date != '最新データ取得中' ?
             <RefreshControl
@@ -815,15 +897,40 @@ export default function Company(props) {
             if (!item.del_flg) {
               return (
                 <TouchableOpacity
-                  style={styles.ListItem}
+                  style={[styles.ListItem,item.room_type=='2'&&{backgroundColor:spc}]}
                   onPress={() => {
+                    navigation.reset({
+                      index: 0,
+                      routes: [
+                        {
+                          name: "ChatTalk",
+                          params: route.params,
+                          websocket: route.websocket,
+                          websocket2: route.websocket2,
+                          profile: route.profile,
+                          room: item,
+                          previous:'Company'
+                        },
+                      ],
+                    });
                   }}
                 >
-                  {item.staff_photo1?
+                  {item.room_type == '0'?
                   (
                     <Image
                       style={styles.icon}
-                      source={{uri:"https://www.total-cloud.net/img/staff_img/"+item.staff_photo1}}
+                      source={item.staff_photo1}
+                    />
+                  ):item.room_type == '1'?
+                  (
+                    <Image
+                      style={styles.icon}
+                      source={item.room_img}
+                    />
+                  ):item.room_type == '2'?(
+                    <Image
+                      style={[styles.icon,{backgroundColor:'transparent'}]}
+                      source={require('../../assets/chinser.png')}
                     />
                   ):(
                     <Image
@@ -833,75 +940,77 @@ export default function Company(props) {
                   )
                   }
                   <View style={styles.ListInner}>
-                    <Text style={styles.shop} numberOfLines={1}>
-                      {item.shop_name}
-                    </Text>
-                    <Text style={styles.name} numberOfLines={1}>
-                      {item.name_1}{item.name_2}
-                    </Text>
+                    {item.room_type == '0'?
+                      (
+                      <>
+                        <Text style={styles.shop} numberOfLines={1}>
+                          {item.shop_name}
+                        </Text>
+                        <Text style={styles.name} numberOfLines={1}>
+                          {item.name_1}{item.name_2}
+                        </Text>
+                      </>
+                      ):(
+                        <Text style={styles.name} numberOfLines={1}>
+                          {item.room_name}
+                        </Text>
+                      )
+                    }
                     <Text style={styles.date}>
-                      0000/00/00
+                      {item.time?item.time:''}
                     </Text>
                     <Text style={styles.message} numberOfLines={1}>
-                      abcdefgijklmnopqrstuvwxyz
+                      {
+                        item.message_flg == '0'||item.message_flg == '3'?
+                          item.note:
+                        item.message_flg == '1'?
+                          '画像を送信しました':
+                        item.message_flg == '2'?
+                          'ファイルを送信しました':
+                          ''
+                      }
                     </Text>
+                    {item.unread > 0&&(
+                    <View style={styles.bell3}>
+                      <Text style={styles.belltext} >{item.unread}</Text>
+                    </View>
+                    )}
                   </View>
                 </TouchableOpacity>
               );
             }
           }}
-          keyExtractor={(item) => `${item.account}`}
+          keyExtractor={(item) => `${item.room_id}`}
         />
       )
     }
-  },[shop_staffs,date])
+  },[shop_staffs,date,filteredStaffs])
 
   const bgc = !global.fc_flg?"#fff4b3":"#f5d3df";
+  const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
 
-  const findStaff = (query) => {
-    if (staffs.length > 0 && query.length > 0) {
-      const regex = new RegExp(`${query.trim()}`, 'i');
-      setFilteredStaffs(
-        staffs.filter((staff) => {
-          const name1Match = staff.name_1 && staff.name_1.search(regex) >= 0;
-          const name2Match = staff.name_2 && staff.name_2.search(regex) >= 0;
-          const shopNameMatch = staff.shop_name && staff.shop_name.search(regex) >= 0;
-      
-          return name1Match || name2Match || shopNameMatch;
-        })
-      );
-    } else {
-      setFilteredStaffs([]);
-    }
-  };
-
-  async function addStaff(item) {
-
-    const AsyncAlert = async () => new Promise((resolve) => {
-      Alert.alert(
-        `確認`,
-        `${item.name_1}${item.name_2}さん(${item.shop_name})を連絡先登録しますか？\n登録すると相手側にも通知がいきます`,
-        [
-          {
-            text: "いいえ",
-            style: "cancel",
-            onPress:() => {resolve(false);}
-          },
-          {
-            text: "はい",
-            onPress: () => {resolve(true);}
-          }
-        ]
+  function staffsSearch(txt) {
+    
+    var filteredStaffs_ = all_data.filter(function(item) {
+      return (
+        (item.name_1 && item.name_1.includes(txt)) ||
+        (item.name_2 && item.name_2.includes(txt)) ||
+        (item.shop_name && item.shop_name.includes(txt)) ||
+        (item.room_name && item.room_name.includes(txt)) ||
+        (item.note && item.note.includes(txt))
       );
     });
 
-    if (!await AsyncAlert()) return;
+    setShop_staffs(txt?filteredStaffs_:all_data);
 
-    setShop_staffs([item, ...shop_staffs])
-    setFilteredStaffs([]);
   }
 
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : -50}
+    >
     <SideMenu
       menu={headerRight}
       isOpen={menu}
@@ -911,28 +1020,128 @@ export default function Company(props) {
       menuPosition={'right'}
       openMenuOffset={deviceScreen.width * 0.5}
     >
+      <Modal
+          isVisible={addchat}
+          swipeDirection={['up']}
+          onSwipeComplete={()=>setAddchat(false)}
+          backdropOpacity={0.5}
+          animationInTiming={100}
+          animationOutTiming={300}
+          animationIn={'fadeIn'}
+          animationOut={'fadeOut'}
+          propagateSwipe={true}
+          transparent={true}
+          style={{margin: 0,justifyContent:'flex-start'}}
+          onBackdropPress={()=>setAddchat(false)}
+        >
+        <View style={[styles.roomheader,{height:headerHeight},Platform.OS === 'ios'&&{paddingTop:statusBarHeight}]}>
+          <Text style={[styles.headertitle,{marginLeft:16}]}>社内チャット</Text>
+          
+          <View style={{marginRight:5,flexDirection:'row',marginLeft:'auto'}}>
+            <TouchableOpacity
+                style={{width:50,height:50,justifyContent:'center',alignItems:'center'}}
+                onPress={() => {
+                  setAddchat(!addchat);
+                  setMenu(false);
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="chat-plus-outline"
+                  color="white"
+                  size={35}
+                />
+              </TouchableOpacity>
+              <>
+              <View style={bell_count?styles.bell:{display:'none'}}>
+                <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
+              </View>
+              <TouchableOpacity
+                style={{width:50,height:50,justifyContent:'center',alignItems:'center'}}
+                onPress={() => {
+                  setAddchat(false);
+                  setMenu(!menu);
+                }}
+              >
+                <Feather
+                  name="menu"
+                  color="white"
+                  size={35}
+                />
+              </TouchableOpacity>
+              </>
+            </View>
+        </View>
+        <View style={styles.roommenu}>
+          <View style={styles.roomblock}>
+            <TouchableOpacity
+              style={styles.roombtn}
+              onPress={()=>{
+                setAddchat(false);
+                navigation.reset({
+                  index: 0,
+                  routes: [{
+                    name: 'Staffs' ,
+                    params: route.params,
+                    websocket:route.websocket,
+                    websocket2: route.websocket2,
+                    profile:route.profile,
+                    previous:'Company',
+                    flg: 'room',
+                  }],
+                });
+              }}
+              activeOpacity={1}
+            > 
+            <MaterialCommunityIcons
+              name="wechat"
+              color={!global.fc_flg?"#1d449a":"#fd2c77"}
+              size={30}
+            />
+              <Text style={[styles.roomtext,{color:!global.fc_flg?"#1d449a":"#fd2c77"}]}>チャット</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.roomblock}>
+            <TouchableOpacity
+              style={styles.roombtn}
+              onPress={()=>{
+                setAddchat(false);
+                navigation.reset({
+                  index: 0,
+                  routes: [{
+                    name: 'Staffs' ,
+                    params: route.params,
+                    websocket:route.websocket,
+                    websocket2: route.websocket2,
+                    profile:route.profile,
+                    previous:'Company',
+                    flg: 'group',
+                  }],
+                });
+              }}
+              activeOpacity={1}
+            > 
+            <MaterialCommunityIcons
+              name="account-group"
+              color={!global.fc_flg?"#1d449a":"#fd2c77"}
+              size={30}
+            />
+              <Text style={[styles.roomtext,{color:!global.fc_flg?"#1d449a":"#fd2c77"}]}>グループ</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <View style={[styles.container,{backgroundColor:bgc}]}>
         <Loading isLoading={isLoading} />
-        <View style={{backgroundColor:bgc,zIndex:999,padding:10}}>
-          <Autocomplete
-            data={filteredStaffs}
-            placeholder="店舗名、名前が検索できます"
-            placeholderTextColor="#b3b3b3"
-            onChangeText={(text) => findStaff(text)}
+        <View style={[styles.inputview,{backgroundColor:bgc}]}>
+          <TextInput
             style={styles.searchInput}
-            flatListProps={{
-              style:{maxHeight:200},
-              keyExtractor: (item) => `${item.account}`,
-              renderItem: ({ item }) =>
-              <TouchableOpacity
-                onPress={() => {
-                  addStaff(item);
-                }}>
-                <Text style={styles.suggestText}>
-                {item.shop_name}：{item.name_1}{item.name_2}
-                </Text>
-              </TouchableOpacity>,
+            value={filteredStaffs}
+            onChangeText={(text) => {
+              setFilteredStaffs(text);
+              staffsSearch(text);
             }}
+            placeholder="検索"
+            placeholderTextColor="#b3b3b3"
           />
         </View>
         <View style={{height:20,marginRight:10}}>
@@ -949,6 +1158,7 @@ export default function Company(props) {
                 name: 'CommunicationHistory' ,
                 params: route.params,
                 websocket:route.websocket,
+                websocket2: route.websocket2,
                 profile:route.profile,
                 previous:'Company',
                 withAnimation: true
@@ -964,7 +1174,9 @@ export default function Company(props) {
                   name: "Schedule",
                   params: route.params,
                   websocket: route.websocket,
+                  websocket2: route.websocket2,
                   profile: route.profile,
+                  previous:'Company',
                   withAnimation: true
                 },
               ],
@@ -974,6 +1186,7 @@ export default function Company(props) {
         />
       </View>
     </SideMenu>
+  </KeyboardAvoidingView>
   );
 }
 
@@ -989,6 +1202,40 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  inputview: {
+    zIndex:999,
+    padding:10,
+    height:70
+  },
+  roomheader :{
+    width:'100%',
+    backgroundColor:'#1d449a',
+    flexDirection:'row',
+    alignItems:'center'
+  },
+  roommenu: {
+    width:Width,
+    backgroundColor:'#fff',
+    flexDirection:'row',
+  },
+  roomblock: {
+    width:Width*0.5,
+    height: 75,
+  },
+  roombtn: {
+    height: 50,
+    width: Width*0.5,
+    alignItems:'center',
+    justifyContent: 'center',
+    marginTop:5,
+  },
+  roomtext: {
+    color:"#000",
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight:'600',
+    marginTop:5
   },
   searchInput: {
     fontSize: 16,
@@ -1037,6 +1284,7 @@ const styles = StyleSheet.create({
     color: "#000000",
   },
   ListItem: {
+    height:80,
     backgroundColor: "#fff",
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1050,19 +1298,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   icon: {
-    width:50,
-    height:50,
+    width:40,
+    height:40,
     borderRadius:100,
     marginRight:10,
+    backgroundColor:'#eee'
   },
   shop: {
     fontSize: 12,
+    width:'65%'
   },
   name: {
     fontSize: 16,
     marginBottom: 5,
+    width:'65%'
   },
   date: {
+    fontSize: Platform.OS === 'ios'? 10 : 12,
+    color:'#999',
     position: "absolute",
     right: 0,
     top: 0,
@@ -1102,6 +1355,22 @@ const styles = StyleSheet.create({
     width:20,
     height:20,
     marginLeft:5
+  },
+  bell3: {
+    justifyContent:"center",
+    alignItems: "center",
+    position: "absolute",
+    color: "white",
+    fontWeight: "bold",
+    backgroundColor: "red",
+    borderRadius: 10,
+    paddingLeft: 5,
+    paddingRight: 5,
+    right: 0,
+    bottom:0,
+    zIndex:999,
+    width:20,
+    height:20
   },
   belltext: {
     color:'#fff',

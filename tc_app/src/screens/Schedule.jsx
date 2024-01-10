@@ -152,25 +152,6 @@ export default function Schedule(props) {
 
   }, []);
 
-  // 端末の戻るボタン
-  const backAction = () => {
-    if (!isLoading) {
-      navigation.reset({
-        index: 0,
-        routes: [
-          {
-            name: "CommunicationHistory",
-            params: route.params,
-            websocket: route.websocket,
-            profile: route.profile,
-            previous: "Schedule",
-          },
-        ],
-      });
-    }
-    return true;
-  };
-
   async function Display() {
 
     // ローカルDB用スタッフリスト
@@ -450,6 +431,7 @@ export default function Schedule(props) {
                       params: route.params,
                       customer: sub.customer_id,
                       websocket: route.websocket,
+                      websocket2: route.websocket2,
                       profile: route.profile,
                       staff: staffs,
                       cus_name: name,
@@ -583,6 +565,9 @@ export default function Schedule(props) {
       "staff_profile",
       "ranking_mst",
       "black_sales_mst",
+      "staff_all",
+      "chat_room",
+      "chat_message",
     ]
     
     for (var d=0;d<dbList.length;d++) {
@@ -625,6 +610,16 @@ export default function Schedule(props) {
       data: '',
     });
 
+    storage.save({
+      key: 'GET-DATA2',
+      data: '',
+    });
+
+    storage.save({
+      key: 'GET-ALLSTAFF',
+      data: '',
+    });
+    
     await Delete_staff_db();
     
     if(global.sp_token && global.sp_id){
@@ -692,6 +687,7 @@ export default function Schedule(props) {
                   name: "BellScreen",
                   params: route.params,
                   websocket: route.websocket,
+                  websocket2: route.websocket2,
                   profile: route.profile,
                   staff: staffs,
                   previous:'Schedule',
@@ -720,6 +716,7 @@ export default function Schedule(props) {
                   name: "Setting",
                   params: route.params,
                   websocket: route.websocket,
+                  websocket2: route.websocket2,
                   profile: route.profile,
                   previous:'Schedule',
                 },
@@ -744,6 +741,7 @@ export default function Schedule(props) {
                   name: "Ranking",
                   params: route.params,
                   websocket: route.websocket,
+                  websocket2: route.websocket2,
                   profile: route.profile,
                   previous:'Schedule',
                 },
@@ -874,6 +872,7 @@ export default function Schedule(props) {
                 name: 'CommunicationHistory' ,
                 params: route.params,
                 websocket:route.websocket,
+                websocket2: route.websocket2,
                 profile:route.profile,
                 previous:'Schedule',
                 withAnimation: true
@@ -887,6 +886,7 @@ export default function Schedule(props) {
                 name: 'Company' ,
                 params: route.params,
                 websocket:route.websocket,
+                websocket2: route.websocket2,
                 profile:route.profile,
                 previous:'Schedule',
                 withAnimation: true

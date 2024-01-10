@@ -10,11 +10,12 @@ import LogInScreen from './src/screens/LogInScreen';
 import CommunicationHistoryScreen from './src/screens/CommunicationHistoryScreen';
 import TalkScreen from './src/screens/TalkScreen';
 import Setting from './src/screens/Setting';
-import Loading from './src/components/Loading';
 import BellScreen from './src/screens/BellScreen';
 import Ranking from './src/screens/Ranking';
 import Schedule from './src/screens/Schedule';
 import Company from './src/screens/Company';
+import Staffs from './src/screens/Staffs';
+import ChatTalk from './src/screens/ChatTalk';
 
 const Stack = createStackNavigator();
 LogBox.ignoreLogs(['Setting a timer']);
@@ -77,6 +78,14 @@ export default function App() {
           options={{
             gestureDirection: "horizontal-inverted",
           }}
+        />
+        <Stack.Screen
+          name="Staffs"
+          component={Staffs}
+        />
+        <Stack.Screen
+          name="ChatTalk"
+          component={ChatTalk}
         />
       </Stack.Navigator>
     </NavigationContainer>

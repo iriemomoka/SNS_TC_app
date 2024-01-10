@@ -1,5 +1,5 @@
 diff --git a/node_modules/react-native-gifted-chat/lib/Bubble.js b/node_modules/react-native-gifted-chat/lib/Bubble.js
-index 70b74ae..a8fc8fa 100644
+index 70b74ae..6b0f5b2 100644
 --- a/node_modules/react-native-gifted-chat/lib/Bubble.js
 +++ b/node_modules/react-native-gifted-chat/lib/Bubble.js
 @@ -19,7 +19,7 @@ const styles = {
@@ -30,16 +30,17 @@ index 70b74ae..a8fc8fa 100644
          },
          bottom: {
              flexDirection: 'row',
-@@ -68,7 +68,7 @@ const styles = {
+@@ -68,15 +68,15 @@ const styles = {
              marginRight: 10,
          },
          username: {
 -            top: -3,
-+            // top: -3,
++            bottom: -2,
              left: 0,
-             fontSize: 12,
+-            fontSize: 12,
++            fontSize: 10,
              backgroundColor: 'transparent',
-@@ -76,7 +76,7 @@ const styles = {
+             color: '#aaa',
          },
          usernameView: {
              flexDirection: 'row',
@@ -80,7 +81,7 @@ index 70b74ae..a8fc8fa 100644
      }
      styledBubbleToNext() {
          const { currentMessage, nextMessage, position, containerToNextStyle, } = this.props;
-@@ -226,14 +251,11 @@ export default class Bubble extends React.Component {
+@@ -226,17 +251,42 @@ export default class Bubble extends React.Component {
          return null;
      }
      renderUsername() {
@@ -92,14 +93,14 @@ index 70b74ae..a8fc8fa 100644
              }
 -            if (renderUsername) {
 -                return renderUsername(currentMessage.user);
--            }
-             return (<View style={styles.content.usernameView}>
-           <Text style={[styles.content.username, this.props.usernameStyle]}>
-             ~ {currentMessage.user.name}
-@@ -242,6 +264,34 @@ export default class Bubble extends React.Component {
-         }
-         return null;
-     }
++            return (<View style={styles.content.usernameView}>
++          <Text style={[styles.content.username, this.props.usernameStyle]}>
++            {currentMessage.user.name}
++          </Text>
++        </View>);
++        }
++        return null;
++    }
 +    renderStatus() {
 +        const { currentMessage, user } = this.props;
 +        if (this.props.renderStatus && currentMessage) {
@@ -119,18 +120,14 @@ index 70b74ae..a8fc8fa 100644
 +        if (this.props.renderTitle && currentMessage) {
 +            if (user && currentMessage.user.title === user.title) {
 +                return null;
-+            }
-+            return (<View style={styles.content.usernameView}>
-+          <Text style={[styles.content.username, this.props.usernameStyle]}>
+             }
+             return (<View style={styles.content.usernameView}>
+           <Text style={[styles.content.username, this.props.usernameStyle]}>
+-            ~ {currentMessage.user.name}
 +            タイトル：{currentMessage.user.title}
-+          </Text>
-+        </View>);
-+        }
-+        return null;
-+    }
-     renderCustomView() {
-         if (this.props.renderCustomView) {
-             return this.props.renderCustomView(this.props);
+           </Text>
+         </View>);
+         }
 @@ -266,28 +316,32 @@ export default class Bubble extends React.Component {
      render() {
          const { position, containerStyle, wrapperStyle, bottomContainerStyle, } = this.props;
@@ -159,6 +156,7 @@ index 70b74ae..a8fc8fa 100644
 +        ]}>
 +        {this.renderStatus()}
 +        {this.renderTitle()}
++        {this.renderUsername()}
 +        <View style={{flexDirection:'row'}}>
 +          <View style={[
 +              styles[position].wrapper,
@@ -173,7 +171,6 @@ index 70b74ae..a8fc8fa 100644
 +              styles[position].bottom,
 +              bottomContainerStyle && bottomContainerStyle[position],
 +          ]}>
-+                  {this.renderUsername()}
 +                  {this.renderTicks()}
 +                </View>
                </View>
@@ -241,6 +238,30 @@ index 7bbf561..ef8d4ee 100644
  };
  //# sourceMappingURL=Composer.js.map
 \ No newline at end of file
+diff --git a/node_modules/react-native-gifted-chat/lib/Day.js b/node_modules/react-native-gifted-chat/lib/Day.js
+index 476b290..e3a3508 100644
+--- a/node_modules/react-native-gifted-chat/lib/Day.js
++++ b/node_modules/react-native-gifted-chat/lib/Day.js
+@@ -1,7 +1,8 @@
+ import * as React from 'react';
+ import PropTypes from 'prop-types';
+ import { StyleSheet, Text, View, } from 'react-native';
+-import dayjs from 'dayjs';
++import Moment from 'moment';
++import 'moment/locale/ja'
+ import Color from './Color';
+ import { StylePropType, isSameDay } from './utils';
+ import { DATE_FORMAT } from './Constant';
+@@ -28,8 +29,7 @@ export function Day({ dateFormat = DATE_FORMAT, currentMessage, previousMessage,
+     return (<View style={[styles.container, containerStyle]}>
+       <View style={wrapperStyle}>
+         <Text style={[styles.text, textStyle]}>
+-          {dayjs(currentMessage.createdAt)
+-            .locale(getLocale())
++          {Moment(currentMessage.createdAt)
+             .format(dateFormat)}
+         </Text>
+       </View>
 diff --git a/node_modules/react-native-gifted-chat/lib/InputToolbar.js b/node_modules/react-native-gifted-chat/lib/InputToolbar.js
 index 2ff651d..c6ae2db 100644
 --- a/node_modules/react-native-gifted-chat/lib/InputToolbar.js
@@ -413,7 +434,7 @@ index dd834d6..54fdf7a 100644
  MessageText.propTypes = {
      position: PropTypes.oneOf(['left', 'right']),
 diff --git a/node_modules/react-native-gifted-chat/lib/Time.js b/node_modules/react-native-gifted-chat/lib/Time.js
-index 821a899..76eeb41 100644
+index 821a899..0f1a4de 100644
 --- a/node_modules/react-native-gifted-chat/lib/Time.js
 +++ b/node_modules/react-native-gifted-chat/lib/Time.js
 @@ -8,8 +8,8 @@ import { StylePropType } from './utils';
@@ -457,3 +478,13 @@ index 821a899..76eeb41 100644
              ...textStyle,
          },
      }),
+@@ -49,6 +55,9 @@ export function Time({ position = 'left', containerStyle, currentMessage, timeFo
+             styles[position].container,
+             containerStyle && containerStyle[position],
+         ]}>
++      {(currentMessage.user.user_read).length>0&&position=='right'&&(
++      <Text style={{fontSize:8}}>既読 {currentMessage.room_type!="0"&&(currentMessage.user.user_read).length}</Text>
++      )}
+       <Text style={[
+             styles[position].text,
+             timeTextStyle && timeTextStyle[position],
