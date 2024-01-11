@@ -1281,44 +1281,33 @@ export default function ChatTalk(props) {
     }
   },[staff_list])
 
+
+  const onLongPress = (context, message) => {
+    var options = ['コピー','キャンセル'];
+
+    const cancelButtonIndex = options.length - 1;
+
+    context.actionSheet().showActionSheetWithOptions({
+      options,
+      cancelButtonIndex
+    }, (buttonIndex) => {
+      switch (buttonIndex) {
+        case 0:
+          Clipboard.setStringAsync(message.text);
+          break;
+        case 1:
+          break;
+      }
+    });
+
+  }
+
   const bgc = !global.fc_flg?"#81aee6":"#e6c4f5";
   const bbc = !global.fc_flg?"#6c93c4":"#c4a3d4";
 
   return (
     <>
     <Loading isLoading={isLoading} />
-    <Modal
-      isVisible={userImage}
-      swipeDirection={['up']}
-      onSwipeComplete={()=>setUserImage(false)}
-      backdropOpacity={1}
-      animationInTiming={100}
-      animationOutTiming={300}
-      animationIn={'fadeIn'}
-      animationOut={'fadeOut'}
-      propagateSwipe={true}
-      transparent={true}
-      onBackdropPress={()=>setUserImage(false)}
-      style={{alignItems:'center',zIndex:999}}
-    >
-      <TouchableOpacity
-        style={styles.clsbtn}
-        onPress={()=>setUserImage(false)}
-        activeOpacity={0.8}
-      >
-        <MaterialCommunityIcons
-          name="close-circle"
-          color="#999"
-          size={30}
-        />
-      </TouchableOpacity>
-      <View style={{width:Width,height:Width}}>
-        <Image
-          style={{width:Width,height:Width}}
-          source={{uri:userInfo.avatar}}
-        />
-      </View>
-    </Modal>
     <Modal
       isVisible={userModal}
       swipeDirection={['up']}
@@ -1366,6 +1355,38 @@ export default function ChatTalk(props) {
         }
         <Text style={[styles.name3,{marginTop:30}]}>{userInfo.name}</Text>
       </View>
+      <Modal
+        isVisible={userImage}
+        swipeDirection={['up']}
+        onSwipeComplete={()=>setUserImage(false)}
+        backdropOpacity={1}
+        animationInTiming={100}
+        animationOutTiming={300}
+        animationIn={'fadeIn'}
+        animationOut={'fadeOut'}
+        propagateSwipe={true}
+        transparent={true}
+        onBackdropPress={()=>setUserImage(false)}
+        style={{alignItems:'center',zIndex:999}}
+      >
+        <TouchableOpacity
+          style={styles.clsbtn}
+          onPress={()=>setUserImage(false)}
+          activeOpacity={0.8}
+        >
+          <MaterialCommunityIcons
+            name="close-circle"
+            color="#999"
+            size={30}
+          />
+        </TouchableOpacity>
+        <View style={{width:Width,height:Width}}>
+          <Image
+            style={{width:Width,height:Width}}
+            source={{uri:userInfo.avatar}}
+          />
+        </View>
+      </Modal>
     </Modal>
     <Modal
       isVisible={settingGroup}
@@ -1534,6 +1555,7 @@ export default function ChatTalk(props) {
         setUserModal(true);
         setUserInfo({name:user.name,avatar:user.avatar})
       }}
+      onLongPress={(context, message)=>onLongPress(context, message)}
       renderBubble={renderBubble}
       renderUsernameOnMessage={route.room.room_type=="0"?false:true}
       renderSend={(props) => {

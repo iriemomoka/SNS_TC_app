@@ -216,6 +216,8 @@ export default function Staffs(props) {
   
       if (!await AsyncAlert()) return;
 
+      setLoading(true);
+
       const arr = [route.params.account,item.account];
       const lst = arr.join(',');
 
@@ -229,6 +231,8 @@ export default function Staffs(props) {
       }
 
       await addRoom_fetch(roomdata);
+
+      setLoading(false);
 
       navigation.reset({
         index: 0,
@@ -317,6 +321,8 @@ export default function Staffs(props) {
 
     if (!await AsyncAlert()) return;
 
+    setLoading(true);
+
     const lst = accounttext+','+route.room.user_list;
 
     const roomdata = {
@@ -368,6 +374,8 @@ export default function Staffs(props) {
       console.log(error)
       Alert.alert("登録に失敗しました");
     })
+
+    setLoading(false);
 
     navigation.reset({
       index: 0,
@@ -546,7 +554,7 @@ export default function Staffs(props) {
   }
 
   async function addGroup_fetch() {
-    
+
     var room = staffs.filter(function(item,index) {
       return item.checked === true && item.account != route.params.account && item.account != "*****";
     });
@@ -555,6 +563,9 @@ export default function Staffs(props) {
       Alert.alert("","スタッフが選択されていません");
       return
     }
+
+    setLoading(true);
+
     route.params.account
     var accounts = room.map((r)=>r.account)
     accounts = [route.params.account,...accounts];
@@ -573,6 +584,8 @@ export default function Staffs(props) {
 
     setAddGroup(false);
     
+    setLoading(false);
+
     navigation.reset({
       index: 0,
       routes: [{
@@ -885,6 +898,7 @@ export default function Staffs(props) {
         
         <TouchableWithoutFeedback onPress={()=>{Keyboard.dismiss()}}>
           <View style={{height:(Height-headerHeight),backgroundColor:'#fff'}}>
+            <Loading isLoading={isLoading} />
             <View style={styles.inputview}>
               <TouchableOpacity
                 style={{width:70,height:70}}
