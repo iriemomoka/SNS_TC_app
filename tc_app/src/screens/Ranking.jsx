@@ -8,11 +8,11 @@ import GestureRecognizer from "react-native-swipe-gestures";
 import DropDownPicker from "react-native-dropdown-picker";
 import { BarChart } from "react-native-chart-kit";
 import Toast from 'react-native-root-toast';
-import {
-  RewardedInterstitialAd,
-  RewardedAdEventType,
-  TestIds,
-} from 'react-native-google-mobile-ads';
+// import {
+//   RewardedInterstitialAd,
+//   RewardedAdEventType,
+//   TestIds,
+// } from 'react-native-google-mobile-ads';
 
 import Loading from "../components/Loading";
 import { db } from '../components/Databace';
@@ -24,19 +24,19 @@ const screenWidth = Dimensions.get('window').width;
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = "https://www.total-cloud.net/";
 
-// 本番
-const adUnitId = Platform.OS === 'ios'
-  ? 'ca-app-pub-1369937549147272/4726650514'  // ios
-  : 'ca-app-pub-1369937549147272/4674679628'; // android
-
-// // テスト
+// // 本番
 // const adUnitId = Platform.OS === 'ios'
-//   ? 'ca-app-pub-3940256099942544/6978759866'  // ios
-//   : 'ca-app-pub-3940256099942544/5354046379'; // android
+//   ? 'ca-app-pub-1369937549147272/4726650514'  // ios
+//   : 'ca-app-pub-1369937549147272/4674679628'; // android
 
-const rewardedInterstitial = RewardedInterstitialAd.createForAdRequest(adUnitId, {
-  requestNonPersonalizedAdsOnly: true,
-});
+// // // テスト
+// // const adUnitId = Platform.OS === 'ios'
+// //   ? 'ca-app-pub-3940256099942544/6978759866'  // ios
+// //   : 'ca-app-pub-3940256099942544/5354046379'; // android
+
+// const rewardedInterstitial = RewardedInterstitialAd.createForAdRequest(adUnitId, {
+//   requestNonPersonalizedAdsOnly: true,
+// });
 
 export default function Ranking(props) {
   
@@ -1976,27 +1976,27 @@ export default function Ranking(props) {
     )
   }
 
-  useEffect(() => {
+  // useEffect(() => {
     
-    const unsubscribeLoaded = rewardedInterstitial.addAdEventListener(
-      RewardedAdEventType.LOADED,
-      () => {},
-    );
+  //   const unsubscribeLoaded = rewardedInterstitial.addAdEventListener(
+  //     RewardedAdEventType.LOADED,
+  //     () => {},
+  //   );
 
-    const unsubscribeEarned = rewardedInterstitial.addAdEventListener(
-      RewardedAdEventType.EARNED_REWARD,
-      reward => {
-      },
-    );
+  //   const unsubscribeEarned = rewardedInterstitial.addAdEventListener(
+  //     RewardedAdEventType.EARNED_REWARD,
+  //     reward => {
+  //     },
+  //   );
 
-    rewardedInterstitial.load();
+  //   rewardedInterstitial.load();
 
-    return () => {
-      unsubscribeLoaded();
-      unsubscribeEarned();
-    };
+  //   return () => {
+  //     unsubscribeLoaded();
+  //     unsubscribeEarned();
+  //   };
 
-  }, []);
+  // }, []);
 
   return (
     <>
@@ -2060,33 +2060,33 @@ export default function Ranking(props) {
                         const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                         await _sleep(1500);
 
-                        if (rewardedInterstitial.loaded) {
-                          rewardedInterstitial.show();
-                        } else {
-                          await rewardedInterstitial.load();
+                        // if (rewardedInterstitial.loaded) {
+                        //   rewardedInterstitial.show();
+                        // } else {
+                        //   await rewardedInterstitial.load();
 
-                          let isLoaded = false;
+                        //   let isLoaded = false;
 
-                          let interval = setInterval(async () => {
-                            if (rewardedInterstitial.loaded) {
-                              rewardedInterstitial.show();
-                              clearInterval(interval);
-                              isLoaded = true;
-                            }
-                          }, 1000);
+                        //   let interval = setInterval(async () => {
+                        //     if (rewardedInterstitial.loaded) {
+                        //       rewardedInterstitial.show();
+                        //       clearInterval(interval);
+                        //       isLoaded = true;
+                        //     }
+                        //   }, 1000);
 
-                          // 15秒経過したらクリア
-                          setTimeout(() => {
-                            clearInterval(interval);
-                            if (!isLoaded) {
-                              Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
-                              setLoading(false);
-                              setKaishi(false);
-                              return
-                            }
-                          }, 15000);
+                        //   // 15秒経過したらクリア
+                        //   setTimeout(() => {
+                        //     clearInterval(interval);
+                        //     if (!isLoaded) {
+                        //       Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
+                        //       setLoading(false);
+                        //       setKaishi(false);
+                        //       return
+                        //     }
+                        //   }, 15000);
 
-                        }
+                        // }
 
                         const getR = await getRanking(true);
                         if (getR == false) return;
@@ -2167,33 +2167,33 @@ export default function Ranking(props) {
                           const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                           await _sleep(1500);
 
-                          if (rewardedInterstitial.loaded) {
-                            rewardedInterstitial.show();
-                          } else {
-                            await rewardedInterstitial.load();
+                          // if (rewardedInterstitial.loaded) {
+                          //   rewardedInterstitial.show();
+                          // } else {
+                          //   await rewardedInterstitial.load();
 
-                            let isLoaded = false;
+                          //   let isLoaded = false;
 
-                            let interval = setInterval(async () => {
-                              if (rewardedInterstitial.loaded) {
-                                rewardedInterstitial.show();
-                                clearInterval(interval);
-                                isLoaded = true;
-                              }
-                            }, 1000);
+                          //   let interval = setInterval(async () => {
+                          //     if (rewardedInterstitial.loaded) {
+                          //       rewardedInterstitial.show();
+                          //       clearInterval(interval);
+                          //       isLoaded = true;
+                          //     }
+                          //   }, 1000);
 
-                            // 15秒経過したらクリア
-                            setTimeout(() => {
-                              clearInterval(interval);
-                              if (!isLoaded) {
-                                Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
-                                setLoading(false);
-                                setKaishi(false);
-                                return
-                              }
-                            }, 15000);
+                          //   // 15秒経過したらクリア
+                          //   setTimeout(() => {
+                          //     clearInterval(interval);
+                          //     if (!isLoaded) {
+                          //       Alert.alert('エラーコード：4','広告の読み込みに失敗しました\n通信状況を確認してください');
+                          //       setLoading(false);
+                          //       setKaishi(false);
+                          //       return
+                          //     }
+                          //   }, 15000);
 
-                          }
+                          // }
 
                           const getR = await getRanking(true);
                           if (getR == false) return;
