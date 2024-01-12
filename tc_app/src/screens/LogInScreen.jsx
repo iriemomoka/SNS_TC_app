@@ -275,21 +275,24 @@ export default function LogInScreen(props) {
         setLoading(false);
   
         // ローカルサーバーのデータを更新(サーバーから取得)
-        getServerData(rocalDBProfile,rocalDB[0]);
-  
-        navigation.reset({
-          index: 0,
-          routes: [{
-            name: 'CommunicationHistory',
-            params: rocalDB[0],
-            websocket:new WebSocket(WS_URL),
-            websocket2:new WebSocket(WS_URL2),
-            profile:rocalDBProfile,
-            flg:'ローカル',
-            previous:'LogIn',
-            notifications:cus_notifications?cus_notifications:null,
-          }],
-        });
+        getServerData(rocalDBProfile,rocalDB[0])
+        .then((result) => {
+          if (result) {
+            navigation.reset({
+              index: 0,
+              routes: [{
+                name: 'CommunicationHistory',
+                params: rocalDB[0],
+                websocket:new WebSocket(WS_URL),
+                websocket2:new WebSocket(WS_URL2),
+                profile:rocalDBProfile,
+                flg:'ローカル',
+                previous:'LogIn',
+                notifications:cus_notifications?cus_notifications:null,
+              }],
+            });
+          }
+        })
   
       } else if (rocalDB.length == 0 && ExpoPushToken && !global.fc_flg) {
 
@@ -423,57 +426,9 @@ export default function LogInScreen(props) {
 
     setLoading(true);
 
-    const staffcheck = async () => new Promise((resolve) => {
-
-      storage.load({
-        key : 'GET-ALLSTAFF'
-      })
-      .then(data => {
-        
-        if (data) {
-          
-          var GET_ALLSTAFF = new Date(data.replace(/-/g, '/')); // 直近の取得時間
-          var currentDate = new Date(); // 現在時間
-  
-          var timeDifference = currentDate - GET_ALLSTAFF;
-          
-          // 直近取得時間から24時間以上たってたらDB更新かける
-          if (timeDifference >= 24 * 60 * 60 * 1000) {
-            resolve(true);
-          } else {
-            resolve(false);
-          }
-  
-        } else {
-          resolve(true);
-        }
-  
-      })
-      .catch(err => {
-        resolve(true);
-        storage.save({
-          key: 'GET-ALLSTAFF',
-          data: '',
-        });
-      })
-
-    })
-
-    const SC = await staffcheck();
-    
-    var sql = `select * from staff_all;`;
-    var stf = await db_select(sql);
-
-    // 直近取得時間から24時間以内かつゼンスタッフデータあり
-    if (!SC && stf != false) {
-      console.log('データあるよん')
-      setLoading(false);
-      return
-    }
-
-    console.log('データないよう')
-
     // ローカルDBのスタッフ情報
+    const stf = await GetDB('staff_all');
+
     var DBstf = [];
     if (stf != false) {
       DBstf = stf.map((s) => {
@@ -500,33 +455,6 @@ export default function LogInScreen(props) {
       var staff_delete = `delete from staff_all where ( account = ? );`;
       await db_write(staff_delete,[account]);
     }
-
-    function addZero(num, length) {
-      var minus = "";
-      var zero = ('0'.repeat(length)).slice(-length);
-      if (parseInt(num) < 0) {
-        // マイナス値の場合
-        minus = "-";
-        num = -num;
-        zero = zero.slice(-(length - 1 - String(num).length));	// -の1桁+数値の桁数分引く
-      }
-    
-      return (minus + zero + num).slice(-length);
-    }
-
-    // データ取得日時
-    var date = new Date();
-    var date_ = (date.getFullYear()).toString() + "-" 
-    + addZero((date.getMonth() + 1).toString(),2) + "-" 
-    + addZero((date.getDate()).toString(),2) + "-" 
-    + addZero((date.getHours()).toString(),2) + "-" 
-    + addZero((date.getMinutes()).toString(),2) + "-" 
-    + addZero((date.getSeconds()).toString(),2);
-
-    storage.save({
-      key: 'GET-ALLSTAFF',
-      data: date_,
-    });
     
     setLoading(false);
   }
@@ -682,89 +610,94 @@ export default function LogInScreen(props) {
   // サーバーからのデータを取得して、ローカルサーバーの中身を更新
   function getServerData(obj,staff){
 
-    fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-    {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      // PHPに送るデータ
-      body: JSON.stringify({
-        ID : staff.account,
-        pass : staff.password,
-        fc_flg: global.fc_flg
+    return new Promise((resolve, reject)=>{
+      fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        // PHPに送るデータ
+        body: JSON.stringify({
+          ID : staff.account,
+          pass : staff.password,
+          fc_flg: global.fc_flg
+        })
       })
-    })
-    .then((response) => response.json())
-    .then(async(json) => {
-      
-      const staff = json.staff;
-      
-      // ログインデータ保持用
-      global.sp_id = staff.account;
-
-      // テーブルを空にする
-      await db_write(`delete from staff_mst;`,[]);     // スタッフ
-      await db_write(`delete from staff_profile;`,[]); // スタッフプロフィール
+      .then((response) => response.json())
+      .then(async(json) => {
         
-      // スタッフ情報をサーバーから取得
-      const staff_data = [
-        staff.account,
-        staff.password,
-        staff.shop_id,
-        staff.name_1,
-        staff.name_2,
-        staff.name,
-        staff.corporations_name,
-        staff.setting_list,
-        staff.app_token,
-        staff.system_mail,
-        staff.yahoomail,
-        staff.gmail,
-        staff.hotmail,
-        staff.outlook,
-        staff.softbank,
-        staff.icloud,
-        staff.original_mail,
-        staff.line_id,
-        staff.mail_name,
-        staff.mail1,
-        staff.mail2,
-        staff.mail3,
-        staff.top_staff_list,
-        staff.setting_list7_mail,
-        global.fc_flg
-      ];
+        const staff = json.staff;
         
-      await Insert_staff_db(staff.account,staff.password,staff_data);
+        // ログインデータ保持用
+        global.sp_id = staff.account;
 
-      // プロフィール情報をサーバーから取得
-      const profile = json.profile;
-      const profile_data = [
-        profile[0].staff_id,
-        profile[0].birthplace,
-        profile[0].birthday,
-        profile[0].profile_tag,
-        profile[0].staff_photo1,
-        profile[0].staff_photo2,
-        profile[0].staff_photo3,
-        profile[0].staff_photo4,
-      ];
+        // テーブルを空にする
+        await db_write(`delete from staff_mst;`,[]);     // スタッフ
+        await db_write(`delete from staff_profile;`,[]); // スタッフプロフィール
+          
+        // スタッフ情報をサーバーから取得
+        const staff_data = [
+          staff.account,
+          staff.password,
+          staff.shop_id,
+          staff.name_1,
+          staff.name_2,
+          staff.name,
+          staff.corporations_name,
+          staff.setting_list,
+          staff.app_token,
+          staff.system_mail,
+          staff.yahoomail,
+          staff.gmail,
+          staff.hotmail,
+          staff.outlook,
+          staff.softbank,
+          staff.icloud,
+          staff.original_mail,
+          staff.line_id,
+          staff.mail_name,
+          staff.mail1,
+          staff.mail2,
+          staff.mail3,
+          staff.top_staff_list,
+          staff.setting_list7_mail,
+          global.fc_flg
+        ];
+          
+        await Insert_staff_db(staff.account,staff.password,staff_data);
 
-      obj.push(profile[0]);
+        // プロフィール情報をサーバーから取得
+        const profile = json.profile;
+        const profile_data = [
+          profile[0].staff_id,
+          profile[0].birthplace,
+          profile[0].birthday,
+          profile[0].profile_tag,
+          profile[0].staff_photo1,
+          profile[0].staff_photo2,
+          profile[0].staff_photo3,
+          profile[0].staff_photo4,
+        ];
 
-      await Insert_profile_db(staff.account,profile_data);
+        obj.push(profile[0]);
 
-      const staff_list = json.staff_list;
-      await Insert_staff_all_db(staff_list);
+        await Insert_profile_db(staff.account,profile_data);
 
-    })
-    .catch((error) => {
-      const errorMsg = "[※]自動ログインに失敗しました。";
-      Alert.alert(errorMsg);
-      console.log(error)
-    })
+        const staff_list = json.staff_list;
+        await Insert_staff_all_db(staff_list);
+
+        resolve(true);
+
+      })
+      .catch((error) => {
+        const errorMsg = "[※]自動ログインに失敗しました。";
+        Alert.alert(errorMsg);
+        console.log(error)
+        resolve(false);
+      })
+    });
     
   }
 

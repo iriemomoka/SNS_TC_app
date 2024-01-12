@@ -238,9 +238,6 @@ export default function ChatTalk(props) {
 
   useEffect(() => {
     
-    const header_name_ = route.room.room_type=="0"?route.room.name_1+route.room.name_2:route.room.room_name;
-
-    setHeader_name(header_name_);
     setGroupname(route.room.room_name);
 
     if (route.room.room_type=="1") {
@@ -318,16 +315,63 @@ export default function ChatTalk(props) {
 
     setStaff_list(staff_arr);
 
+    var staff_flg = "";
+
+    const header_name_ = route.room.room_type=="0"?route.room.name_1+route.room.name_2:route.room.room_name;
+
+    function isString(value) {
+      if (typeof value === "string" || value instanceof String) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    if (isString(header_name_)) {
+      setHeader_name(header_name_);
+    } else {
+      staff_flg = "1";
+    }
+
     const startTime = Date.now(); // 開始時間
 
-    const json = await getCOM();
+    const json = await getCOM(staff_flg);
 
     // ログアウトしてたら中断
     if(!global.sp_token && !global.sp_id) return;
 
     if (json != null && json != false) {
 
-      await Insert_chatmessage_db(json);
+      await Insert_chatmessage_db(json["chatmessage"]);
+
+      if (staff_flg) {
+        await Insert_staff_all_db(json["staff_list"]);
+        
+        var user_id_ = route.room["user_id"].split(',');
+
+        var account = user_id_.filter(function(id) {
+          return id !== route.params.account;
+        });
+
+        var sql = `select * from staff_all where account = '${account[0]}';`;
+        var staff = await db_select(sql);
+
+        route.room["account"]      = account[0];
+        route.room["name_1"]       = staff[0]["name_1"];
+        route.room["name_2"]       = staff[0]["name_2"];
+        route.room["shop_id"]      = staff[0]["shop_id"];
+        route.room["shop_name"]    = staff[0]["shop_name"];
+        
+        if (staff[0]["staff_photo1"]) {
+          const imageUrl = domain+"img/staff_img/"+staff[0]["staff_photo1"];
+          route.room["staff_photo1"] = {uri:imageUrl};
+        } else {
+          route.room["staff_photo1"] = require('../../assets/photo4.png');
+        }
+
+        setHeader_name(route.room.name_1+route.room.name_2);
+
+      }
 
       const endTime2 = Date.now(); // 終了時間
       const time2 = (endTime2 - startTime)/1000;
@@ -357,7 +401,7 @@ export default function ChatTalk(props) {
 
   }, []);
 
-  const getCOM = useCallback(() => {
+  const getCOM = useCallback((staff_flg) => {
     
     return new Promise((resolve, reject)=>{
       fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
@@ -372,7 +416,8 @@ export default function ChatTalk(props) {
           pass : route.params.password,
           act:'chatmessage',
           room_id:route.room.room_id,
-          fc_flg: global.fc_flg
+          fc_flg: global.fc_flg,
+          staff_all:staff_flg
         })
       })
       .then((response) => response.json())
@@ -637,6 +682,50 @@ export default function ChatTalk(props) {
     setTalk(talk_);
   }
   
+  // スタッフリストデータベース登録
+  async function Insert_staff_all_db(staff_all) {
+
+    if (staff_all) {
+
+      const startTime = Date.now(); // 開始時間
+
+      // ローカルDBのスタッフ情報
+      const stf = await GetDB('staff_all');
+  
+      var DBstf = [];
+      if (stf != false) {
+        DBstf = stf.map((s) => {
+          return s.account
+        })
+      }
+  
+      // 最新のスタッフ情報
+      var APIstf = [];
+  
+      for (var s=0;s<staff_all.length;s++) {
+        var staff = staff_all[s];
+        var staff_insert = `insert or replace into staff_all values (?,?,?,?,?,?);`
+        var staff_data = [staff.account, staff.shop_id, staff.name, staff.name_1, staff.name_2, staff.staff_photo1];
+        await db_write(staff_insert,staff_data);
+        APIstf.push(staff.account);
+      }
+  
+      // 削除するスタッフ情報
+      const DELstf = DBstf.filter(stf => !APIstf.includes(stf));
+      
+      for (var d=0;d<DELstf.length;d++) {
+        var account = DELstf[d];
+        var staff_delete = `delete from staff_all where ( account = ? );`;
+        await db_write(staff_delete,[account]);
+      }
+      
+      const endTime = Date.now(); // 終了時間
+      const time = (endTime - startTime)/1000;
+      console.log('staff_all：'+time + '秒');
+    }
+
+  }
+
   async function onSend() {
     
     setLoading(true);

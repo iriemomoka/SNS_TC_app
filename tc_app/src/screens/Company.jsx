@@ -326,7 +326,7 @@ export default function Company(props) {
     }
   };
 
-  const onRefresh = useCallback(async(flg) => {
+  const onRefresh = useCallback(async(flg,staff_flg="") => {
 
     const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -336,7 +336,7 @@ export default function Company(props) {
 
     const startTime = Date.now(); // 開始時間
 
-    const json = await getCOM();
+    const json = await getCOM(staff_flg);
 
     // ログアウトしてたら中断
     if(!global.sp_token && !global.sp_id) return;
@@ -351,7 +351,11 @@ export default function Company(props) {
 
     if (json != false) {
 
-      await Insert_chatroom_db(json);
+      await Insert_chatroom_db(json["chatroom"]);
+
+      if (staff_flg) {
+        await Insert_staff_all_db(json["staff_list"]);
+      }
 
       function addZero(num, length) {
         var minus = "";
@@ -450,7 +454,7 @@ export default function Company(props) {
     await onRefresh(false);
   };
 
-  const getCOM = useCallback(() => {
+  const getCOM = useCallback((staff_flg) => {
     
     const signal = abortControllerRef.current.signal;
 
@@ -466,6 +470,7 @@ export default function Company(props) {
           pass: route.params.password,
           act: "company",
           fc_flg: global.fc_flg,
+          staff_all:staff_flg
         }),
         signal
       })
@@ -648,6 +653,49 @@ export default function Company(props) {
     }
   }
 
+  // スタッフリストデータベース登録
+  async function Insert_staff_all_db(staff_all) {
+
+    if (staff_all) {
+
+      const startTime = Date.now(); // 開始時間
+
+      // ローカルDBのスタッフ情報
+      const stf = await GetDB('staff_all');
+  
+      var DBstf = [];
+      if (stf != false) {
+        DBstf = stf.map((s) => {
+          return s.account
+        })
+      }
+  
+      // 最新のスタッフ情報
+      var APIstf = [];
+  
+      for (var s=0;s<staff_all.length;s++) {
+        var staff = staff_all[s];
+        var staff_insert = `insert or replace into staff_all values (?,?,?,?,?,?);`
+        var staff_data = [staff.account, staff.shop_id, staff.name, staff.name_1, staff.name_2, staff.staff_photo1];
+        await db_write(staff_insert,staff_data);
+        APIstf.push(staff.account);
+      }
+  
+      // 削除するスタッフ情報
+      const DELstf = DBstf.filter(stf => !APIstf.includes(stf));
+      
+      for (var d=0;d<DELstf.length;d++) {
+        var account = DELstf[d];
+        var staff_delete = `delete from staff_all where ( account = ? );`;
+        await db_write(staff_delete,[account]);
+      }
+      
+      const endTime = Date.now(); // 終了時間
+      const time = (endTime - startTime)/1000;
+      console.log('staff_all：'+time + '秒');
+    }
+
+  }
 
   async function Delete_staff_db(){
 
@@ -707,11 +755,6 @@ export default function Company(props) {
 
     storage.save({
       key: 'GET-DATA2',
-      data: '',
-    });
-
-    storage.save({
-      key: 'GET-ALLSTAFF',
       data: '',
     });
     
@@ -886,7 +929,7 @@ export default function Company(props) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={async()=>{
-                await onRefresh(true);
+                await onRefresh(true,"1");
               }}
             />
             :<></>
@@ -928,10 +971,13 @@ export default function Company(props) {
                       source={item.room_img}
                     />
                   ):item.room_type == '2'?(
-                    <Image
-                      style={[styles.icon,{backgroundColor:'transparent'}]}
-                      source={require('../../assets/chinser.png')}
-                    />
+                    <View style={styles.icon2}>
+                      <MaterialCommunityIcons
+                        name="home-account"
+                        color={!global.fc_flg?"#1d449a":"#fd2c77"}
+                        size={40}
+                      />
+                    </View>
                   ):(
                     <Image
                       style={styles.icon}
@@ -1303,6 +1349,13 @@ const styles = StyleSheet.create({
     borderRadius:100,
     marginRight:10,
     backgroundColor:'#eee'
+  },
+  icon2: {
+    width:40,
+    height:40,
+    marginRight:10,
+    justifyContent:"center",
+    alignItems: "center",
   },
   shop: {
     fontSize: 12,

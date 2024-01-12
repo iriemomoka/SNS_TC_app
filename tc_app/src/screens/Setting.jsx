@@ -912,11 +912,6 @@ async function logout() {
     key: 'GET-DATA2',
     data: '',
   });
-
-  storage.save({
-    key: 'GET-ALLSTAFF',
-    data: '',
-  });
   
   await Delete_staff_db();
   

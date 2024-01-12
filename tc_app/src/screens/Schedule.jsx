@@ -614,11 +614,6 @@ export default function Schedule(props) {
       key: 'GET-DATA2',
       data: '',
     });
-
-    storage.save({
-      key: 'GET-ALLSTAFF',
-      data: '',
-    });
     
     await Delete_staff_db();
     
