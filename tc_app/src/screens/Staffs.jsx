@@ -678,14 +678,9 @@ export default function Staffs(props) {
     if (staff_list.length > 0) {
       return (
         <FlatList
-          bounces={true}
+          showsHorizontalScrollIndicator={false}
+          bounces={false}
           ref={listRef}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={()=>{}}
-            />
-          }
           initialNumToRender={10}
           data={staff_list}
           renderItem={({ item,index }) => {
@@ -996,6 +991,7 @@ const styles = StyleSheet.create({
     color: "#000000",
   },
   ListItem: {
+    width:"100%",
     height:60,
     backgroundColor: "#fff",
     flexDirection: "row",

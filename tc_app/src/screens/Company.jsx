@@ -75,6 +75,7 @@ export default function Company(props) {
   const deviceScreen = Dimensions.get('window');
   
   const listRef = useRef([]);
+  const filteredRef = useRef([]);
   
   // 参照データ取得日時
   const [date, setDate] = useState('');
@@ -351,11 +352,11 @@ export default function Company(props) {
 
     if (json != false) {
 
-      await Insert_chatroom_db(json["chatroom"]);
-
       if (staff_flg) {
         await Insert_staff_all_db(json["staff_list"]);
       }
+      
+      await Insert_chatroom_db(json["chatroom"]);
 
       function addZero(num, length) {
         var minus = "";
@@ -644,9 +645,30 @@ export default function Company(props) {
         }
 
       }
+      
+      if (filteredRef.current.value) {
+        const txt = filteredRef.current.value;
 
-      setShop_staffs(rooms_);
-      setAlldata(rooms_);
+        var filteredStaffs_ = rooms_.filter(function(item) {
+          return (
+            (item.name_1 && item.name_1.includes(txt)) ||
+            (item.name_2 && item.name_2.includes(txt)) ||
+            (item.shop_name && item.shop_name.includes(txt)) ||
+            (item.room_name && item.room_name.includes(txt)) ||
+            (item.note && item.note.includes(txt))
+          );
+        });
+    
+        setShop_staffs(txt?filteredStaffs_:rooms_);
+        setAlldata(rooms_);
+
+      } else {
+        setShop_staffs(rooms_);
+        setAlldata(rooms_);
+      }
+      
+      listRef.current.scrollToOffset({ animated: true, offset: 0 });
+
     } else {
       setShop_staffs([]);
       setAlldata([]);
@@ -930,6 +952,7 @@ export default function Company(props) {
               refreshing={refreshing}
               onRefresh={async()=>{
                 await onRefresh(true,"1");
+                listRef.current.scrollToOffset({ animated: true, offset: 0 });
               }}
             />
             :<></>
@@ -1180,9 +1203,11 @@ export default function Company(props) {
         <Loading isLoading={isLoading} />
         <View style={[styles.inputview,{backgroundColor:bgc}]}>
           <TextInput
+            ref={filteredRef}
             style={styles.searchInput}
             value={filteredStaffs}
             onChangeText={(text) => {
+              filteredRef.current.value = text
               setFilteredStaffs(text);
               staffsSearch(text);
             }}

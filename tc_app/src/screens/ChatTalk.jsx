@@ -342,8 +342,6 @@ export default function ChatTalk(props) {
 
     if (json != null && json != false) {
 
-      await Insert_chatmessage_db(json["chatmessage"]);
-
       if (staff_flg) {
         await Insert_staff_all_db(json["staff_list"]);
         
@@ -373,6 +371,8 @@ export default function ChatTalk(props) {
 
       }
 
+      await Insert_chatmessage_db(json["chatmessage"]);
+      
       const endTime2 = Date.now(); // 終了時間
       const time2 = (endTime2 - startTime)/1000;
       console.log('トーク登録：'+time2 + '秒')
