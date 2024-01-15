@@ -1103,7 +1103,7 @@ export default function Company(props) {
           style={{margin: 0,justifyContent:'flex-start'}}
           onBackdropPress={()=>setAddchat(false)}
         >
-        <View style={[styles.roomheader,{height:headerHeight},Platform.OS === 'ios'&&{paddingTop:statusBarHeight}]}>
+        <View style={[styles.roomheader,{height:headerHeight},Platform.OS === 'ios'&&{paddingTop:statusBarHeight},{backgroundColor:global.fc_flg?"#fd2c77":"#1d449a"}]}>
           <Text style={[styles.headertitle,{marginLeft:16}]}>社内チャット</Text>
           
           <View style={{marginRight:5,flexDirection:'row',marginLeft:'auto'}}>
@@ -1281,7 +1281,6 @@ const styles = StyleSheet.create({
   },
   roomheader :{
     width:'100%',
-    backgroundColor:'#1d449a',
     flexDirection:'row',
     alignItems:'center'
   },

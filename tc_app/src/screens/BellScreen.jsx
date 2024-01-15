@@ -208,6 +208,7 @@ export default function BellScreen(props) {
           status:"メール受信",
           title:com.title,
           html_flg:com.html_flg,
+          user_read:0,
         }
       }
       return data;
