@@ -4,7 +4,8 @@ import React, {
   useCallback,
   useRef,
   useMemo,
-  useLayoutEffect
+  useLayoutEffect,
+  useContext
 } from "react";
 import {
   StyleSheet,
@@ -36,6 +37,7 @@ import Constants from 'expo-constants';
 import Loading from "../components/Loading";
 import { GetDB,db_select,db_write } from '../components/Databace';
 import Footer from "../components/Footer";
+import { Context1 } from "../components/ExportContext";
 
 import Storage from 'react-native-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -80,6 +82,8 @@ export default function Company(props) {
   // 参照データ取得日時
   const [date, setDate] = useState('');
   
+  const context = useContext(Context1);
+
   var headerHeight = useHeaderHeight();
   const statusBarHeight = Constants.statusBarHeight;
 
@@ -596,8 +600,13 @@ export default function Company(props) {
     
     if (rooms_ != false) {
 
+      var cnt = 0;
+
       for (var r=0;r<rooms_.length;r++) {
         var room = rooms_[r];
+
+        const unread = Number(room["unread"]);
+        cnt += unread;
 
         if (room["room_type"] == "0") {
 
@@ -646,6 +655,8 @@ export default function Company(props) {
 
       }
       
+      context.setChatbell(cnt);
+
       if (filteredRef.current.value) {
         const txt = filteredRef.current.value;
 

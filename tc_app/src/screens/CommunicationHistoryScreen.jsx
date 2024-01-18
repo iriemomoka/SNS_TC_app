@@ -4,7 +4,8 @@ import React, {
   useCallback,
   useRef,
   useMemo,
-  useLayoutEffect
+  useLayoutEffect,
+  useContext
 } from "react";
 import {
   StyleSheet,
@@ -35,6 +36,7 @@ import * as SQLite from "expo-sqlite";
 import Loading from "../components/Loading";
 import { GetDB,db_select,db_write } from '../components/Databace';
 import Footer from "../components/Footer";
+import { Context1 } from "../components/ExportContext";
 
 import Storage from 'react-native-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -76,6 +78,8 @@ export default function CommunicationHistoryScreen(props) {
   // 参照データ取得日時
   const [date, setDate] = useState('');
   
+  const context = useContext(Context1);
+
   var staffList = useMemo(()=>{
 
     var items = [];
@@ -147,6 +151,21 @@ export default function CommunicationHistoryScreen(props) {
       });
 
       Display(true);
+
+      var sql = `select unread from chat_room where del_flg != '1';`;
+      db_select(sql).then(function(rooms){
+  
+        var cnt = 0;
+    
+        if (rooms != false) {
+          for (var r in rooms) {
+            const unread = Number(rooms[r]["unread"]);
+            cnt += unread;
+          }
+        }
+    
+        context.setChatbell(cnt);
+      })
 
     } else {
 
@@ -384,6 +403,7 @@ export default function CommunicationHistoryScreen(props) {
       const staff_ = await Insert_staff_list_db(json.staff);
 
       // ローカルDB用お客様情報＋最新のコミュニケーション
+      await Delete_customer_db(json.del_cus);
       await Insert_customer_db(json.search);
       await searchCustomer(staff_,true);
 
@@ -506,6 +526,7 @@ export default function CommunicationHistoryScreen(props) {
     
     if (json != false) {
       // ローカルDB用お客様情報＋最新のコミュニケーション
+      await Delete_customer_db(json.del_cus);
       await Insert_customer_db(json.search);
       await searchCustomer(staff_value,false);
     }
@@ -544,7 +565,11 @@ export default function CommunicationHistoryScreen(props) {
     await onRefresh(false);
   };
 
-  const getCOM = useCallback(() => {
+  const getCOM = useCallback(async() => {
+    
+    var sql = `select customer_id from customer_mst;`;
+    var customer_mst = await db_select(sql);
+    const customer_id_list = customer_mst!=false?customer_mst.map((c)=>c.customer_id):[];
     
     const signal = abortControllerRef.current.signal;
 
@@ -561,6 +586,7 @@ export default function CommunicationHistoryScreen(props) {
           act: "customer_list",
           fc_flg: global.fc_flg,
           page:0,
+          customer_id_list:customer_id_list.join(),
         }),
         signal
       })
@@ -580,8 +606,12 @@ export default function CommunicationHistoryScreen(props) {
 
   },[abortControllerRef]);
 
-  const getCOMNEXT = useCallback((page) => {
+  const getCOMNEXT = useCallback(async(page) => {
     
+    var sql = `select customer_id from customer_mst;`;
+    var customer_mst = await db_select(sql);
+    const customer_id_list = customer_mst!=false?customer_mst.map((c)=>c.customer_id):[];
+
     return new Promise((resolve, reject)=>{
       fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
         method: "POST",
@@ -595,6 +625,7 @@ export default function CommunicationHistoryScreen(props) {
           act: "customer_list",
           fc_flg: global.fc_flg,
           page:page,
+          customer_id_list:customer_id_list.join(),
         }),
       })
       .then((response) => response.json())
@@ -783,6 +814,17 @@ export default function CommunicationHistoryScreen(props) {
 
     }
 
+  }
+
+  // ローカルDBの削除対象顧客を削除する
+  async function Delete_customer_db(customer) {
+    if (customer.length > 0) {
+      for (var c in customer) {
+        const customer_id = customer[c];
+        var delcus = `DELETE FROM customer_mst WHERE customer_id = (?);`;
+        await db_write(delcus,[customer_id]);
+      }
+    }
   }
 
   // 定型文データベース登録

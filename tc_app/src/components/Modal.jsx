@@ -1,6 +1,6 @@
 import React,{ useState, useEffect, useLayoutEffect, useRef } from 'react';
 import {
-  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, TouchableWithoutFeedback, Linking, SafeAreaView,
+  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, TouchableWithoutFeedback, Linking, Keyboard,
 } from 'react-native';
 import Modal from "react-native-modal";
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -760,16 +760,16 @@ export function MyModal1(props) {
   
   const onClose = () => {
     props.setModal1(false);
-    setNote('');
-    setCus_Value(cus_mail[0]);
-    setShop_Value(shop_mail[0]);
-    setMail_subject('');
-    setIsEnabled(false);
-    setCheck(false);
-    setFilename('');
-    setFiledata(null);
-    setInputCursorPosition(null);
-    setMail_Format('0');
+    // setNote('');
+    // setCus_Value(cus_mail[0]);
+    // setShop_Value(shop_mail[0]);
+    // setMail_subject('');
+    // setIsEnabled(false);
+    // setCheck(false);
+    // setFilename('');
+    // setFiledata(null);
+    // setInputCursorPosition(null);
+    // setMail_Format('0');
   }
   
   const img_Delete = () => {
@@ -953,6 +953,22 @@ export function MyModal1(props) {
     }
   }, [textColor])
   
+  const [keyboardStatus, setKeyboardStatus] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardStatus(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardStatus(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   return (
     <Modal
       isVisible={isVisible}
@@ -962,7 +978,9 @@ export function MyModal1(props) {
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       onModalHide={() => {setCon_flg(false)}}
-      onBackdropPress={onClose}
+      onBackdropPress={()=>{
+        keyboardStatus?Keyboard.dismiss():onClose()
+      }}
     >
       <MyModal3 
         isVisible={Property}
@@ -1344,6 +1362,22 @@ export function MyModal2(props){
     }
   }
   
+  const [keyboardStatus, setKeyboardStatus] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardStatus(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardStatus(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+  
   return (
     <Modal
       isVisible={isVisible}
@@ -1353,47 +1387,53 @@ export function MyModal2(props){
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       onModalHide={() => {setCon_flg(false)}}
-      onBackdropPress={onClose}
+      onBackdropPress={()=>{
+        keyboardStatus?Keyboard.dismiss():onClose()
+      }}
     >
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <View style={[{height:500},styles.bottom,styles.modalInner]}>
-          <TouchableOpacity
-            style={styles.close}
-            onPress={onClose}
-          >
-            <Feather name='x-circle' color='gray' size={35} />
-          </TouchableOpacity>
-          <View style={styles.form}>
-            <View style={styles.input}>{action_date()}</View>
-            <View style={{ zIndex: 100 }}>
-              <DropDownPicker
-                open={open}
-                value={status}
-                items={items1}
-                setOpen={setOpen}
-                setValue={setStatus}
-                setItems={setItems1}
-                style={styles.inputInner}
-                placeholder = "選択してください"
-                maxHeight={300}
-              />
-            </View>
-            <View style={styles.input}>
-              <Text style={styles.label}>内容詳細</Text>
-              <TextInput
-                onChangeText={(text) => {setAction_text(text)}}
-                value={action_text}
-                style={styles.textarea}
-                multiline={true}
-                disableFullscreenUI={true}
-                numberOfLines={11}
-              />
-            </View>
-            <TouchableOpacity onPress={onSubmit} style={styles.submit}>
-              <Text style={styles.submitText}>登　録</Text>
+        <TouchableWithoutFeedback
+          onPress={()=>Keyboard.dismiss()}
+        >
+          <View style={[{height:500},styles.bottom,styles.modalInner]}>
+            <TouchableOpacity
+              style={styles.close}
+              onPress={onClose}
+            >
+              <Feather name='x-circle' color='gray' size={35} />
             </TouchableOpacity>
+            <View style={styles.form}>
+              <View style={styles.input}>{action_date()}</View>
+              <View style={{ zIndex: 100 }}>
+                <DropDownPicker
+                  open={open}
+                  value={status}
+                  items={items1}
+                  setOpen={setOpen}
+                  setValue={setStatus}
+                  setItems={setItems1}
+                  style={styles.inputInner}
+                  placeholder = "選択してください"
+                  maxHeight={300}
+                />
+              </View>
+              <View style={styles.input}>
+                <Text style={styles.label}>内容詳細</Text>
+                <TextInput
+                  onChangeText={(text) => {setAction_text(text)}}
+                  value={action_text}
+                  style={styles.textarea}
+                  multiline={true}
+                  disableFullscreenUI={true}
+                  numberOfLines={11}
+                />
+              </View>
+              <TouchableOpacity onPress={onSubmit} style={styles.submit}>
+                <Text style={styles.submitText}>登　録</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -4971,8 +5011,12 @@ const styles = StyleSheet.create({
   },
   close: {
     position: 'absolute',
-    top:10,
-    right:15,
+    top:0,
+    right:0,
+    width:50,
+    height:50,
+    justifyContent:'center',
+    alignItems:'center',
   },
   line: {
     backgroundColor: "#ffffff",

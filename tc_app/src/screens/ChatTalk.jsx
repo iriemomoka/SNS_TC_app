@@ -783,7 +783,7 @@ export default function ChatTalk(props) {
     .then(async(json) => {
       setLoading(false);
       setMessages(GiftedChat.append(messages, newMessage));
-      await Insert_chatmessage_db(json);
+      await Insert_chatmessage_db(json["chatmessage"]);
     })
     .catch((error) => {
       setLoading(false);
@@ -1150,7 +1150,6 @@ export default function ChatTalk(props) {
       })
       .then((response) => response.json())
       .then(async(json) => {
-        setLoading(false);
         setMessages(
           GiftedChat.append(messages,
             [{
@@ -1169,17 +1168,17 @@ export default function ChatTalk(props) {
             }]
           )
         );
-        await Insert_chatmessage_db(json);
+        await Insert_chatmessage_db(json["chatmessage"]);
+        setLoading(false);
       })
       .catch((error) => {
         console.log(error)
-        setLoading(false);
         const errorMsg = "ファイルをアップできませんでした";
         Alert.alert(errorMsg);
+        setLoading(false);
       })
       
     }
-    setLoading(false);
 	};
 	
   // カメラロールから画像またはビデオを選択
@@ -1250,9 +1249,7 @@ export default function ChatTalk(props) {
       .then((response) => response.json())
       .then(async(json) => {
         
-        setLoading(false);
-
-        const text = json[0]["note"];
+        const text = json["chatmessage"][0]["note"];
 
         setMessages(
           GiftedChat.append(messages,
@@ -1272,17 +1269,18 @@ export default function ChatTalk(props) {
             }]
           )
         );
-        await Insert_chatmessage_db(json);
+        await Insert_chatmessage_db(json["chatmessage"]);
+        setLoading(false);
       })
       .catch((error) => {
         console.log(error)
         const errorMsg = "ファイルをアップできませんでした";
         Alert.alert(errorMsg);
+        setLoading(false);
       })
 
     }
 
-    setLoading(false);
   };
 
   const groupList = useMemo(() => {

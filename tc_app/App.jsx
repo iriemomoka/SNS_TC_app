@@ -16,80 +16,96 @@ import Schedule from './src/screens/Schedule';
 import Company from './src/screens/Company';
 import Staffs from './src/screens/Staffs';
 import ChatTalk from './src/screens/ChatTalk';
+import ContractRegister from './src/screens/ContractRegister';
+import CustomerEdit from './src/screens/CustomerEdit';
+
+import { Context1 } from './src/components/ExportContext';
 
 const Stack = createStackNavigator();
 LogBox.ignoreLogs(['Setting a timer']);
 
 export default function App() {
   
+  const [chatbell, setChatbell] = useState(0);
+
   return (
-    <RootSiblingParent>
-      
-    <StatusBar translucent={true} hidden={false} />
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="LogIn"
-        screenOptions={({route: {withAnimation}}) => ({
-          headerTitleAlign: 'left',
-          gestureEnabled: true,
-          gestureDirection: 'horizontal',
-          cardStyleInterpolator: !withAnimation
-          ? CardStyleInterpolators.forHorizontalIOS
-          : CardStyleInterpolators.forNoAnimation,
-        })}
-      >
-        <Stack.Screen
-          name="LogIn"
-          component={LogInScreen}
-        />
-        <Stack.Screen
-          name="CommunicationHistory"
-          component={CommunicationHistoryScreen}
-          options={{
-            gestureDirection: "horizontal-inverted",
-          }}
-        />
-        <Stack.Screen
-          name="Setting"
-          component={Setting}
-        />
-        <Stack.Screen
-          name="TalkScreen"
-          component={TalkScreen}
-        />
-        <Stack.Screen
-          name="BellScreen"
-          component={BellScreen}
-        />
-        <Stack.Screen
-          name="Ranking"
-          component={Ranking}
-        />
-        <Stack.Screen
-          name="Schedule"
-          component={Schedule}
-          options={{
-            gestureDirection: "horizontal-inverted",
-          }}
-        />
-        <Stack.Screen
-          name="Company"
-          component={Company}
-          options={{
-            gestureDirection: "horizontal-inverted",
-          }}
-        />
-        <Stack.Screen
-          name="Staffs"
-          component={Staffs}
-        />
-        <Stack.Screen
-          name="ChatTalk"
-          component={ChatTalk}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
-    </RootSiblingParent>
+    
+    <Context1.Provider value={{chatbell, setChatbell}}>
+      <RootSiblingParent>
+        <StatusBar translucent={true} hidden={false} />
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="LogIn"
+            screenOptions={({route: {withAnimation,withAnimation2}}) => ({
+              headerTitleAlign: 'left',
+              gestureEnabled: true,
+              gestureDirection: !withAnimation2?'horizontal':'horizontal-inverted',
+              cardStyleInterpolator: !withAnimation
+              ? CardStyleInterpolators.forHorizontalIOS
+              : CardStyleInterpolators.forNoAnimation,
+            })}
+          >
+            <Stack.Screen
+              name="LogIn"
+              component={LogInScreen}
+            />
+            <Stack.Screen
+              name="CommunicationHistory"
+              component={CommunicationHistoryScreen}
+              options={{
+                gestureDirection: "horizontal-inverted",
+              }}
+            />
+            <Stack.Screen
+              name="Setting"
+              component={Setting}
+            />
+            <Stack.Screen
+              name="TalkScreen"
+              component={TalkScreen}
+            />
+            <Stack.Screen
+              name="BellScreen"
+              component={BellScreen}
+            />
+            <Stack.Screen
+              name="Ranking"
+              component={Ranking}
+            />
+            <Stack.Screen
+              name="Schedule"
+              component={Schedule}
+              options={{
+                gestureDirection: "horizontal-inverted",
+              }}
+            />
+            <Stack.Screen
+              name="Company"
+              component={Company}
+              options={{
+                gestureDirection: "horizontal-inverted",
+              }}
+            />
+            <Stack.Screen
+              name="Staffs"
+              component={Staffs}
+            />
+            <Stack.Screen
+              name="ChatTalk"
+              component={ChatTalk}
+            />
+            <Stack.Screen
+              name="ContractRegister"
+              component={ContractRegister}
+            />
+            <Stack.Screen
+              name="CustomerEdit"
+              component={CustomerEdit}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </RootSiblingParent>
+    </Context1.Provider>
   );
 }
 

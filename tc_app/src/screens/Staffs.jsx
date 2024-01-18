@@ -147,7 +147,7 @@ export default function Staffs(props) {
       headerRight: () => (
         <TouchableOpacity
         activeOpacity={1}
-          style={{justifyContent:'center',alignItems:'center',width:50,height:50}}
+          style={{justifyContent:'center',alignItems:'center',width:70,height:70}}
           onPress={() => {
 
             var room = staffs.filter(function(item,index) {
@@ -168,7 +168,7 @@ export default function Staffs(props) {
             }
           }}
         >
-          <Text style={{color:"#fff"}}>{route.flg == 'upd_room'?'追加':'次へ'}</Text>
+          <Text style={{color:"#fff",textAlign:'center',fontWeight:'800'}}>{route.flg == 'upd_room'?'追 加':route.flg == 'room'?'チャット\n開始':'次 へ'}</Text>
         </TouchableOpacity>
       ),
     });
@@ -181,7 +181,49 @@ export default function Staffs(props) {
       var listtext = namelist.join(',');
       setG_placeholder(listtext)
     }
-  },[staffs]);
+  },[staffs,checked]);
+
+  const addButton = useMemo(() => {
+
+    var room = staffs.filter(function(item,index) {
+      return item.checked === true && item.account != route.params.account && item.account != "*****";
+    });
+
+    const bgc = !global.fc_flg ? "#1d449a" : "#fd2c77";
+
+    if (room.length > 0) {
+      return (
+        <TouchableOpacity
+        activeOpacity={1}
+          style={[styles.addbutton,{backgroundColor:bgc}]}
+          onPress={() => {
+
+            var room = staffs.filter(function(item,index) {
+              return item.checked === true && item.account != route.params.account && item.account != "*****";
+            });
+            
+            if (room.length == 0) {
+              Alert.alert("","スタッフが選択されていません");
+              return
+            }
+            
+            if (route.flg == 'room') {
+              addStaff(room[0]);
+            } else if (route.flg == 'upd_room') {
+              updGroup();
+            } else {
+              setAddGroup(true);
+            }
+          }}
+        >
+          <Text style={styles.addbuttontxt}>{route.flg == 'upd_room'?'追 加':route.flg == 'room'?'チャット\n開始':'次 へ'}</Text>
+        </TouchableOpacity>
+      )
+    } else {
+      return null;
+    }
+
+  },[staffs,checked])
 
   async function addStaff(item) {
 
@@ -193,6 +235,18 @@ export default function Staffs(props) {
                 and del_flg != '1' 
               ;`;
     var chat_room = await db_select(sql);
+
+    const arr = [route.params.account,item.account];
+    const lst = arr.join(',');
+
+    var roomdata = {
+      room_id:"",
+      room_name:"",
+      room_img:null,
+      room_type:"0",
+      user_id:lst,
+      user_list:lst,
+    }
 
     if (chat_room == false) {
 
@@ -218,74 +272,51 @@ export default function Staffs(props) {
 
       setLoading(true);
 
-      const arr = [route.params.account,item.account];
-      const lst = arr.join(',');
-
-      const roomdata = {
-        room_id:"",
-        room_name:"",
-        room_img:null,
-        room_type:"0",
-        user_id:lst,
-        user_list:lst,
-      }
-
-      await addRoom_fetch(roomdata);
+      const room_id = await addRoom_fetch(roomdata);
+      roomdata["room_id"] = room_id;
 
       setLoading(false);
 
-      navigation.reset({
-        index: 0,
-        routes: [{
-          name: 'Company' ,
+    }
+    
+    const room = chat_room == false?roomdata:chat_room[0];
+      
+    if (room["room_type"] == "0") {
+
+      var user_id = room["user_id"].split(',');
+
+      var account = user_id.filter(function(id) {
+        return id !== route.params.account;
+      });
+
+      var sql = `select * from staff_all where account = '${account[0]}';`;
+      var staff = await db_select(sql);
+
+      if (staff != false) {
+        room["account"]      = account[0];
+        room["name_1"]       = staff[0]["name_1"];
+        room["name_2"]       = staff[0]["name_2"];
+        room["shop_id"]      = staff[0]["shop_id"];
+        room["shop_name"]    = staff[0]["shop_name"];
+        room["staff_photo1"] = staff[0]["staff_photo1"];
+      }
+
+    }
+
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: "ChatTalk",
           params: route.params,
           websocket:route.websocket,
           websocket2:route.websocket2,
           profile:route.profile,
+          room: room,
           previous:'Staffs'
-        }],
-      });
-
-    } else {
-      const room = chat_room[0];
-      
-      if (room["room_type"] == "0") {
-
-        var user_id = room["user_id"].split(',');
-
-        var account = user_id.filter(function(id) {
-          return id !== route.params.account;
-        });
-
-        var sql = `select * from staff_all where account = '${account[0]}';`;
-        var staff = await db_select(sql);
-
-        if (staff != false) {
-          room["account"]      = account[0];
-          room["name_1"]       = staff[0]["name_1"];
-          room["name_2"]       = staff[0]["name_2"];
-          room["shop_id"]      = staff[0]["shop_id"];
-          room["shop_name"]    = staff[0]["shop_name"];
-          room["staff_photo1"] = staff[0]["staff_photo1"];
-        }
-
-      }
-
-      navigation.reset({
-        index: 0,
-        routes: [
-          {
-            name: "ChatTalk",
-            params: route.params,
-            websocket:route.websocket,
-            websocket2:route.websocket2,
-            profile:route.profile,
-            room: room,
-            previous:'Staffs'
-          },
-        ],
-      });
-    }
+        },
+      ],
+    });
 
   }
   
@@ -423,8 +454,6 @@ export default function Staffs(props) {
       sql += `where shop_id != '00001' and shop_id != '00002' and shop_id != '12345' and shop_id != '99999' and shop_id != 'feides' ;`;
     }
 
-    console.log(sql)
-
     var sl = await db_select(sql);
     
     if (sl != false) {
@@ -541,8 +570,7 @@ export default function Staffs(props) {
       })
       .then((response) => response.json())
       .then((json) => {
-        console.log(json);
-        resolve(true);
+        resolve(json.room_id);
       })
       .catch((error) => {
         resolve(false);
@@ -571,7 +599,7 @@ export default function Staffs(props) {
     accounts = [route.params.account,...accounts];
     var accounttext = accounts.join(',');
     
-    const roomdata = {
+    var roomdata = {
       room_id:"",
       room_name:groupname?groupname:g_placeholder,
       room_img:group_img,
@@ -580,7 +608,8 @@ export default function Staffs(props) {
       user_list:accounttext,
     }
 
-    await addRoom_fetch(roomdata);
+    const room_id = await addRoom_fetch(roomdata);
+    roomdata["room_id"] = room_id;
 
     setAddGroup(false);
     
@@ -588,15 +617,19 @@ export default function Staffs(props) {
 
     navigation.reset({
       index: 0,
-      routes: [{
-        name: 'Company' ,
-        params: route.params,
-        websocket:route.websocket,
-        websocket2: route.websocket2,
-        profile:route.profile,
-        previous:'Staffs'
-      }],
+      routes: [
+        {
+          name: "ChatTalk",
+          params: route.params,
+          websocket:route.websocket,
+          websocket2:route.websocket2,
+          profile:route.profile,
+          room: roomdata,
+          previous:'Staffs'
+        },
+      ],
     });
+
   }
 
   function staffsSearch(name) {
@@ -678,6 +711,7 @@ export default function Staffs(props) {
     if (staff_list.length > 0) {
       return (
         <FlatList
+          scrollIndicatorInsets={{ right: 1 }}
           showsHorizontalScrollIndicator={false}
           bounces={false}
           ref={listRef}
@@ -852,6 +886,7 @@ export default function Staffs(props) {
           />
         </View>
         {comList}
+        {addButton}
       </View>
       
       <Modal
@@ -1100,5 +1135,22 @@ const styles = StyleSheet.create({
     shadowOpacity:1,
     shadowRadius:2,
     elevation:5
+  },
+  addbutton: {
+    width:80,
+    height:80,
+    position:'absolute',
+    bottom:50,
+    right:20,
+    zIndex:1000,
+    borderRadius:100,
+    alignItems:'center',
+    justifyContent:'center',
+  },
+  addbuttontxt: {
+    textAlign:'center',
+    color:'#fff',
+    fontSize:14,
+    fontWeight:'700'
   }
 });

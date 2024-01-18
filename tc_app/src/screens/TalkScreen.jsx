@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  Platform, StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity, TextInput, Linking, LogBox, BackHandler, AppState, FlatList
+  Platform, StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity, TextInput, Linking, LogBox, BackHandler, AppState, Dimensions
 } from 'react-native';
 import { GiftedChat, Actions, Send, InputToolbar, Bubble, Time, Composer, Message  } from 'react-native-gifted-chat';
 import Feather from 'react-native-vector-icons/Feather';
@@ -12,6 +12,8 @@ import RenderHtml from 'react-native-render-html';
 import { Camera } from 'expo-camera';
 import { Audio } from 'expo-av';
 import * as Clipboard from 'expo-clipboard';
+import SideMenu from 'react-native-side-menu-updated';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import Loading from '../components/Loading';
 import { MyModal0, MyModal1, MyModal2, MyModal3, MyModal4, MyModal5, MyModal6 } from '../components/Modal';
@@ -22,6 +24,8 @@ LogBox.ignoreAllLogs()
 
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = 'https://www.total-cloud.net/';
+
+const Width = Dimensions.get("window").width;
 
 export default function TalkScreen(props) {
   
@@ -75,6 +79,8 @@ export default function TalkScreen(props) {
   const [fixed, setFixed] = useState([]);
   
   const [inputCursorPosition, setInputCursorPosition] = useState(null);
+
+  const [sidemenu, setSideMenu] = useState(false);
 
   navigation.setOptions({
     headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
@@ -178,7 +184,7 @@ export default function TalkScreen(props) {
                 }
               }
             }}
-            style={{paddingHorizontal:15,paddingVertical:10}}
+            style={{padding:10}}
           />
       ),
       
@@ -350,24 +356,25 @@ export default function TalkScreen(props) {
       
       navigation.setOptions({
         headerRight: () => (
-          <Feather
-            name='phone'
-            color='white'
-            size={30}
+          
+          <TouchableOpacity
+            style={{width:60,height:60,justifyContent:'center',alignItems:'center'}}
             onPress={() => {
-              if (!isLoading) {
-                const phoneNumber = `tel:${customer.main.tel1}`;
-                Linking.openURL(phoneNumber);
-              }
+              setSideMenu(!sidemenu);
             }}
-            style={!customer.main.tel1?{display:'none'}:{paddingHorizontal:15,paddingVertical:10}}
-          />
+          >
+            <Feather
+              name="menu"
+              color="white"
+              size={35}
+            />
+          </TouchableOpacity>
         ),
       });
       
     }
     
-  }, [customer,isLoading])
+  }, [isLoading])
   
   useEffect(() => {
     if(inquiry) {
@@ -772,9 +779,8 @@ export default function TalkScreen(props) {
     
     if(!customer.line){
       Alert.alert('LINE未連携です');
+      setModal0(false);
     } else {
-      
-      setLoading(true);
       
   	  let result = await ImagePicker.launchImageLibraryAsync({
   		  mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -784,6 +790,9 @@ export default function TalkScreen(props) {
   	  
   	  if (!result.cancelled) {
         
+        setLoading(true);
+        setModal0(false)
+
         let filename = result.uri.split('/').pop();
 
         let match = /\.(\w+)$/.exec(filename);
@@ -809,7 +818,6 @@ export default function TalkScreen(props) {
         })
         .then((response) => response.json())
         .then((json) => {
-          setLoading(false);
           setMessages(
             GiftedChat.append(messages,
               [{
@@ -823,11 +831,13 @@ export default function TalkScreen(props) {
                   name: "店舗",
                   status: "LINE送信",
                   title: "",
+                  user_read:0,
                 }
               }]
             )
           );
           setTalk(json['communication']);
+          setLoading(false);
         })
         .catch((error) => {
           console.log(error)
@@ -836,11 +846,11 @@ export default function TalkScreen(props) {
           Alert.alert(errorMsg);
         })
         
-  	  }
+  	  } else {
+        setLoading(false);
+      }
   	  
 	  }
-    setLoading(false);
-    setModal0(false)
 	};
 	
 	// ファイル選択
@@ -850,11 +860,14 @@ export default function TalkScreen(props) {
     
     if(!customer.line){
       Alert.alert('LINE未連携です');
+      setModal0(false);
     } else {
   	  
-      setLoading(true);
   	  if (result.type != "cancel") {
         
+        setLoading(true);
+        setModal0(false)
+
         let filename = result.uri.split('/').pop();
 
         let match = /\.(\w+)$/.exec(filename);
@@ -882,12 +895,13 @@ export default function TalkScreen(props) {
         .then((response) => response.json())
         .then((json) => {
           
-          setLoading(false);
+          const text = json["communication"][0]["note"];
+
           setMessages(
             GiftedChat.append(messages,
               [{
                 _id:String(Number(messages[0]._id)+1),
-                text:'',
+                text:text,
                 image:'',
                 createdAt: new Date(),
                 user:{
@@ -896,24 +910,23 @@ export default function TalkScreen(props) {
                   name: "店舗",
                   status: "LINE送信",
                   title: "",
+                  user_read:0,
                 }
               }]
             )
           );
           setTalk(json['communication']);
+          setLoading(false);
         })
         .catch((error) => {
           console.log(error)
           const errorMsg = "ファイルをアップできませんでした";
           Alert.alert(errorMsg);
+          setLoading(false);
         })
-        
-        setLoading(false);
-        setModal0(false);
 
   	  } else {
         setLoading(false);
-        setModal0(false);
       }
   	  
 	  }
@@ -1178,297 +1191,420 @@ export default function TalkScreen(props) {
 
   }
   
-  return (
-    <>
-    <Loading isLoading={isLoading} />
-    <MyModal6
-      isVisible={modal6}
-      route={route}
-      overlap={overlap}
-      navigation={navigation}
-      
-      //modal5
-      staff={route.staff}
-      cus={customer}
-      options={options}
-      tantou={tantou}
-      station_list={station}
-      address={address}
-    />
-    <MyModal5
-      isVisible={modal6?false:modal5}
-      route={route}
-      staff={route.staff}
-      cus={customer}
-      navigation={navigation}
-      options={options}
-      tantou={tantou}
-      station_list={station}
-      address={address}
-    />
-    <GiftedChat
-      messages={messages}
-      
-      // メッセージ画面を押したときのイベント
-      messageOnPress={() => setMenu(false)}
-      text={msgtext?msgtext:''}
-      onInputTextChanged={text => {setMsgtext(text)}}
-      placeholder={customer.line?"テキストを入力してください":""}
-      disableComposer={!customer.line?true:false}
-      onSend={() => onSend(['LINE送信',msgtext],'line')}
-      dateFormat={'MM/DD(ddd)'}
-      renderMessage={(props) => {
-        return (
-          <GestureRecognizer
-            onSwipeRight={()=>{backAction()}}
-            config={{
-              velocityThreshold: 0.3,
-              directionalOffsetThreshold: 80,
-            }}
-            style={{flex: 1}}
-          >
-            <Message {...props}/>
-          </GestureRecognizer>
-        );
-      }}
-      renderBubble={renderBubble}
-      onLongPress={(context, message)=>onLongPress(context, message)}
-      renderUsernameOnMessage={false}
-      renderStatus={true}
-      renderTitle={true}
-      renderSend={(props) => {
-        return (
-          <Send {...props} containerStyle={styles.sendContainer}>
-            <Feather name='send' color='gray' size={25} />
-          </Send>
-        );
-      }}
-      renderComposer={(props) => {
-        if (!customer.line) {
-          return (
+  const headerRight = useMemo(() => {
+    if (customer) {
+      return (
+        <View style={{backgroundColor:'#fff',flex:1,paddingTop:25}}>
+          {customer.main.tel1&&(
             <TouchableOpacity
-              style={styles.menu_btn}
-              activeOpacity={1}
-              onPress={() => setMenu(!menu)}
-            >
-              <Text style={styles.menu_btn_text}>メニュー ▼</Text>
-            </TouchableOpacity>
-          )
-        } else {
-          return (
-            <Composer
-              {...props}
-              textInputProps={{
-                ...props.textInputProps,
-                onSelectionChange: (event) => setInputCursorPosition(event.nativeEvent.selection)
+              style={styles.menulist}
+              onPress={() => {
+                const phoneNumber = `tel:${customer.main.tel1}`;
+                Linking.openURL(phoneNumber);
               }}
+            >
+              <MaterialCommunityIcons
+                name="phone"
+                color={global.fc_flg?"#fd2c77":"#1d449a"}
+                size={30}
+              />
+              <Text style={styles.menutext}>電話をかける</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: "CustomerEdit",
+                    params: route.params,
+                    websocket: route.websocket,
+                    websocket2: route.websocket2,
+                    profile: route.profile,
+                    customer: route.customer,
+                    customer_data: customer,
+                    cus_name:route.cus_name,
+                    staff: route.staff,
+                    previous:'TalkScreen'
+                  },
+                ],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="account-cog"
+              color={global.fc_flg?"#fd2c77":"#1d449a"}
+              size={30}
+            />
+            <Text style={styles.menutext}>お客様編集</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: "ContractRegister",
+                    params: route.params,
+                    websocket: route.websocket,
+                    websocket2: route.websocket2,
+                    profile: route.profile,
+                    hojin:false,
+                    customer: route.customer,
+                    cus_name:route.cus_name,
+                    staff: route.staff,
+                    contract: customer["contract"],
+                    previous:'TalkScreen'
+                  },
+                ],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="file-table"
+              color={global.fc_flg?"#fd2c77":"#1d449a"}
+              size={30}
+            />
+            <Text style={styles.menutext}>契約進行表</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: "ContractRegister",
+                    params: route.params,
+                    websocket: route.websocket,
+                    websocket2: route.websocket2,
+                    profile: route.profile,
+                    hojin:true,
+                    customer: route.customer,
+                    cus_name:route.cus_name,
+                    staff: route.staff,
+                    contract: customer["cjs_contract"],
+                    previous:'TalkScreen'
+                  },
+                ],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="file-account"
+              color={global.fc_flg?"#fd2c77":"#1d449a"}
+              size={30}
+            />
+            <Text style={styles.menutext}>契約進行表(法人)</Text>
+          </TouchableOpacity>
+        </View>
+      )
+    }
+  },[customer])
+
+  return (
+    <SideMenu
+      menu={headerRight}
+      isOpen={sidemenu}
+      onChange={isOpen => {
+        setSideMenu(isOpen);
+      }}
+      menuPosition={'right'}
+      openMenuOffset={Width * 0.5}
+    >
+      <Loading isLoading={isLoading} />
+      <MyModal6
+        isVisible={modal6}
+        route={route}
+        overlap={overlap}
+        navigation={navigation}
+        
+        //modal5
+        staff={route.staff}
+        cus={customer}
+        options={options}
+        tantou={tantou}
+        station_list={station}
+        address={address}
+      />
+      <MyModal5
+        isVisible={modal6?false:modal5}
+        route={route}
+        staff={route.staff}
+        cus={customer}
+        navigation={navigation}
+        options={options}
+        tantou={tantou}
+        station_list={station}
+        address={address}
+      />
+      <GiftedChat
+        messages={messages}
+        
+        // メッセージ画面を押したときのイベント
+        messageOnPress={() => setMenu(false)}
+        text={msgtext?msgtext:''}
+        onInputTextChanged={text => {setMsgtext(text)}}
+        placeholder={customer.line?"テキストを入力してください":""}
+        disableComposer={!customer.line?true:false}
+        onSend={() => onSend(['LINE送信',msgtext],'line')}
+        dateFormat={'MM/DD(ddd)'}
+        renderMessage={(props) => {
+          return (
+            <GestureRecognizer
+              onSwipeRight={()=>{backAction()}}
+              config={{
+                velocityThreshold: 0.3,
+                directionalOffsetThreshold: 80,
+              }}
+              style={{flex: 1}}
+            >
+              <Message {...props}/>
+            </GestureRecognizer>
+          );
+        }}
+        renderBubble={renderBubble}
+        onLongPress={(context, message)=>onLongPress(context, message)}
+        renderUsernameOnMessage={false}
+        renderStatus={true}
+        renderTitle={true}
+        renderSend={(props) => {
+          return (
+            <Send {...props} containerStyle={styles.sendContainer}>
+              <Feather name='send' color='gray' size={25} />
+            </Send>
+          );
+        }}
+        renderComposer={(props) => {
+          if (!customer.line) {
+            return (
+              <TouchableOpacity
+                style={styles.menu_btn}
+                activeOpacity={1}
+                onPress={() => setMenu(!menu)}
+              >
+                <Text style={styles.menu_btn_text}>メニュー ▼</Text>
+              </TouchableOpacity>
+            )
+          } else {
+            return (
+              <Composer
+                {...props}
+                textInputProps={{
+                  ...props.textInputProps,
+                  onSelectionChange: (event) => setInputCursorPosition(event.nativeEvent.selection)
+                }}
+              />
+            )
+          }
+        }}
+        user={{_id: 1,text:msgtext}}
+        textInputStyle={styles.textInput}
+        textStyle={{color: "black"}}
+        keyboardShouldPersistTaps={'never'}
+        // 入力欄クリックした時のイベント
+        textInputProps = {{
+          onFocus: () => setMenu(false),
+        }}
+        // プラスボタン
+        renderActions={(props) => {
+          return (
+            // 選択されている送信ツール（LINE、メール、行動内容）のアイコン表示
+            <Actions {...props} icon={() => <Feather name={'menu'} color={!global.fc_flg?'#191970':'#ffffff'} size={25} />} />
+          );
+        }}
+        // ↑を押したときのイベント
+        onPressActionButton={() => setMenu(!menu)}
+        // メニュー開いたらメッセージも上に表示する
+        minInputToolbarHeight={30}
+        messagesContainerStyle={[
+          menu&&{paddingBottom:190},
+          {backgroundColor:'#f1f1f1'}
+          // menu&&menu_height?
+          //   Platform.select({
+          //     ios: {height:400-menu_height},
+          //     android: {height:550-menu_height},
+          //   })
+          //   :null,
+        ]}
+        
+        onLayout={(e) => getHeight(e)}
+        maxComposerHeight={150}
+        
+        // 入力欄の下のスペース
+        bottomOffset={Platform.select({ios: 15})} // 入力欄下の謎のすき間埋める(iosのみ)
+        renderInputToolbar={(props) => (
+            <InputToolbar {...props}
+            editable={false}
+              containerStyle={[{
+                backgroundColor:!global.fc_flg?'#47a9ce':'#fe95bb'},
+                menu?{height:255}:'',
+                menu&&menu_height?{height:255+menu_height}:'',
+              ]}
             />
           )
         }
-      }}
-      user={{_id: 1,text:msgtext}}
-      textInputStyle={styles.textInput}
-      textStyle={{color: "black"}}
-      keyboardShouldPersistTaps={'never'}
-      // 入力欄クリックした時のイベント
-      textInputProps = {{
-        onFocus: () => setMenu(false),
-      }}
-      // プラスボタン
-      renderActions={(props) => {
-        return (
-          // 選択されている送信ツール（LINE、メール、行動内容）のアイコン表示
-          <Actions {...props} icon={() => <Feather name={'menu'} color={!global.fc_flg?'#191970':'#ffffff'} size={25} />} />
-        );
-      }}
-      // ↑を押したときのイベント
-      onPressActionButton={() => setMenu(!menu)}
-      // メニュー開いたらメッセージも上に表示する
-      minInputToolbarHeight={30}
-      messagesContainerStyle={[
-        menu&&{paddingBottom:190}
-        // menu&&menu_height?
-        //   Platform.select({
-        //     ios: {height:400-menu_height},
-        //     android: {height:550-menu_height},
-        //   })
-        //   :null,
-      ]}
-      
-      onLayout={(e) => getHeight(e)}
-      maxComposerHeight={150}
-      
-      // 入力欄の下のスペース
-      bottomOffset={Platform.select({ios: 15})} // 入力欄下の謎のすき間埋める(iosのみ)
-      renderInputToolbar={(props) => (
-          <InputToolbar {...props}
-          editable={false}
-            containerStyle={[{
-              backgroundColor:!global.fc_flg?'#47a9ce':'#fe95bb'},
-              menu?{height:255}:'',
-              menu&&menu_height?{height:255+menu_height}:'',
+        // ↑の中身
+        renderAccessory={(props) =>
+          <View
+            style={[
+              styles.border,
+              !menu?{display:'none'}:'',
             ]}
-          />
-        )
-      }
-      // ↑の中身
-      renderAccessory={(props) =>
-        <View
-          style={[
-            styles.border,
-            !menu?{display:'none'}:'',
-          ]}
-        >
-          <View style={[styles.menu,{marginTop:15}]}>
-            <TouchableOpacity style={!customer.line?{display:"none"}:styles.menuBox} onPress={()=>menuPress(1)} >
-              <Feather name='message-circle' color='#191970' size={30} />
-              <Text style={styles.iconText}>LINE</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuBox} onPress={()=>menuPress(2)} >
-              <Feather name='mail' color='#191970' size={28} />
-              <Text style={styles.iconText}>メール</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuBox} onPress={()=>menuPress(3)} >
-              <Feather name='edit' color='#191970' size={25} />
-              <Text style={styles.iconText}>行動内容</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={customer.line&&video_option?styles.menuBox:{display:"none"}} onPress={() =>online_call(route.customer)}>
-              <Feather name='video' color='#191970' size={28} />
-              <Text style={styles.iconText}>オンライン{"\n"}通話</Text>
-            </TouchableOpacity>
-            <MyModal0
-              isVisible={modal0}
-              onSwipeComplete={() => { setModal0(false) }}
-              onPress={()=>{ setModal0(false) }}
-              send_image={()=>pickImage()}
-              pickDocument={() => pickDocument()}
-            />
-            <MyModal1
-              isVisible={modal1}
-              setModal1={setModal1}
-              reservation={reservation}
-              shop_mail={[
-                staff.system_mail,
-                staff.yahoomail,
-                staff.gmail,
-                staff.hotmail,
-                staff.outlook,
-                staff.softbank,
-                staff.icloud,
-                staff.original_mail
-              ]}
-              cus_mail={customer?[
-                customer.main.mail1,
-                customer.main.mail2,
-                customer.main.mail3
-              ]:[]}
-              setMail={setMail}
-              subject={subject}
-              note_ret={note_ret}
-              send_mail={send_mail}
-              route={route}
-              onSend={onSend}
-              property={property}
-              station_list={station}
-              address={address}
-              c_d={conditions_date}
-              fixed={fixed}
-              hensu={customer.main?[
-                // 定型文で使うもの
-                customer.main.name,
-                staff.corporations_name,
-                staff.name,
-                customer.reverberation.staff_name,
-                route.params.name_1+' '+route.params.name_2,
-                customer.reverberation.media,
-                inquiry_text,
-                staff.tel,
-                staff.fax,
-                inquiry_name,
-                customer.reverberation.inquiry_day,
-              ]:[]}
-              mail_set={
-                receive_mail?
-                {
-                  brower_mail:receive_mail,
-                  mail_select:staff.mail_select,
-                }:
-                customer.main?
-                {
-                  brower_mail:customer.main.brower_mail,
-                  mail_select:staff.mail_select,
-                }
-                :
-                ''}
-              options={video_option}
-              options2={options}
-            />
-            <MyModal2
-              isVisible={modal2}
-              setModal2={setModal2}
-              onClose={()=>{
-                if(add[1]){
-                  setModal2(false);
-                } else {
-                  Alert.alert('確定を押してください');
-                }
-              }}
-              setAdd={setAdd}
-              onSend={onSend}
-            />
+          >
+            <View style={[styles.menu,{marginTop:15}]}>
+              <TouchableOpacity style={!customer.line?{display:"none"}:styles.menuBox} onPress={()=>menuPress(1)} >
+                <Feather name='message-circle' color='#191970' size={30} />
+                <Text style={styles.iconText}>LINE</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuBox} onPress={()=>menuPress(2)} >
+                <Feather name='mail' color='#191970' size={28} />
+                <Text style={styles.iconText}>メール</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuBox} onPress={()=>menuPress(3)} >
+                <Feather name='edit' color='#191970' size={25} />
+                <Text style={styles.iconText}>行動内容</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={customer.line&&video_option?styles.menuBox:{display:"none"}} onPress={() =>online_call(route.customer)}>
+                <Feather name='video' color='#191970' size={28} />
+                <Text style={styles.iconText}>オンライン{"\n"}通話</Text>
+              </TouchableOpacity>
+              <MyModal0
+                isVisible={modal0}
+                onSwipeComplete={() => { setModal0(false) }}
+                onPress={()=>{ setModal0(false) }}
+                send_image={()=>pickImage()}
+                pickDocument={() => pickDocument()}
+              />
+              <MyModal1
+                isVisible={modal1}
+                setModal1={setModal1}
+                reservation={reservation}
+                shop_mail={[
+                  staff.system_mail,
+                  staff.yahoomail,
+                  staff.gmail,
+                  staff.hotmail,
+                  staff.outlook,
+                  staff.softbank,
+                  staff.icloud,
+                  staff.original_mail
+                ]}
+                cus_mail={customer?[
+                  customer.main.mail1,
+                  customer.main.mail2,
+                  customer.main.mail3
+                ]:[]}
+                setMail={setMail}
+                subject={subject}
+                note_ret={note_ret}
+                send_mail={send_mail}
+                route={route}
+                onSend={onSend}
+                property={property}
+                station_list={station}
+                address={address}
+                c_d={conditions_date}
+                fixed={fixed}
+                hensu={customer.main?[
+                  // 定型文で使うもの
+                  customer.main.name,
+                  staff.corporations_name,
+                  staff.name,
+                  customer.reverberation.staff_name,
+                  route.params.name_1+' '+route.params.name_2,
+                  customer.reverberation.media,
+                  inquiry_text,
+                  staff.tel,
+                  staff.fax,
+                  inquiry_name,
+                  customer.reverberation.inquiry_day,
+                ]:[]}
+                mail_set={
+                  receive_mail?
+                  {
+                    brower_mail:receive_mail,
+                    mail_select:staff.mail_select,
+                  }:
+                  customer.main?
+                  {
+                    brower_mail:customer.main.brower_mail,
+                    mail_select:staff.mail_select,
+                  }
+                  :
+                  ''}
+                options={video_option}
+                options2={options}
+              />
+              <MyModal2
+                isVisible={modal2}
+                setModal2={setModal2}
+                onClose={()=>{
+                  if(add[1]){
+                    setModal2(false);
+                  } else {
+                    Alert.alert('確定を押してください');
+                  }
+                }}
+                setAdd={setAdd}
+                onSend={onSend}
+              />
+            </View>
+            <View style={!customer.line?{display:"none"}:styles.menu}>
+              <TouchableOpacity style={styles.menuBox} onPress={()=>menuPress(4)}>
+                <Feather name='home' color='#191970' size={28} />
+                <Text style={styles.iconText}>オススメ{"\n"}物件</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuBox}onPress={()=>menuPress(5)}>
+                <Feather name='file-text' color='#191970' size={28} />
+                <Text style={styles.iconText}>定型文</Text>
+              </TouchableOpacity>
+              
+              <MyModal3 {...props}
+                isVisible={modal3}
+                onSwipeComplete={() => { setModal3(false) }}
+                onClose={()=>{ setModal3(false) }}
+                route={route}
+                property={property}
+                station_list={station}
+                address={address}
+                c_d={conditions_date}
+                msgtext={props.user.text}
+                setMsgtext={setMsgtext}
+                inputCursorPosition={inputCursorPosition}
+                mail_format={'0'}
+              />
+              <MyModal4
+                isVisible={modal4}
+                onSwipeComplete={() => { setModal4(false) }}
+                onPress={()=>{ setModal4(false) }}
+                fixed={filteredFixed}
+                msgtext={msgtext}
+                subject={subject}
+                setMsgtext={setMsgtext}
+                setSubject={setSubject}
+                hensu={customer.main?[
+                  customer.main.name,
+                  staff.corporations_name,
+                  staff.name,
+                  customer.reverberation.staff_name,
+                  route.params.name_1+' '+route.params.name_2,
+                  customer.reverberation.media,
+                  inquiry_text,
+                  staff.tel,
+                  staff.fax,
+                  inquiry_name,
+                  customer.reverberation.inquiry_day,
+                ]:[]}
+              />
+            </View>
           </View>
-          <View style={!customer.line?{display:"none"}:styles.menu}>
-            <TouchableOpacity style={styles.menuBox} onPress={()=>menuPress(4)}>
-              <Feather name='home' color='#191970' size={28} />
-              <Text style={styles.iconText}>オススメ{"\n"}物件</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuBox}onPress={()=>menuPress(5)}>
-              <Feather name='file-text' color='#191970' size={28} />
-              <Text style={styles.iconText}>定型文</Text>
-            </TouchableOpacity>
-            
-            <MyModal3 {...props}
-              isVisible={modal3}
-              onSwipeComplete={() => { setModal3(false) }}
-              onClose={()=>{ setModal3(false) }}
-              route={route}
-              property={property}
-              station_list={station}
-              address={address}
-              c_d={conditions_date}
-              msgtext={props.user.text}
-              setMsgtext={setMsgtext}
-              inputCursorPosition={inputCursorPosition}
-              mail_format={'0'}
-            />
-            <MyModal4
-              isVisible={modal4}
-              onSwipeComplete={() => { setModal4(false) }}
-              onPress={()=>{ setModal4(false) }}
-              fixed={filteredFixed}
-              msgtext={msgtext}
-              subject={subject}
-              setMsgtext={setMsgtext}
-              setSubject={setSubject}
-              hensu={customer.main?[
-                customer.main.name,
-                staff.corporations_name,
-                staff.name,
-                customer.reverberation.staff_name,
-                route.params.name_1+' '+route.params.name_2,
-                customer.reverberation.media,
-                inquiry_text,
-                staff.tel,
-                staff.fax,
-                inquiry_name,
-                customer.reverberation.inquiry_day,
-              ]:[]}
-            />
-          </View>
-        </View>
-      }
-    />
-    </>
+        }
+      />
+    </SideMenu>
   )
 
 }
@@ -1535,5 +1671,16 @@ const styles = StyleSheet.create({
     color:'#191970',
     marginTop:5,
     textAlign:'center',
+  },
+  menulist: {
+    flexDirection:'row',
+    marginLeft:10,
+    marginVertical:10,
+    alignItems:'center',
+    height:40,
+  },
+  menutext: {
+    fontSize:16,
+    marginLeft:10
   },
 });
