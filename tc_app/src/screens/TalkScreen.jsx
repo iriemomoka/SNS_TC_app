@@ -1333,7 +1333,6 @@ export default function TalkScreen(props) {
       <MyModal5
         isVisible={modal6?false:modal5}
         route={route}
-        staff={route.staff}
         cus={customer}
         navigation={navigation}
         options={options}

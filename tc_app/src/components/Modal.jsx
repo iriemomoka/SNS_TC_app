@@ -26,7 +26,7 @@ import ColorPicker from 'react-native-color-picker-ios-android'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // DB接続
-import { db } from './Databace';
+import { db,db_select } from './Databace';
 
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = 'https://www.total-cloud.net/';
@@ -2767,7 +2767,7 @@ export function MyModal4(props){
 
 export function MyModal5(props){
   
-  const { isVisible,route,staff,cus,navigation,options,tantou,property,station_list,address,c_d } = props;
+  const { isVisible,route,cus,navigation,options,tantou,property,station_list,address,c_d } = props;
   
   const [pattern,setPattern] = useState('');
   const [text,setText] = useState('');
@@ -2813,14 +2813,20 @@ export function MyModal5(props){
   
   useEffect(() => {
     
-    setStaffs(staff);
-    setClose(isVisible);
-    
-    staff.map((s) => {
-      if (route.params.account == s.account) {
-        setStaff_Value(s.account);
+    var sql = `select * from staff_list where (account != 'all');`;
+    db_select(sql).then(function(staff){
+      if (staff != false) {
+        setStaffs(staff);
+      
+        staff.map((s) => {
+          if (route.params.account == s.account) {
+            setStaff_Value(s.account);
+          }
+        })
       }
     })
+
+    setClose(isVisible);
     
     if(options && tantou) {
       if (options.includes('11')) {
@@ -2890,7 +2896,7 @@ export function MyModal5(props){
       
     }
     
-  }, [staff,isVisible,cus,options])
+  }, [isVisible,cus,options])
   
   useEffect(() => {
     
@@ -3213,8 +3219,8 @@ export function MyModal5(props){
             name: 'CommunicationHistory' ,
             params: route.params,
             websocket:route.websocket,
-            station:route.station,
-            address:route.address,
+            websocket2:route.websocket2,
+            profile: route.profile,
           }],
         });
       })
@@ -3226,8 +3232,8 @@ export function MyModal5(props){
         name: 'CommunicationHistory' ,
         params: route.params,
         websocket:route.websocket,
-        station:route.station,
-        address:route.address,
+        websocket2:route.websocket2,
+        profile: route.profile,
       }],
     });
   }
@@ -3370,8 +3376,8 @@ export function MyModal5(props){
                 name: 'CommunicationHistory' ,
                 params: route.params,
                 websocket:route.websocket,
-                station:route.station,
-                address:route.address,
+                websocket2:route.websocket2,
+                profile: route.profile,
               }],
             });
           }}
@@ -4714,8 +4720,8 @@ export function MyModal6(props){
             name: 'CommunicationHistory' ,
             params: route.params,
             websocket:route.websocket,
-            station:route.station,
-            address:route.address,
+            websocket2:route.websocket2,
+            profile: route.profile,
           }],
         });
       }
@@ -4744,7 +4750,6 @@ export function MyModal6(props){
       <MyModal5
         isVisible={modal5}
         route={route}
-        staff={staff}
         cus={cus}
         navigation={navigation}
         options={options}
@@ -4762,8 +4767,8 @@ export function MyModal6(props){
                 name: 'CommunicationHistory' ,
                 params: route.params,
                 websocket:route.websocket,
-                station:route.station,
-                address:route.address,
+                websocket2:route.websocket2,
+                profile: route.profile,
               }],
             });
           }}

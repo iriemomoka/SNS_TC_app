@@ -57,7 +57,7 @@ export default function LogInScreen(props) {
   }
 
   const { navigation,route } = props;
-  const cus_notifications = route.params;
+  const [cus_notifications, setCus_notifications] = useState(null);
   
   const [isLoading, setLoading] = useState(false);
   const [id, setID] = useState('');
@@ -100,14 +100,7 @@ export default function LogInScreen(props) {
       if (response.notification.request.content.data.customer && !global.sp_id) {
     
         const cus_data = response.notification.request.content.data.customer;
-        
-        navigation.navigate(
-          'LogIn',
-          {
-            customer_id: cus_data.customer_id,
-            name: cus_data.name,
-          }
-        );
+        setCus_notifications(cus_data);
         
       }
     })
@@ -394,7 +387,7 @@ export default function LogInScreen(props) {
       }
     }
       
-  }, [station,address,rocalDB]);
+  }, [station,address,rocalDB,cus_notifications]);
   
   async function Insert_staff_db(account,pass,data){
 

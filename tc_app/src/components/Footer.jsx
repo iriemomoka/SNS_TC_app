@@ -40,7 +40,7 @@ export default function Footer(props){
           activeOpacity={1}
         > 
         {context.chatbell>0&&(
-          <View style={styles.bell}>
+          <View style={[styles.bell,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]}>
             <Text style={styles.belltext} >{context.chatbell}</Text>
           </View>
         )}
@@ -69,7 +69,6 @@ export default function Footer(props){
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   hooter: {
@@ -104,7 +103,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     color: "white",
     fontWeight: "bold",
-    backgroundColor: "red",
     borderRadius: 10,
     paddingLeft: 5,
     paddingRight: 5,

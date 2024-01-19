@@ -118,7 +118,7 @@ export default function Schedule(props) {
       headerTitle:() => (<Text style={styles.header_name}>スケジュール</Text>),
       headerRight: () => (
         <View style={{marginRight:15}}>
-          <View style={bell_count?styles.bell:{display:'none'}}>
+          <View style={bell_count?[styles.bell,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]:{display:'none'}}>
             <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
           </View>
           <TouchableOpacity
@@ -146,8 +146,92 @@ export default function Schedule(props) {
 
     Display(true);
 
+    // 通知をタップしたらチャット一覧 → トーク画面 (ログイン済)
+    const notificationInteractionSubscription =
+      Notifications.addNotificationResponseReceivedListener(async(response) => {
+        if (
+          response.notification.request.content.data.customer &&
+          global.sp_id
+        ) {
+          const cus_data = response.notification.request.content.data.customer;
+
+          const sl = await GetDB('staff_list');
+
+          if (sl != false) {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "TalkScreen",
+                  params: route.params,
+                  customer: cus_data.customer_id,
+                  websocket: route.websocket,
+                  websocket2: route.websocket2,
+                  profile: route.profile,
+                  staff: sl,
+                  cus_name: cus_data.name,
+                  previous:'Schedule'
+                },
+              ],
+            });
+          }
+        }
+        if (
+          response.notification.request.content.data.room_id &&
+          global.sp_id
+        ) {
+          const room_id = response.notification.request.content.data.room_id;
+
+          var sql = `select * from chat_room where del_flg != '1' and room_id = '${room_id}';`;
+          var rooms_ = await db_select(sql);
+          
+          if (rooms_ != false) {
+            var room = rooms_[0];
+    
+            if (room["room_type"] == "0") {
+    
+              var user_id = room["user_id"].split(',');
+    
+              var account = user_id.filter(function(id) {
+                return id !== route.params.account;
+              });
+    
+              var sql = `select * from staff_all where account = '${account[0]}';`;
+              var staff = await db_select(sql);
+    
+              if (staff != false) {
+                room["account"]      = account[0];
+                room["name_1"]       = staff[0]["name_1"];
+                room["name_2"]       = staff[0]["name_2"];
+                room["shop_id"]      = staff[0]["shop_id"];
+                room["shop_name"]    = staff[0]["shop_name"];
+                room["staff_photo1"] = staff[0]["staff_photo1"];
+              }
+    
+            }
+
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "ChatTalk",
+                  params: route.params,
+                  websocket: route.websocket,
+                  websocket2: route.websocket2,
+                  profile: route.profile,
+                  room: room,
+                  previous:'Schedule'
+                },
+              ],
+            });
+
+          }
+        }
+      });
+
     return () => {
       BackHandler.addEventListener("hardwareBackPress", true).remove();
+      notificationInteractionSubscription.remove();
     };
 
   }, []);
@@ -697,7 +781,7 @@ export default function Schedule(props) {
             size={35}
           />
           <Text style={styles.menutext}>通知</Text>
-          <View style={bell_count?styles.bell2:{display:'none'}}>
+          <View style={bell_count?[styles.bell2,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]:{display:'none'}}>
             <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
           </View>
         </TouchableOpacity>
@@ -1027,7 +1111,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     color: "white",
     fontWeight: "bold",
-    backgroundColor: "red",
     borderRadius: 10,
     paddingLeft: 5,
     paddingRight: 5,
@@ -1042,7 +1125,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     color: "white",
     fontWeight: "bold",
-    backgroundColor: "red",
     borderRadius: 10,
     paddingLeft: 5,
     paddingRight: 5,

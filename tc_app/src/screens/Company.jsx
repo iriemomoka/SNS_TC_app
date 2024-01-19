@@ -120,7 +120,7 @@ export default function Company(props) {
             />
           </TouchableOpacity>
           <>
-          <View style={bell_count?styles.bell:{display:'none'}}>
+          <View style={bell_count?[styles.bell,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]:{display:'none'}}>
             <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
           </View>
           <TouchableOpacity
@@ -158,22 +158,26 @@ export default function Company(props) {
         ) {
           const cus_data = response.notification.request.content.data.customer;
 
-          navigation.reset({
-            index: 0,
-            routes: [
-              {
-                name: "TalkScreen",
-                params: route.params,
-                customer: cus_data.customer_id,
-                websocket: route.websocket,
-                websocket2: route.websocket2,
-                profile: route.profile,
-                staff: staffs,
-                cus_name: cus_data.name,
-                previous:'Company'
-              },
-            ],
-          });
+          const sl = await GetDB('staff_list');
+
+          if (sl != false) {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "TalkScreen",
+                  params: route.params,
+                  customer: cus_data.customer_id,
+                  websocket: route.websocket,
+                  websocket2: route.websocket2,
+                  profile: route.profile,
+                  staff: sl,
+                  cus_name: cus_data.name,
+                  previous:'Company'
+                },
+              ],
+            });
+          }
         }
         if (
           response.notification.request.content.data.room_id &&
@@ -873,7 +877,7 @@ export default function Company(props) {
             size={35}
           />
           <Text style={styles.menutext}>通知</Text>
-          <View style={bell_count?styles.bell2:{display:'none'}}>
+          <View style={bell_count?[styles.bell2,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]:{display:'none'}}>
             <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
           </View>
         </TouchableOpacity>
@@ -1132,7 +1136,7 @@ export default function Company(props) {
                 />
               </TouchableOpacity>
               <>
-              <View style={bell_count?styles.bell:{display:'none'}}>
+              <View style={bell_count?[styles.bell,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]:{display:'none'}}>
                 <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
               </View>
               <TouchableOpacity
@@ -1421,7 +1425,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     color: "white",
     fontWeight: "bold",
-    backgroundColor: "red",
     borderRadius: 10,
     paddingLeft: 5,
     paddingRight: 5,
@@ -1436,7 +1439,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     color: "white",
     fontWeight: "bold",
-    backgroundColor: "red",
     borderRadius: 10,
     paddingLeft: 5,
     paddingRight: 5,
