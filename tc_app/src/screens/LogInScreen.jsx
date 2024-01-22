@@ -734,7 +734,7 @@ export default function LogInScreen(props) {
       }
       
       // 【重要】端末別のトークン取得
-      token = (await Notifications.getExpoPushTokenAsync()).data;
+      token = (await Notifications.getExpoPushTokenAsync({projectId:"17f9fbe4-117d-4572-aaf6-39347ef9f85d"})).data;
   
       // グローバル変数にトークンを格納
       global.sp_token = token;
