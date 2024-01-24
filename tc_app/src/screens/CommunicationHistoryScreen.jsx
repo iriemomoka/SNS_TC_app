@@ -166,6 +166,10 @@ export default function CommunicationHistoryScreen(props) {
         context.setChatbell(cnt);
       })
 
+    } else if (route.reload == 1) {
+
+      onRefresh(true);
+
     } else {
 
       Display(false);
@@ -824,8 +828,10 @@ export default function CommunicationHistoryScreen(props) {
     if (customer.length > 0) {
       for (var c in customer) {
         const customer_id = customer[c];
-        var delcus = `DELETE FROM customer_mst WHERE customer_id = (?);`;
-        await db_write(delcus,[customer_id]);
+        var delcus1 = `DELETE FROM customer_mst WHERE customer_id = (?);`;
+        await db_write(delcus1,[customer_id]);
+        var delcus2 = `DELETE FROM communication_mst WHERE customer_id = (?);`;
+        await db_write(delcus2,[customer_id]);
       }
     }
   }
@@ -1002,42 +1008,49 @@ export default function CommunicationHistoryScreen(props) {
     
     if(global.sp_token && global.sp_id){
       
-      // サーバーに情報送信して、DBから削除
-      await fetch(domain+'app/app_system/set_staff_app_token.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: global.sp_id,
-          token: global.sp_token,
-          del_flg:1,
-          fc_flg: global.fc_flg
-        }),
+      const tokenDelete = async () => new Promise((resolve) => {
+        // サーバーに情報送信して、DBから削除
+        fetch(domain+'app/app_system/set_staff_app_token.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: global.sp_id,
+            token: global.sp_token,
+            del_flg:1,
+            fc_flg: global.fc_flg
+          }),
+        })
+        .then((response) => response.json())
+        .then((json) => {resolve(true)})
+        .catch((error) => {resolve(true)})
       })
-      
+
+      await tokenDelete();
+
     }
     
     if(global.fc_flg){
       
-      let formData = new FormData();
-      formData.append('fc_logout',1);
-      
-      await fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-      {
-        method: 'POST',
-        header: {
-          'content-type': 'multipart/form-data',
-        },
-        body: formData
+      const fc_logout = async () => new Promise((resolve) => {
+        let formData = new FormData();
+        formData.append('fc_logout',1);
+        
+        fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+        {
+          method: 'POST',
+          header: {
+            'content-type': 'multipart/form-data',
+          },
+          body: formData
+        })
+        .then((response) => response.json())
+        .then((json) => {resolve(true)})
+        .catch((error) => {resolve(true)})
       })
-      .then((response) => response.json())
-      .then((json) => {
-        console.log(json);
-      })
-      .catch((error) => {
-        console.log(error)
-      })
+
+      await fc_logout();
       
     }
     
@@ -1212,9 +1225,9 @@ export default function CommunicationHistoryScreen(props) {
                       </Text>
                       <Text style={styles.name} numberOfLines={1}>
                         {item.name
-                          ? item.name.length < 10
+                          ? item.name.length < 15
                             ? item.name
-                            : item.name.substring(0, 10) + "..."
+                            : item.name.substring(0, 15) + "..."
                           : ""}
                       </Text>
                     </View>

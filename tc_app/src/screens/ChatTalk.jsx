@@ -466,7 +466,7 @@ export default function ChatTalk(props) {
   
   useEffect(() => {
     
-    if (talk.length > 0) {
+    if (talk != null && talk.length > 0) {
       const msg = talk.map(com => {
         
         if (com.del_flg){

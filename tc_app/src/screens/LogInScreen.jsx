@@ -39,7 +39,7 @@ global.fc_flg = '';   // fcフラグ
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
@@ -488,17 +488,20 @@ export default function LogInScreen(props) {
   // ID・PASS記入時のログイン処理
   function onSubmit(){
     
-    setLoading(false);
+    setLoading(true);
     
     if (!id && !password) {
       Alert.alert('IDとパスワードを入力してください');
+      setLoading(false);
       return
     }
     if (!id) {
       Alert.alert('IDを入力してください');
+      setLoading(false);
       return
     } else if (!password) {
       Alert.alert('パスワードを入力してください');
+      setLoading(false);
       return
     }
     
@@ -523,7 +526,7 @@ export default function LogInScreen(props) {
       global.sp_id = id;
 
       // トークン取得＆登録
-      registerForPushNotificationsAsync();
+      await registerForPushNotificationsAsync();
       
       // websocket通信
       const WS_URL  = 'ws://54.168.20.149:8080/ws/'+json.staff.shop_id+'/'
@@ -579,6 +582,7 @@ export default function LogInScreen(props) {
       const staff_list = json.staff_list;
       await Insert_staff_all_db(staff_list);
 
+      setLoading(false);
       navigation.reset({
         index: 0,
         routes: [{
@@ -597,6 +601,7 @@ export default function LogInScreen(props) {
       const errorMsg = "IDまたはパスワードが違います";
       Alert.alert(errorMsg);
       console.log(error)
+      setLoading(false);
     })
   };
 

@@ -8,10 +8,9 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Notifications from 'expo-notifications';
 import GestureRecognizer from 'react-native-swipe-gestures';
-import RenderHtml from 'react-native-render-html';
+import * as Haptics from 'expo-haptics';
 import { Camera } from 'expo-camera';
 import { Audio } from 'expo-av';
-import * as Clipboard from 'expo-clipboard';
 import SideMenu from 'react-native-side-menu-updated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -82,6 +81,8 @@ export default function TalkScreen(props) {
 
   const [sidemenu, setSideMenu] = useState(false);
 
+  const [reload, setReload] = useState("");
+
   navigation.setOptions({
     headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
   });
@@ -105,7 +106,8 @@ export default function TalkScreen(props) {
                     websocket:route.websocket,
                     websocket2: route.websocket2,
                     profile:route.profile,
-                    previous:'TalkScreen'
+                    previous:'TalkScreen',
+                    reload:reload
                   }],
                 });
               }
@@ -124,7 +126,8 @@ export default function TalkScreen(props) {
             websocket:route.websocket,
             websocket2: route.websocket2,
             profile:route.profile,
-            previous:'TalkScreen'
+            previous:'TalkScreen',
+            reload:reload
           }],
         });
       }
@@ -159,7 +162,8 @@ export default function TalkScreen(props) {
                               websocket:route.websocket,
                               websocket2: route.websocket2,
                               profile:route.profile,
-                              previous:'TalkScreen'
+                              previous:'TalkScreen',
+                              reload:reload
                             }],
                           });
                         }
@@ -178,7 +182,8 @@ export default function TalkScreen(props) {
                       websocket:route.websocket,
                       websocket2: route.websocket2,
                       profile:route.profile,
-                      previous:'TalkScreen'
+                      previous:'TalkScreen',
+                      reload:reload
                     }],
                   });
                 }
@@ -197,7 +202,7 @@ export default function TalkScreen(props) {
 
     return () => backHandler.remove();
     
-  }, [msgtext,isLoading])
+  }, [msgtext,isLoading,reload])
   
   useEffect(() => {
     
@@ -216,6 +221,25 @@ export default function TalkScreen(props) {
 
     const startTime = Date.now(); // 開始時間
 
+    if (!route.customer) {
+
+      Alert.alert('','このお客様データは削除されています');
+      
+      navigation.reset({
+        index: 0,
+        routes: [{
+          name: 'CommunicationHistory' ,
+          params: route.params,
+          websocket:route.websocket,
+          websocket2: route.websocket2,
+          profile:route.profile,
+          previous:'TalkScreen'
+        }],
+      });
+
+      return;
+    }
+    
     const json = await getCOM();
 
     // ログアウトしてたら中断
@@ -224,6 +248,26 @@ export default function TalkScreen(props) {
     if (json != false) {
       
       setTalk(json['communication']);
+
+      if (json['customer_data']['main'] == null) {
+
+        Alert.alert('','このお客様データは削除されています');
+        
+        navigation.reset({
+          index: 0,
+          routes: [{
+            name: 'CommunicationHistory' ,
+            params: route.params,
+            websocket:route.websocket,
+            websocket2: route.websocket2,
+            profile:route.profile,
+            previous:'TalkScreen'
+          }],
+        });
+
+        return;
+      }
+
       setCustomer(json['customer_data']);
       setStaff(json['staff']);
       setReservation(json['customer_reservation']);
@@ -390,7 +434,7 @@ export default function TalkScreen(props) {
   
   useEffect(() => {
     
-    if (talk.length > 0) {
+    if (talk != null && talk.length > 0) {
       const msg = talk.map(com => {
         
         if (com.del_flg){
@@ -610,6 +654,7 @@ export default function TalkScreen(props) {
         setLoading(false);
         setMessages(GiftedChat.append(messages, newMessage));
         setTalk(json['communication']);
+        setReload(1);
       })
       .catch((error) => {
         setLoading(false);
@@ -649,6 +694,7 @@ export default function TalkScreen(props) {
         Alert.alert('登録しました');
         setMessages(GiftedChat.append(messages, newMessage));
         setTalk(json['communication']);
+        setReload(1);
       })
       .catch((error) => {
         setLoading(false);
@@ -717,6 +763,7 @@ export default function TalkScreen(props) {
         
         setReservation(json['customer_reservation']);
         setTalk(json['communication']);
+        setReload(1);
       })
       .catch((error) => {
         setLoading(false);
@@ -838,6 +885,7 @@ export default function TalkScreen(props) {
           );
           setTalk(json['communication']);
           setLoading(false);
+          setReload(1);
         })
         .catch((error) => {
           console.log(error)
@@ -917,6 +965,7 @@ export default function TalkScreen(props) {
           );
           setTalk(json['communication']);
           setLoading(false);
+          setReload(1);
         })
         .catch((error) => {
           console.log(error)
@@ -1126,10 +1175,12 @@ export default function TalkScreen(props) {
     var options = [];
 
     if (message.user.status == 'メール受信') {
-      options = ['返信','コピー','キャンセル'];
+      options = ['返信','キャンセル'];
     } else {
-      options = ['コピー','キャンセル'];
+      return null;
     }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
     const cancelButtonIndex = options.length - 1;
 
@@ -1181,9 +1232,6 @@ export default function TalkScreen(props) {
           })
 
           break;
-        case 'コピー':
-          Clipboard.setStringAsync(message.text);
-          break;
         default:
           break;
       }
@@ -1192,7 +1240,7 @@ export default function TalkScreen(props) {
   }
   
   const headerRight = useMemo(() => {
-    if (customer) {
+    if (customer.main) {
       return (
         <View style={{backgroundColor:'#fff',flex:1,paddingTop:25}}>
           {customer.main.tel1&&(
@@ -1366,7 +1414,8 @@ export default function TalkScreen(props) {
           );
         }}
         renderBubble={renderBubble}
-        onLongPress={(context, message)=>onLongPress(context, message)}
+        onPress={()=>{}}
+        onLongPress={onLongPress}
         renderUsernameOnMessage={false}
         renderStatus={true}
         renderTitle={true}
@@ -1492,7 +1541,7 @@ export default function TalkScreen(props) {
                   staff.icloud,
                   staff.original_mail
                 ]}
-                cus_mail={customer?[
+                cus_mail={customer.main?[
                   customer.main.mail1,
                   customer.main.mail2,
                   customer.main.mail3

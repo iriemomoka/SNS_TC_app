@@ -2981,9 +2981,17 @@ export function MyModal5(props){
             {name}
           </Text>
           <Text style={styles.cus_label}>【TEL】</Text>
-          <Text style={styles.cus_contents}>
-            {tel}
-          </Text>
+          <TouchableOpacity
+            onPress={() => {
+              const phoneNumber = `tel:${tel}`;
+              Linking.openURL(phoneNumber);
+            }}
+            disabled={tel==""?true:false}
+          >
+            <Text style={[styles.cus_contents,{color:"blue",textDecorationLine: 'underline'}]}>
+              {tel}
+            </Text>
+          </TouchableOpacity>
           <Text style={suumo?[styles.cus_contents,{color:'red'}]:{display:'none'}}>
             ※こちらは有効期限付きの番号です。{"\n"}お客様の電話番号のご確認をお願いします
           </Text>
@@ -3104,9 +3112,17 @@ export function MyModal5(props){
             {name}
           </Text>
           <Text style={styles.cus_label}>【TEL】</Text>
-          <Text style={styles.cus_contents}>
-            {tel}
-          </Text>
+          <TouchableOpacity
+            onPress={() => {
+              const phoneNumber = `tel:${tel}`;
+              Linking.openURL(phoneNumber);
+            }}
+            disabled={tel==""?true:false}
+          >
+            <Text style={[styles.cus_contents,{color:"blue",textDecorationLine: 'underline'}]}>
+              {tel}
+            </Text>
+          </TouchableOpacity>
           <Text style={suumo?[styles.cus_contents,{color:'red'}]:{display:'none'}}>
             ※こちらは有効期限付きの番号です。{"\n"}お客様の電話番号のご確認をお願いします
           </Text>
@@ -3221,6 +3237,7 @@ export function MyModal5(props){
             websocket:route.websocket,
             websocket2:route.websocket2,
             profile: route.profile,
+            reload: 1
           }],
         });
       })
@@ -3234,6 +3251,7 @@ export function MyModal5(props){
         websocket:route.websocket,
         websocket2:route.websocket2,
         profile: route.profile,
+        reload: 1
       }],
     });
   }
@@ -4722,6 +4740,7 @@ export function MyModal6(props){
             websocket:route.websocket,
             websocket2:route.websocket2,
             profile: route.profile,
+            reload: 1
           }],
         });
       }

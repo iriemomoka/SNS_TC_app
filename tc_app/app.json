@@ -84,6 +84,13 @@
             "useFrameworks": "static"
           }
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notificationicon.png",
+          "sounds": ["./assets/notification-sound.wav"]
+        }
       ]
     ],
     "owner": "tc_ooishi"

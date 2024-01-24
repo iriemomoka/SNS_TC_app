@@ -186,7 +186,25 @@ export default function BellScreen(props) {
   
   }, [])
 
+  // お客様IDの重複防止用5桁ランダム数字生成
+  function Random5() {
+    const randomInteger = Math.floor(Math.random() * 1000000);
+    const sixDigitNumber = String(randomInteger).padStart(5, '0');  
+    return sixDigitNumber;
+  }
+
+  // 追加したランダム数字を削除する
+  function removeCusID(ID) {
+
+    const indexOfUnderscore = ID.indexOf('_');
   
+    if (indexOfUnderscore !== -1) {
+      return ID.substring(0, indexOfUnderscore);
+    } else {
+      return ID;
+    }
+  }
+
   useEffect(() => {
     
     const msg = talk.map(com => {
@@ -195,7 +213,7 @@ export default function BellScreen(props) {
         return
       }
       const data = {
-        _id:  com.customer_id,
+        _id:  com.customer_id+"_"+Random5(),
         name: com.name,
         text: "お客様名:"+com.name+"\n\n"+com.note,
         image:'',
@@ -293,7 +311,7 @@ export default function BellScreen(props) {
           routes: [{
             name: 'TalkScreen',
             params: route.params ,
-            customer:message._id,
+            customer:removeCusID(message._id),
             websocket:route.websocket,
             websocket2: route.websocket2,
             profile:route.profile,
