@@ -158,26 +158,21 @@ export default function Company(props) {
         ) {
           const cus_data = response.notification.request.content.data.customer;
 
-          const sl = await GetDB('staff_list');
-
-          if (sl != false) {
-            navigation.reset({
-              index: 0,
-              routes: [
-                {
-                  name: "TalkScreen",
-                  params: route.params,
-                  customer: cus_data.customer_id,
-                  websocket: route.websocket,
-                  websocket2: route.websocket2,
-                  profile: route.profile,
-                  staff: sl,
-                  cus_name: cus_data.name,
-                  previous:'Company'
-                },
-              ],
-            });
-          }
+          navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: "TalkScreen",
+                params: route.params,
+                customer: cus_data.customer_id,
+                websocket: route.websocket,
+                websocket2: route.websocket2,
+                profile: route.profile,
+                cus_name: cus_data.name,
+                previous:'Company'
+              },
+            ],
+          });
         }
         if (
           response.notification.request.content.data.room_id &&
@@ -244,7 +239,7 @@ export default function Company(props) {
 
   async function Display() {
 
-    const sl = await GetDB('staff_all');
+    const sl = await GetDB('staff_list');
 
     if (sl != false) {
       setStaffs(sl);
@@ -871,7 +866,6 @@ export default function Company(props) {
                   websocket: route.websocket,
                   websocket2: route.websocket2,
                   profile: route.profile,
-                  staff: staffs,
                   previous:'Company'
                 },
               ],

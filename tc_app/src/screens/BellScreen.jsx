@@ -1,16 +1,10 @@
 import React, { useState,useEffect } from 'react';
-import { Platform,StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity,TextInput,Linking,LogBox,BackHandler,AppState, FlatList } from 'react-native';
-import { GiftedChat, Actions, Send, InputToolbar, Bubble, Time, Composer, Message  } from 'react-native-gifted-chat';
+import { StyleSheet, View, Text,LogBox,BackHandler,AppState } from 'react-native';
+import { GiftedChat, Bubble } from 'react-native-gifted-chat';
 import Feather from 'react-native-vector-icons/Feather';
-import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
 import * as Notifications from 'expo-notifications';
-import * as Permissions from "expo-permissions";
-import GestureRecognizer from 'react-native-swipe-gestures';
-import RenderHtml from 'react-native-render-html';
 
 import Loading from '../components/Loading';
-import { db } from '../components/Databace';
 
 LogBox.ignoreAllLogs()
 
@@ -30,58 +24,21 @@ export default function BellScreen(props) {
   const [talk, setTalk] = useState([]);
 
   const [messages, setMessages] = useState([]);
-  const [customer, setCustomer] = useState(false);
-  const [menu, setMenu] = useState(false);
-  const [msgtext,setMsgtext] = useState('');
-  const [staffs, setStaffs] = useState([]);
-  const [fixed,setFixed] = useState([]);
-
-  navigation.setOptions({
-    headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
-  });
   
   // 端末の戻るボタン
   const backAction = () => {
     if (!isLoading) {
-      if(msgtext) {
-        Alert.alert(
-          "入力されたテキストは消えますが\nよろしいですか？",
-          "",
-          [
-            {
-              text: "はい",
-              onPress: () => {
-                navigation.reset({
-                  index: 0,
-                  routes: [{
-                    name: 'CommunicationHistory' ,
-                    params: route.params,
-                    websocket:route.websocket,
-                    websocket2: route.websocket2,
-                    profile:route.profile,
-                    previous:'BellScreen'
-                  }],
-                });
-              }
-            },
-            {
-              text: "いいえ",
-            },
-          ]
-        );
-      } else {
-        navigation.reset({
-          index: 0,
-          routes: [{
-            name: 'CommunicationHistory' ,
-            params: route.params,
-            websocket:route.websocket,
-            websocket2: route.websocket2,
-            profile:route.profile,
-            previous:'BellScreen'
-          }],
-        });
-      }
+      navigation.reset({
+        index: 0,
+        routes: [{
+          name: 'CommunicationHistory' ,
+          params: route.params,
+          websocket:route.websocket,
+          websocket2: route.websocket2,
+          profile:route.profile,
+          previous:'BellScreen'
+        }],
+      });
     }
     return true;
   };
@@ -89,6 +46,7 @@ export default function BellScreen(props) {
   useEffect(() => {
     
     navigation.setOptions({
+      headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
       headerTitle:() => (<Text style={styles.name}>通知</Text>),
       headerLeft: () => (
           <Feather
@@ -97,45 +55,17 @@ export default function BellScreen(props) {
             size={30}
             onPress={() => {
               if (!isLoading) {
-                if(msgtext) {
-                  Alert.alert(
-                    "入力されたテキストは消えますが\nよろしいですか？",
-                    "",
-                    [
-                      {
-                        text: "はい",
-                        onPress: () => {
-                          navigation.reset({
-                            index: 0,
-                            routes: [{
-                              name: route.previous,
-                              params: route.params,
-                              websocket:route.websocket,
-                              websocket2: route.websocket2,
-                              profile:route.profile,
-                              previous:'BellScreen'
-                            }],
-                          });
-                        }
-                      },
-                      {
-                        text: "いいえ",
-                      },
-                    ]
-                  );
-                } else {
-                  navigation.reset({
-                    index: 0,
-                    routes: [{
-                      name: route.previous,
-                      params: route.params,
-                      websocket:route.websocket,
-                      websocket2: route.websocket2,
-                      profile:route.profile,
-                      previous:'BellScreen'
-                    }],
-                  });
-                }
+                navigation.reset({
+                  index: 0,
+                  routes: [{
+                    name: route.previous,
+                    params: route.params,
+                    websocket:route.websocket,
+                    websocket2: route.websocket2,
+                    profile:route.profile,
+                    previous:'BellScreen'
+                  }],
+                });
               }
             }}
             style={{paddingHorizontal:15,paddingVertical:10}}
@@ -151,7 +81,7 @@ export default function BellScreen(props) {
 
     return () => backHandler.remove();
     
-  }, [msgtext,isLoading])
+  }, [isLoading])
   
   
   useEffect(() => {
@@ -173,7 +103,6 @@ export default function BellScreen(props) {
     })
       .then((response) => response.json())
       .then((json) => {
-        console.log("TEST1:"+json);
         if(json['communication']){
           setTalk(json['communication']);
         }
@@ -275,27 +204,6 @@ export default function BellScreen(props) {
     );
     
   };
-
-  // 更新
-  const [refreshing, setRefreshing] = useState(false);
-  
-
-
-  if(menu){
-    Keyboard.dismiss() // キーボード隠す
-  }
-  
-
-
-  const [menu_height,setMenu_height] = useState(false);
-  const getHeight = (e) => {
-    const height = e.nativeEvent.layout.height;
-    if (height > 40) {
-      //setMenu_height(height-40)
-    } else {
-      //setMenu_height(height)
-    }
-  }
   
   return (
     <>
@@ -316,22 +224,12 @@ export default function BellScreen(props) {
             websocket2: route.websocket2,
             profile:route.profile,
             cus_name:message.name,
-            staff:staffs,
           }],
         });
       }}
       placeholder={""}
       renderBubble={renderBubble}
-      renderComposer={(props) => {
-        if (!customer.line) {
-          return (
-            <TouchableOpacity>
-            </TouchableOpacity>
-          )
-        } else {
-          return (<Composer {...props}/>)
-        }
-      }}
+      renderComposer={(props) => {return (<View></View>)}}
     />
 
     </>

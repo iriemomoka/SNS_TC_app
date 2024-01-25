@@ -4470,7 +4470,7 @@ export function MyModal5_condition(props){
 
 export function MyModal6(props){
   
-  const { isVisible,overlap,route,navigation,staff,cus,options,tantou,station_list,address } = props;
+  const { isVisible,overlap,route,navigation,cus,options,tantou,station_list,address } = props;
   
   const [close,setClose] = useState(false);
   const [customer, setCustomer] = useState([]);

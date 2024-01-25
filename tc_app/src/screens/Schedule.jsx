@@ -155,26 +155,21 @@ export default function Schedule(props) {
         ) {
           const cus_data = response.notification.request.content.data.customer;
 
-          const sl = await GetDB('staff_list');
-
-          if (sl != false) {
-            navigation.reset({
-              index: 0,
-              routes: [
-                {
-                  name: "TalkScreen",
-                  params: route.params,
-                  customer: cus_data.customer_id,
-                  websocket: route.websocket,
-                  websocket2: route.websocket2,
-                  profile: route.profile,
-                  staff: sl,
-                  cus_name: cus_data.name,
-                  previous:'Schedule'
-                },
-              ],
-            });
-          }
+          navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: "TalkScreen",
+                params: route.params,
+                customer: cus_data.customer_id,
+                websocket: route.websocket,
+                websocket2: route.websocket2,
+                profile: route.profile,
+                cus_name: cus_data.name,
+                previous:'Schedule'
+              },
+            ],
+          });
         }
         if (
           response.notification.request.content.data.room_id &&
@@ -517,7 +512,6 @@ export default function Schedule(props) {
                       websocket: route.websocket,
                       websocket2: route.websocket2,
                       profile: route.profile,
-                      staff: staffs,
                       cus_name: name,
                     },
                   ],
@@ -775,7 +769,6 @@ export default function Schedule(props) {
                   websocket: route.websocket,
                   websocket2: route.websocket2,
                   profile: route.profile,
-                  staff: staffs,
                   previous:'Schedule',
                 },
               ],

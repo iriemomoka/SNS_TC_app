@@ -1274,7 +1274,6 @@ export default function TalkScreen(props) {
                     customer: route.customer,
                     customer_data: customer,
                     cus_name:route.cus_name,
-                    staff: route.staff,
                     previous:'TalkScreen'
                   },
                 ],
@@ -1303,7 +1302,6 @@ export default function TalkScreen(props) {
                     hojin:false,
                     customer: route.customer,
                     cus_name:route.cus_name,
-                    staff: route.staff,
                     contract: customer["contract"],
                     previous:'TalkScreen'
                   },
@@ -1333,7 +1331,6 @@ export default function TalkScreen(props) {
                     hojin:true,
                     customer: route.customer,
                     cus_name:route.cus_name,
-                    staff: route.staff,
                     contract: customer["cjs_contract"],
                     previous:'TalkScreen'
                   },
@@ -1371,7 +1368,6 @@ export default function TalkScreen(props) {
         navigation={navigation}
         
         //modal5
-        staff={route.staff}
         cus={customer}
         options={options}
         tantou={tantou}
