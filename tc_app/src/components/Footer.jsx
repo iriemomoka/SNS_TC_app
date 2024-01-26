@@ -114,6 +114,6 @@ const styles = StyleSheet.create({
   },
   belltext: {
     color:'#fff',
-    fontSize:10
+    fontSize:9
   },
 });

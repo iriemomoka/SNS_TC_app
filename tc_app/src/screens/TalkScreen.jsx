@@ -206,20 +206,14 @@ export default function TalkScreen(props) {
   
   useEffect(() => {
     
-    onRefresh(true);
+    Display();
     GetDB('station_mst').then(station_mst=>station_mst!=false&&setStation(station_mst));
     GetDB('address_mst').then(address_mst=>address_mst!=false&&setAddress(address_mst));
     GetDB('fixed_mst').then(fixed_mst=>fixed_mst!=false&&setFixed(fixed_mst));
 
   }, [])
   
-  const onRefresh = useCallback(async(flg) => {
-
-    console.log('--------------------------');
-
-    if (flg) setLoading(true);
-
-    const startTime = Date.now(); // 開始時間
+  async function Display() {
 
     if (!route.customer) {
 
@@ -239,6 +233,70 @@ export default function TalkScreen(props) {
 
       return;
     }
+
+    var loadflg = false;
+
+    var sql = `select count(*) as count from communication_mst where customer_id = '${route.customer}';`;
+    var customer = await db_select(sql);
+    const cnt = customer[0]["count"];
+
+    if (cnt == 0) loadflg = true;
+
+    await getLocalDB(loadflg);
+    onRefresh(loadflg);
+
+  }
+
+  const getLocalDB = async(flg) => {
+
+    setLoading(true);
+
+    var sql = `select * from communication_mst where ( customer_id = '${route.customer}' ) order by time desc;`;
+    var talk_ = await db_select(sql);
+    if (talk_ != false) {
+      setTalk(talk_);
+    }
+
+    if (!flg) setLoading(false);
+
+    const staff_mst = await GetDB('staff_mst');
+    if (staff_mst != false) setStaff(staff_mst[0]);
+
+    var sql = `select * from customer_mst where ( customer_id = '${route.customer}' );`;
+    var customer_mst = await db_select(sql);
+    if (customer_mst != false) {
+      const cus = customer_mst[0];
+      const cusData = {
+        line: cus["line"],
+        main: {
+          customer_id: cus["customer_id"],
+          name: cus["name"],
+          tel1: cus["tel1"],
+          mail1: cus["mail1"],
+          mail2: cus["mail2"],
+          mail3: cus["mail3"],
+          status: cus["status"],
+          brower_mail: "",
+        },
+        reverberation: {
+          user_id: cus["reverberation_user_id"],
+          staff_name: cus["staff_name"],
+          media: cus["media"],
+          inquiry_day: "",
+        }
+      }
+      setCustomer(cusData);
+    }
+
+  }
+
+  const onRefresh = useCallback(async(flg) => {
+
+    console.log('--------------------------');
+
+    if (flg) setLoading(true);
+
+    const startTime = Date.now(); // 開始時間
     
     const json = await getCOM();
 
@@ -1361,29 +1419,33 @@ export default function TalkScreen(props) {
       openMenuOffset={Width * 0.5}
     >
       <Loading isLoading={isLoading} />
-      <MyModal6
-        isVisible={modal6}
-        route={route}
-        overlap={overlap}
-        navigation={navigation}
-        
-        //modal5
-        cus={customer}
-        options={options}
-        tantou={tantou}
-        station_list={station}
-        address={address}
-      />
-      <MyModal5
-        isVisible={modal6?false:modal5}
-        route={route}
-        cus={customer}
-        navigation={navigation}
-        options={options}
-        tantou={tantou}
-        station_list={station}
-        address={address}
-      />
+      {(typeof customer === "object" && "beginning_communication" in customer) && (
+        <>
+        <MyModal6
+          isVisible={modal6}
+          route={route}
+          overlap={overlap}
+          navigation={navigation}
+          
+          //modal5
+          cus={customer}
+          options={options}
+          tantou={tantou}
+          station_list={station}
+          address={address}
+        />
+        <MyModal5
+          isVisible={modal6?false:modal5}
+          route={route}
+          cus={customer}
+          navigation={navigation}
+          options={options}
+          tantou={tantou}
+          station_list={station}
+          address={address}
+        />
+        </>
+      )}
       <GiftedChat
         messages={messages}
         
@@ -1392,7 +1454,7 @@ export default function TalkScreen(props) {
         text={msgtext?msgtext:''}
         onInputTextChanged={text => {setMsgtext(text)}}
         placeholder={customer.line?"テキストを入力してください":""}
-        disableComposer={!customer.line?true:false}
+        disableComposer={customer.line&&customer!=false?false:true}
         onSend={() => onSend(['LINE送信',msgtext],'line')}
         dateFormat={'MM/DD(ddd)'}
         renderMessage={(props) => {
@@ -1461,7 +1523,11 @@ export default function TalkScreen(props) {
           );
         }}
         // ↑を押したときのイベント
-        onPressActionButton={() => setMenu(!menu)}
+        onPressActionButton={() => {
+          if (customer != false) {
+            setMenu(!menu);
+          }
+        }}
         // メニュー開いたらメッセージも上に表示する
         minInputToolbarHeight={30}
         messagesContainerStyle={[

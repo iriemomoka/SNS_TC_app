@@ -1134,7 +1134,7 @@ const styles = StyleSheet.create({
   },
   belltext: {
     color:'#fff',
-    fontSize:12
+    fontSize:9
   },
   menulist: {
     flexDirection:'row',

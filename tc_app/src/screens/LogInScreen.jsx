@@ -320,6 +320,7 @@ export default function LogInScreen(props) {
           const WS_URL2 = 'ws://54.168.20.149:8080/ws/'+json.staff.account+'/'
           
           const staff = json.staff;
+          const shops = json.shops2;
 
           const staff_data = [
             staff.account,
@@ -328,17 +329,17 @@ export default function LogInScreen(props) {
             staff.name_1,
             staff.name_2,
             staff.name,
-            staff.corporations_name,
+            shops.corporations_name,
             staff.setting_list,
             staff.app_token,
-            staff.system_mail,
-            staff.yahoomail,
-            staff.gmail,
-            staff.hotmail,
-            staff.outlook,
-            staff.softbank,
-            staff.icloud,
-            staff.original_mail,
+            shops.system_mail,
+            shops.yahoomail,
+            shops.gmail,
+            shops.hotmail,
+            shops.outlook,
+            shops.softbank,
+            shops.icloud,
+            shops.original_mail,
             staff.line_id,
             staff.mail_name,
             staff.mail1,
@@ -346,7 +347,7 @@ export default function LogInScreen(props) {
             staff.mail3,
             staff.top_staff_list,
             staff.setting_list7_mail,
-            null
+            global.fc_flg
           ];
             
           await Insert_staff_db(staff.account,staff.password,staff_data);
@@ -533,7 +534,8 @@ export default function LogInScreen(props) {
       const WS_URL2 = 'ws://54.168.20.149:8080/ws/'+json.staff.account+'/'
       
       const staff = json.staff;
-      
+      const shops = json.shops2;
+
       const staff_data = [
         staff.account,
         staff.password,
@@ -541,17 +543,17 @@ export default function LogInScreen(props) {
         staff.name_1,
         staff.name_2,
         staff.name,
-        staff.corporations_name,
+        shops.corporations_name,
         staff.setting_list,
         staff.app_token,
-        staff.system_mail,
-        staff.yahoomail,
-        staff.gmail,
-        staff.hotmail,
-        staff.outlook,
-        staff.softbank,
-        staff.icloud,
-        staff.original_mail,
+        shops.system_mail,
+        shops.yahoomail,
+        shops.gmail,
+        shops.hotmail,
+        shops.outlook,
+        shops.softbank,
+        shops.icloud,
+        shops.original_mail,
         staff.line_id,
         staff.mail_name,
         staff.mail1,
@@ -627,6 +629,7 @@ export default function LogInScreen(props) {
       .then(async(json) => {
         
         const staff = json.staff;
+        const shops = json.shops2;
         
         // ログインデータ保持用
         global.sp_id = staff.account;
@@ -634,7 +637,7 @@ export default function LogInScreen(props) {
         // テーブルを空にする
         await db_write(`delete from staff_mst;`,[]);     // スタッフ
         await db_write(`delete from staff_profile;`,[]); // スタッフプロフィール
-          
+
         // スタッフ情報をサーバーから取得
         const staff_data = [
           staff.account,
@@ -643,17 +646,17 @@ export default function LogInScreen(props) {
           staff.name_1,
           staff.name_2,
           staff.name,
-          staff.corporations_name,
+          shops.corporations_name,
           staff.setting_list,
           staff.app_token,
-          staff.system_mail,
-          staff.yahoomail,
-          staff.gmail,
-          staff.hotmail,
-          staff.outlook,
-          staff.softbank,
-          staff.icloud,
-          staff.original_mail,
+          shops.system_mail,
+          shops.yahoomail,
+          shops.gmail,
+          shops.hotmail,
+          shops.outlook,
+          shops.softbank,
+          shops.icloud,
+          shops.original_mail,
           staff.line_id,
           staff.mail_name,
           staff.mail1,
