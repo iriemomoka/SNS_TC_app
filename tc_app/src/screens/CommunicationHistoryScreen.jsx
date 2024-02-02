@@ -758,9 +758,9 @@ export default function CommunicationHistoryScreen(props) {
             cus.communication_status === "その他")
         ) {
           cus.communication_note = cus.communication_note.replace(
-            /<("[^"]*"|'[^']*'|[^'">])*>/g,
+            /(<("[^"]*"|'[^']*'|[^'">])*>|\n|\r)/g,
             ""
-          );
+        );
         }
 
         let status = cus.status;
@@ -955,7 +955,7 @@ export default function CommunicationHistoryScreen(props) {
     
     for (var d=0;d<dbList.length;d++) {
       var table = dbList[d];
-      var delete_sql = `delete from ${table};`;
+      var delete_sql = `DROP TABLE ${table};`;
       const del_res = await db_write(delete_sql,[]);
       if (del_res) {
         console.log(`${table} 削除 成功`);
@@ -1184,6 +1184,16 @@ export default function CommunicationHistoryScreen(props) {
           data={memos}
           renderItem={({ item }) => {
             if (!item.del_flg) {
+
+              var note = "";
+              if (item.title === "スタンプ") {
+                note = "スタンプを送信しました";
+              } else if (!item.note) {
+                note = item.title;
+              } else {
+                note = (item.note).replace(/(<("[^"]*"|'[^']*'|[^'">])*>|\n|\r)/g,"");
+              }
+
               return (
                 <TouchableOpacity
                   style={styles.ListItem}
@@ -1226,13 +1236,7 @@ export default function CommunicationHistoryScreen(props) {
                     <Text style={styles.date}>
                       {item.time ? item.time.slice(0, -3) : ""}
                     </Text>
-                    <Text style={styles.message} numberOfLines={1}>
-                      {item.title === "スタンプ"
-                        ? "スタンプを送信しました"
-                        : !item.note
-                        ? item.title
-                        : item.note}
-                    </Text>
+                    <Text style={styles.message} numberOfLines={1}>{note}</Text>
                   </View>
                 </TouchableOpacity>
               );

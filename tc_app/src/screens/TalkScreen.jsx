@@ -192,7 +192,21 @@ export default function TalkScreen(props) {
             style={{padding:10}}
           />
       ),
-      
+      headerRight: () => (
+        
+        <TouchableOpacity
+          style={{width:60,height:60,justifyContent:'center',alignItems:'center'}}
+          onPress={() => {
+            setSideMenu(!sidemenu);
+          }}
+        >
+          <Feather
+            name="menu"
+            color="white"
+            size={35}
+          />
+        </TouchableOpacity>
+      ),
     });
     
     const backHandler = BackHandler.addEventListener(
@@ -455,24 +469,6 @@ export default function TalkScreen(props) {
       //   setTantou('来店');
       //   setModal5(true);
       // }
-      
-      navigation.setOptions({
-        headerRight: () => (
-          
-          <TouchableOpacity
-            style={{width:60,height:60,justifyContent:'center',alignItems:'center'}}
-            onPress={() => {
-              setSideMenu(!sidemenu);
-            }}
-          >
-            <Feather
-              name="menu"
-              color="white"
-              size={35}
-            />
-          </TouchableOpacity>
-        ),
-      });
       
     }
     

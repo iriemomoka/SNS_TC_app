@@ -747,7 +747,7 @@ export default function Company(props) {
     
     for (var d=0;d<dbList.length;d++) {
       var table = dbList[d];
-      var delete_sql = `delete from ${table};`;
+      var delete_sql = `DROP TABLE ${table};`;
       const del_res = await db_write(delete_sql,[]);
       if (del_res) {
         console.log(`${table} 削除 成功`);
