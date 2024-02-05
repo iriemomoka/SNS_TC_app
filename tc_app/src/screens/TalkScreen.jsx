@@ -1495,7 +1495,7 @@ export default function TalkScreen(props) {
       openMenuOffset={Width * 0.5}
     >
       <Loading isLoading={isLoading} />
-      {(typeof customer === "object" && "beginning_communication" in customer) && (
+      {(typeof customer === "object" && ("beginning_communication" in customer) && (customer.beginning_communication != null)) && (
         <>
         <MyModal6
           isVisible={modal6}
