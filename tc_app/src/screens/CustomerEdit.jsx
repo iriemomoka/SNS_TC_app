@@ -137,13 +137,13 @@ export default function CustomerEdit(props) {
   ];
 
   const shop_type = [
-    { label: "本店", value: "1" },
-    { label: "支店", value: "2" },
+    { label: "本店", value: 1 },
+    { label: "支店", value: 2 },
   ]
 
   const rental_type = [
-    { label: "住居用", value: "1" },
-    { label: "テナント", value: "2" },
+    { label: "住居用", value: 1 },
+    { label: "テナント", value: 2 },
   ]
 
   useEffect(() => {
@@ -219,11 +219,91 @@ export default function CustomerEdit(props) {
         sex: cus.sex,
         age: cus.age,
         work: cus.work,
-        shop_type: cus.shop_type,
-        rental_type: cus.rental_type,
+        shop_type: Number(cus.shop_type),
+        rental_type: Number(cus.rental_type),
       })
     }
     
+    // 通知をタップしたらお客様一覧 → トーク画面 (ログイン済)
+    const notificationInteractionSubscription =
+      Notifications.addNotificationResponseReceivedListener(async(response) => {
+        if (
+          response.notification.request.content.data.customer &&
+          global.sp_id
+        ) {
+          const cus_data = response.notification.request.content.data.customer;
+
+          navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: "TalkScreen",
+                params: route.params,
+                customer: cus_data.customer_id,
+                websocket: route.websocket,
+                websocket2: route.websocket2,
+                profile: route.profile,
+                cus_name: cus_data.name,
+              },
+            ],
+          });
+        }
+        if (
+          response.notification.request.content.data.room_id &&
+          global.sp_id
+        ) {
+          const room_id = response.notification.request.content.data.room_id;
+
+          var sql = `select * from chat_room where del_flg != '1' and room_id = '${room_id}';`;
+          var rooms_ = await db_select(sql);
+          
+          if (rooms_ != false) {
+            var room = rooms_[0];
+    
+            if (room["room_type"] == "0") {
+    
+              var user_id = room["user_id"].split(',');
+    
+              var account = user_id.filter(function(id) {
+                return id !== route.params.account;
+              });
+    
+              var sql = `select * from staff_all where account = '${account[0]}';`;
+              var staff = await db_select(sql);
+    
+              if (staff != false) {
+                room["account"]      = account[0];
+                room["name_1"]       = staff[0]["name_1"];
+                room["name_2"]       = staff[0]["name_2"];
+                room["shop_id"]      = staff[0]["shop_id"];
+                room["shop_name"]    = staff[0]["shop_name"];
+                room["staff_photo1"] = staff[0]["staff_photo1"];
+              }
+    
+            }
+
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "ChatTalk",
+                  params: route.params,
+                  websocket: route.websocket,
+                  websocket2: route.websocket2,
+                  profile: route.profile,
+                  room: room
+                },
+              ],
+            });
+
+          }
+        }
+    });
+
+    return () => {
+      notificationInteractionSubscription.remove();
+    };
+
   }, []);
 
   async function onSubmit() {
