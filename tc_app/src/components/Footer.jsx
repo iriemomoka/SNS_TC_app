@@ -10,10 +10,10 @@ const Width = Dimensions.get("window").width;
 
 export default function Footer(props){
   
-  const { onPress0,onPress1,onPress2,active } = props;
+  const { onPress0,onPress1,onPress2,onPress3,active } = props;
 
-  const active_btn = !global.fc_flg?"#ffed87":"#f5d3df"
-  const bgc = !global.fc_flg?"#1d449a":"#fd2c77";
+  const active_btn = !global.fc_flg?"#F9F871":"#FDFDBD"
+  const bgc = !global.fc_flg?"#6C9BCF":"#FF8F8F";
 
   const context = useContext(Context1);
 
@@ -40,7 +40,7 @@ export default function Footer(props){
           activeOpacity={1}
         > 
         {context.chatbell>0&&(
-          <View style={[styles.bell,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]}>
+          <View style={[styles.bell,{backgroundColor:!global.fc_flg?"red":"#574141"}]}>
             <Text style={styles.belltext} >{context.chatbell}</Text>
           </View>
         )}
@@ -66,6 +66,20 @@ export default function Footer(props){
           <Text style={[styles.back_text,active[2]==true&&{color:active_btn}]}>スケジュール</Text>
         </TouchableOpacity>
       </View>
+      <View style={styles.block}>
+        <TouchableOpacity
+          style={styles.btn}
+          onPress={onPress3}
+          activeOpacity={1}
+        > 
+          <MaterialCommunityIcons
+            name="timeline-text"
+            color={active[3]==true?active_btn:"#fff"}
+            size={30}
+          />
+          <Text style={[styles.back_text,active[3]==true&&{color:active_btn}]}>タイムライン</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -80,12 +94,12 @@ const styles = StyleSheet.create({
     zIndex:999
   },
   block: {
-    width:Width*0.333,
+    width:Width*0.25,
     height: 75,
   },
   btn: {
     height: 50,
-    width: Width*0.333*0.9,
+    width: Width*0.25*0.9,
     alignItems:'center',
     justifyContent: 'center',
     marginTop:5

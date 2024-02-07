@@ -19,8 +19,8 @@ const storage = new Storage({
   defaultExpires: null,
 });
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = 'https://www.total-cloud.net/';
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = 'https://www.total-cloud.net/';
 
 export default function CustomerEdit(props) {
 
@@ -149,7 +149,7 @@ export default function CustomerEdit(props) {
   useEffect(() => {
     
     navigation.setOptions({
-      headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
+      headerStyle: !global.fc_flg?{ backgroundColor: '#6C9BCF', height: 110}:{ backgroundColor: '#FF8F8F', height: 110},
       headerTitle:() => (<Text style={styles.header_title}>お客様編集</Text>),
       headerLeft: () => (
         <Feather

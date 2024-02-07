@@ -8,8 +8,8 @@ import Loading from '../components/Loading';
 
 LogBox.ignoreAllLogs()
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = 'https://www.total-cloud.net/';
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = 'https://www.total-cloud.net/';
 
 export default function BellScreen(props) {
   
@@ -46,7 +46,7 @@ export default function BellScreen(props) {
   useEffect(() => {
     
     navigation.setOptions({
-      headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
+      headerStyle: !global.fc_flg?{ backgroundColor: '#6C9BCF', height: 110}:{ backgroundColor: '#FF8F8F', height: 110},
       headerTitle:() => (<Text style={styles.name}>通知</Text>),
       headerLeft: () => (
           <Feather
@@ -273,7 +273,7 @@ export default function BellScreen(props) {
                 maxWidth: '75%',
             },
             left: {
-                backgroundColor: (view_flg==='0'?'#696969':'#346cb8'),
+                backgroundColor: ('#c9c9c9'),
                 marginLeft: 5,
                 marginVertical: 5,
                 borderBottomLeftRadius: 1,
@@ -310,6 +310,11 @@ export default function BellScreen(props) {
       placeholder={""}
       renderBubble={renderBubble}
       renderComposer={(props) => {return (<View></View>)}}
+      listViewProps={{
+        style: {
+          backgroundColor: '#fff',
+        },
+      }}
     />
 
     </>

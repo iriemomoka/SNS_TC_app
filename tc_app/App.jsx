@@ -18,6 +18,9 @@ import Staffs from './src/screens/Staffs';
 import ChatTalk from './src/screens/ChatTalk';
 import ContractRegister from './src/screens/ContractRegister';
 import CustomerEdit from './src/screens/CustomerEdit';
+import TimeLine from './src/screens/TimeLine';
+import Post from './src/screens/Post';
+import Thanks from './src/screens/Thanks';
 
 import { Context1 } from './src/components/ExportContext';
 
@@ -101,6 +104,21 @@ export default function App() {
             <Stack.Screen
               name="CustomerEdit"
               component={CustomerEdit}
+            />
+            <Stack.Screen
+              name="TimeLine"
+              component={TimeLine}
+              options={{
+                gestureDirection: "horizontal-inverted",
+              }}
+            />
+            <Stack.Screen
+              name="Post"
+              component={Post}
+            />
+            <Stack.Screen
+              name="Thanks"
+              component={Thanks}
             />
           </Stack.Navigator>
         </NavigationContainer>

@@ -23,8 +23,8 @@ const storage = new Storage({
   defaultExpires: null,
 });
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = 'https://www.total-cloud.net/';
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = 'https://www.total-cloud.net/';
 
 export default function ContractRegister(props) {
 
@@ -145,7 +145,7 @@ export default function ContractRegister(props) {
     GetDB('staff_list').then(staff_list=>staff_list!=false&&setStaffs(staff_list));
     
     navigation.setOptions({
-      headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
+      headerStyle: !global.fc_flg?{ backgroundColor: '#6C9BCF', height: 110}:{ backgroundColor: '#FF8F8F', height: 110},
       headerTitle:() => (
         <>
         <Text style={styles.header_title}>契約進行表{route.hojin&&"(法人)"}</Text>

@@ -49,8 +49,8 @@ const storage = new Storage({
 
 const db = SQLite.openDatabase("db");
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = "https://www.total-cloud.net/";
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = "https://www.total-cloud.net/";
 
 Notifications.setBadgeCountAsync(0);
 
@@ -110,14 +110,14 @@ export default function CommunicationHistoryScreen(props) {
 
     navigation.setOptions({
       headerStyle: !global.fc_flg
-        ? { backgroundColor: "#1d449a", height: 110 }
-        : { backgroundColor: "#fd2c77", height: 110 },
+        ? { backgroundColor: "#6C9BCF", height: 110 }
+        : { backgroundColor: "#FF8F8F", height: 110 },
       headerTitle: () => (
         <Text style={styles.headertitle}>お客様一覧</Text>
       ),
       headerRight: () => (
         <View style={{marginRight:15}}>
-          <View style={bell_count?[styles.bell,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]:{display:'none'}}>
+          <View style={bell_count?[styles.bell,{backgroundColor:!global.fc_flg?"red":"#574141"}]:{display:'none'}}>
             <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
           </View>
           <TouchableOpacity
@@ -1082,11 +1082,11 @@ export default function CommunicationHistoryScreen(props) {
         >
           <MaterialCommunityIcons
             name="bell"
-            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
             size={35}
           />
           <Text style={styles.menutext}>通知</Text>
-          <View style={bell_count?[styles.bell2,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]:{display:'none'}}>
+          <View style={bell_count?[styles.bell2,{backgroundColor:!global.fc_flg?"red":"#574141"}]:{display:'none'}}>
             <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
           </View>
         </TouchableOpacity>
@@ -1110,7 +1110,7 @@ export default function CommunicationHistoryScreen(props) {
         >
           <MaterialCommunityIcons
             name="account"
-            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
             size={35}
           />
           <Text style={styles.menutext}>設定</Text>
@@ -1135,10 +1135,33 @@ export default function CommunicationHistoryScreen(props) {
         >
           <MaterialCommunityIcons
             name="crown"
-            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
             size={35}
           />
           <Text style={styles.menutext}>売上順位</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menulist}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [{
+                name: 'Thanks' ,
+                params: route.params,
+                websocket:route.websocket,
+                websocket2: route.websocket2,
+                profile:route.profile,
+                previous:'CommunicationHistory',
+              }],
+            });
+          }}
+        >
+          <MaterialCommunityIcons
+            name="heart"
+            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
+            size={35}
+          />
+          <Text style={styles.menutext}>ありがとう</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.menulist}
@@ -1146,7 +1169,7 @@ export default function CommunicationHistoryScreen(props) {
         >
           <MaterialCommunityIcons
             name="logout"
-            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
             size={35}
           />
           <Text style={styles.menutext}>ログアウト</Text>
@@ -1227,9 +1250,9 @@ export default function CommunicationHistoryScreen(props) {
                       </Text>
                       <Text style={styles.name} numberOfLines={1}>
                         {item.name
-                          ? item.name.length < 15
+                          ? item.name.length < 10
                             ? item.name
-                            : item.name.substring(0, 15) + "..."
+                            : item.name.substring(0, 10) + "..."
                           : ""}
                       </Text>
                     </View>
@@ -1324,7 +1347,21 @@ export default function CommunicationHistoryScreen(props) {
               ],
             });
           }}
-          active={[true,false,false]}
+          onPress3={() => {
+            navigation.reset({
+              index: 0,
+              routes: [{
+                name: 'TimeLine' ,
+                params: route.params,
+                websocket:route.websocket,
+                websocket2: route.websocket2,
+                profile:route.profile,
+                previous:'CommunicationHistory',
+                withAnimation: true
+              }],
+            });
+          }}
+          active={[true,false,false,false]}
         />
       </View>
     </SideMenu>

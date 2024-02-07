@@ -10,6 +10,7 @@ import * as SQLite from "expo-sqlite";
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import Loading from '../components/Loading';
 import { CreateDB, GetDB,db_select,db_write} from '../components/Databace';
@@ -44,8 +45,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = 'https://www.total-cloud.net/';
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = 'https://www.total-cloud.net/';
 
 export default function LogInScreen(props) {
   
@@ -78,11 +79,12 @@ export default function LogInScreen(props) {
 
   useEffect(() => {
     navigation.setOptions({
-      headerStyle: !fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
+      headerStyle: !fc_flg?{ backgroundColor: '#6C9BCF', height: 110}:{ backgroundColor: '#FF8F8F', height: 110},
       headerTitle: () => 
         !fc_flg?
         (<Image source={require('../../assets/logo.png')} />):
-        (<Image source={require('../../assets/logo_onetop.png')} style={styles.header_img} />)
+        (<Image source={require('../../assets/logo_onetop.png')} style={styles.header_img} />),
+        headerTitleAlign: 'center'
     });
   }, [fc_flg]);
 
@@ -819,6 +821,8 @@ export default function LogInScreen(props) {
     
   }
 
+  const bgc = !global.fc_flg?['#00A0F3', '#00C4F7', '#00E2E3']:['#FF4F4F', '#FCB2AA'];
+
   return (
     <View style={styles.container}>
       <Loading isLoading={isLoading} />
@@ -863,10 +867,16 @@ export default function LogInScreen(props) {
           />
         </View>
         <TouchableOpacity
-          style={styles.buttonContainer}
+          style={styles.button}
           onPress={onSubmit}
+          activeOpacity={0.8}
           >
-            <Image source={require('../../assets/btn_login.png')} resizeMode="cover" style={styles.button} />
+            <LinearGradient
+              colors={bgc}
+              style={styles.login}
+              >
+              <Text style={styles.login_text}>ロ グ イ ン</Text>
+            </LinearGradient>
         </TouchableOpacity>
         {!fc_flg?(
         <>
@@ -880,7 +890,7 @@ export default function LogInScreen(props) {
         </>
         ):(
         <>
-          <Text style={[styles.onetop,{color:'#1d449a'}]}>TOTAL CLOUD はこちらから</Text>
+          <Text style={[styles.onetop,{color:'#00A0F3'}]}>TOTAL CLOUD はこちらから</Text>
           <TouchableOpacity
             style={styles.buttonContainer}
             onPress={() => Change_FC('')}
@@ -940,7 +950,7 @@ const styles = StyleSheet.create({
     marginTop:50,
     marginBottom:10,
     textAlign:'center',
-    color:'#fd2c77',
+    color:'#ff4f4f',
     fontSize:16,
     fontWeight:'bold',
   },
@@ -952,5 +962,28 @@ const styles = StyleSheet.create({
     position:'absolute',
     bottom:0,
     right:15
+  },
+  button:{
+    alignSelf: 'center',
+    width:200,
+    height:50,
+    shadowColor: "#999",
+    shadowOffset: { width: 1, height: 5 },
+    shadowOpacity:1,
+    shadowRadius:2,
+    elevation:5
+  },
+  login: {
+    width:200,
+    height:50,
+    justifyContent:'center',
+    alignItems:'center',
+    borderRadius:10,
+  },
+  login_text: {
+    fontSize:23,
+    fontWeight:'600',
+    color:'#fff',
+    textAlign:'center'
   }
 });

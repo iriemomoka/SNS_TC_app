@@ -51,8 +51,8 @@ const storage = new Storage({
 
 const db = SQLite.openDatabase("db");
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = "https://www.total-cloud.net/";
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = 'https://www.total-cloud.net/';
 
 Notifications.setBadgeCountAsync(0);
 
@@ -178,8 +178,8 @@ export default function Staffs(props) {
 
     navigation.setOptions({
       headerStyle: !global.fc_flg
-        ? { backgroundColor: "#1d449a", height: 110}
-        : { backgroundColor: "#fd2c77", height: 110},
+        ? { backgroundColor: "#6C9BCF", height: 110}
+        : { backgroundColor: "#FF8F8F", height: 110},
       
       headerTitleAlign: 'center',
       headerTitle: () => (
@@ -273,7 +273,7 @@ export default function Staffs(props) {
       return item.checked === true && item.account != route.params.account && item.account != "*****";
     });
 
-    const bgc = !global.fc_flg ? "#1d449a" : "#fd2c77";
+    const bgc = !global.fc_flg ? "#6C9BCF" : "#FF8F8F";
 
     if (room.length > 0) {
       return (
@@ -796,7 +796,7 @@ export default function Staffs(props) {
       return (
         <FlatList
           scrollIndicatorInsets={{ right: 1 }}
-          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
           bounces={false}
           ref={listRef}
           initialNumToRender={10}
@@ -948,6 +948,7 @@ export default function Staffs(props) {
 
   const bgc = !global.fc_flg?"#fff4b3":"#f5d3df";
   const chk = !global.fc_flg?"#81aee6":"#e6c4f5";
+  const hdr = !global.fc_flg ? "#6C9BCF" : "#FF8F8F";
 
   return (
     <KeyboardAvoidingView
@@ -987,7 +988,7 @@ export default function Staffs(props) {
         style={{margin: 0,justifyContent:'flex-start'}}
         onBackdropPress={()=>setAddGroup(false)}
       >
-        <View style={[styles.roomheader,{height:headerHeight},Platform.OS === 'ios'&&{paddingTop:statusBarHeight}]}>
+        <View style={[styles.roomheader,{height:headerHeight},Platform.OS === 'ios'&&{paddingTop:statusBarHeight},{backgroundColor:hdr}]}>
           <TouchableOpacity
             style={{width:50,height:50,justifyContent:'center',alignItems:'center',marginRight:'auto'}}
             onPress={() => {
@@ -1183,7 +1184,7 @@ const styles = StyleSheet.create({
   },
   roomheader :{
     width:'100%',
-    backgroundColor:'#1d449a',
+    backgroundColor:'#6C9BCF',
     flexDirection:'row',
     alignItems:'center',
     justifyContent:'center'

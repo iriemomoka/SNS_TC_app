@@ -21,8 +21,8 @@ LogBox.ignoreAllLogs(true)
 
 const screenWidth = Dimensions.get('window').width;
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = "https://www.total-cloud.net/";
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = 'https://www.total-cloud.net/';
 
 // // 本番
 // const adUnitId = Platform.OS === 'ios'
@@ -50,17 +50,10 @@ export default function Ranking(props) {
 
   navigation.setOptions({
     headerStyle: !global.fc_flg
-      ? { backgroundColor: "#1d449a", height: 110 }
-      : { backgroundColor: "#fd2c77", height: 110 },
-    headerTitleAlign: "center",
-    headerTitle: () =>
-      !global.fc_flg ? (
-        <Image source={require("../../assets/logo.png")} />
-      ) : (
-        <Image
-          source={require("../../assets/logo_onetop.png")}
-          style={styles.header_img}
-        />
+      ? { backgroundColor: "#6C9BCF", height: 110 }
+      : { backgroundColor: "#FF8F8F", height: 110 },
+      headerTitle: () => (
+        <Text style={styles.headertitle}>売上順位</Text>
       ),
   });
 
@@ -2391,9 +2384,10 @@ export default function Ranking(props) {
 }
 
 const styles = StyleSheet.create({
-  header_img: {
-    width: 150,
-    height: 45,
+  headertitle: {
+    color:'#fff',
+    fontWeight:'700',
+    fontSize:20
   },
   form: {
     width: "90%",
@@ -2406,12 +2400,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    color: "#1d449a",
+    color: "#384955",
     fontWeight: "bold",
   },
   title2: {
     fontSize: 20,
-    color: "#1d449a",
+    color: "#384955",
     fontWeight: "bold",
     marginTop: 20,
     marginBottom:5
@@ -2425,21 +2419,21 @@ const styles = StyleSheet.create({
     width:160,
     height: 50,
     backgroundColor: "#fff",
-    borderColor: "#191970",
-    borderWidth: 1.5,
+    borderColor: "#878787",
+    borderWidth: 1,
     borderRadius: 8,
   },
   dropDown2: {
     width:100,
     height: 40,
     backgroundColor: "#fff",
-    borderColor: "#191970",
-    borderWidth: 1.5,
+    borderColor: "#878787",
+    borderWidth: 1,
     borderRadius: 8,
   },
   dropDownContainer: {
-    borderColor: "#191970",
-    borderWidth: 1.5,
+    borderColor: "#878787",
+    borderWidth: 1,
   },
   btn: {
     justifyContent: "center",
@@ -2448,7 +2442,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width: 90,
     height: 50,
-    backgroundColor: "#1f2d53",
+    backgroundColor: "#384955",
     marginLeft:'auto'
   },
   btn_text: {
@@ -2481,14 +2475,14 @@ const styles = StyleSheet.create({
   rankList: {
     height:60,
     borderBottomWidth:1,
-    borderBottomColor:'#202e53',
+    borderBottomColor:'#384955',
     flexDirection:'row',
     paddingHorizontal:10,
     alignItems:'center'
   },
   rankLabel: {
     fontSize:20,
-    color:'#202e53',
+    color:'#384955',
     width:'40%',
   },
   rankData: {

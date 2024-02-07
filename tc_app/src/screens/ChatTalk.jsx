@@ -18,8 +18,8 @@ import { GetDB,db_select,db_write } from '../components/Databace';
 
 LogBox.ignoreAllLogs()
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = 'https://www.total-cloud.net/';
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = 'https://www.total-cloud.net/';
 
 const Height = Dimensions.get("window").height;
 const Width = Dimensions.get("window").width;
@@ -69,7 +69,7 @@ export default function ChatTalk(props) {
   const [userImage, setUserImage] = useState(false);
 
   navigation.setOptions({
-    headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
+    headerStyle: !global.fc_flg?{ backgroundColor: '#6C9BCF', height: 110}:{ backgroundColor: '#FF8F8F', height: 110},
   });
   
   // 端末の戻るボタン
@@ -1469,9 +1469,6 @@ export default function ChatTalk(props) {
 
   }
 
-  const bgc = !global.fc_flg?"#81aee6":"#e6c4f5";
-  const bbc = !global.fc_flg?"#6c93c4":"#c4a3d4";
-
   return (
     <>
     <Loading isLoading={isLoading} />
@@ -1616,7 +1613,7 @@ export default function ChatTalk(props) {
             </View>
             {adminGroup&&(
               <TouchableOpacity
-                style={[styles.searchBtn,{backgroundColor:bgc,borderBottomColor:bbc}]}
+                style={styles.searchBtn}
                 activeOpacity={0.7}
                 onPress={()=>{saveGroupname()}}
               >
@@ -1681,14 +1678,14 @@ export default function ChatTalk(props) {
         </View>
         <View style={{flexDirection:'row'}} >
           <TouchableOpacity
-            style={[styles.searchBtn2,{backgroundColor:bgc,borderBottomColor:bbc}]}
+            style={styles.searchBtn2}
             activeOpacity={0.7}
             onPress={()=>{addAdminGroup()}}
           >
             <Text style={styles.searchBtntxt}>{member.admin?"管理者から削除":"管理者に追加"}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.searchBtn2}
+            style={[styles.searchBtn2,{backgroundColor:"#f59898",borderBottomColor:"#db8686"}]}
             activeOpacity={0.7}
             onPress={()=>{delGroupMember()}}
           >
@@ -1745,7 +1742,7 @@ export default function ChatTalk(props) {
       maxComposerHeight={150}
       renderInputToolbar={(props) => (
           <InputToolbar {...props}
-            containerStyle={{backgroundColor:!global.fc_flg?'#47a9ce':'#fe95bb',paddingBottom:20}}
+            containerStyle={{backgroundColor:!global.fc_flg ? "#6C9BCF" : "#FF8F8F",paddingBottom:20}}
           />
         )
       }
@@ -1834,7 +1831,7 @@ const styles = StyleSheet.create({
   },
   roomheader :{
     width:'100%',
-    backgroundColor:'#1d449a',
+    backgroundColor:'#6C9BCF',
     flexDirection:'row',
     alignItems:'center',
     justifyContent:'center'
@@ -1875,7 +1872,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 1,
-    elevation:5
+    elevation:5,
+    backgroundColor:'#81aee6',
+    borderBottomColor:'#6c93c4'
   },
   searchBtn2: {
     width: "40%",
@@ -1883,8 +1882,6 @@ const styles = StyleSheet.create({
     marginHorizontal:5,
     alignItems: "center",
     justifyContent:'center',
-    backgroundColor:"#f59898",
-    borderBottomColor:"#db8686",
     borderRadius:5,
     borderBottomWidth:3,
     shadowColor: "#000",
@@ -1894,7 +1891,9 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation:5
+    elevation:5,
+    backgroundColor:'#81aee6',
+    borderBottomColor:'#6c93c4'
   },
   searchBtntxt: {
     color:"#fff",

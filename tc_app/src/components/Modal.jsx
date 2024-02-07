@@ -28,8 +28,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 // DB接続
 import { db,db_select } from './Databace';
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = 'https://www.total-cloud.net/';
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = 'https://www.total-cloud.net/';
 
 LogBox.ignoreAllLogs();
 

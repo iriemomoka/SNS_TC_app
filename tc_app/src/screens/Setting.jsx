@@ -25,8 +25,8 @@ const storage = new Storage({
   defaultExpires: null,
 });
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = 'https://www.total-cloud.net/';
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = 'https://www.total-cloud.net/';
 
 let photo_path = domain + 'img/staff_img/';
 
@@ -48,12 +48,10 @@ export default function Setting(props) {
   const [isLoading, setLoading] = useState(false);
   
   navigation.setOptions({
-    headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
-    headerTitleAlign: 'center',
-    headerTitle: () =>
-      !global.fc_flg?
-      (<Image source={require('../../assets/logo.png')} />):
-      (<Image source={require('../../assets/logo_onetop.png')} style={styles.header_img} />)
+    headerStyle: !global.fc_flg?{ backgroundColor: '#6C9BCF', height: 110}:{ backgroundColor: '#FF8F8F', height: 110},
+    headerTitle: () => (
+      <Text style={styles.headertitle}>設定</Text>
+    ),
   });
   
   // スタッフ情報
@@ -1964,7 +1962,7 @@ function replaceElement(array, before, after) {
               value={contact}
               selectedBtn={(e) => {setContact(e.value)}}
               animationTypes={['rotate']}
-              activeColor={'#191970'}
+              activeColor={'#384955'}
               initial={!contact?1:contact==='9_1'?2:contact==='9'?3:2}
             />
             
@@ -1998,7 +1996,7 @@ function replaceElement(array, before, after) {
                 setSetting_list1(e.value);
               }}
               animationTypes={['rotate']}
-              activeColor={'#191970'}
+              activeColor={'#384955'}
               box={true}
               boxStyle={styles.radio_box}
               textStyle={{marginLeft:10,fontSize:16}}
@@ -2033,7 +2031,7 @@ function replaceElement(array, before, after) {
                 setSetting_list2(e.value);
               }}
               animationTypes={['rotate']}
-              activeColor={'#191970'}
+              activeColor={'#384955'}
               box={true}
               boxStyle={styles.radio_box}
               textStyle={{marginLeft:10,fontSize:16}}
@@ -2053,7 +2051,7 @@ function replaceElement(array, before, after) {
                 setSetting_list3(e.value);
               }}
               animationTypes={['rotate']}
-              activeColor={'#191970'}
+              activeColor={'#384955'}
               box={true}
               boxStyle={styles.radio_box}
               textStyle={{marginLeft:10,fontSize:16}}
@@ -2091,7 +2089,7 @@ function replaceElement(array, before, after) {
                 setSetting_list5(e.value);
               }}
               animationTypes={['rotate']}
-              activeColor={'#191970'}
+              activeColor={'#384955'}
               box={true}
               boxStyle={styles.radio_box}
               textStyle={{marginLeft:10,fontSize:16}}
@@ -2129,7 +2127,7 @@ function replaceElement(array, before, after) {
                   setSetting_list6(e.value);
                 }}
                 animationTypes={['rotate']}
-                activeColor={'#191970'}
+                activeColor={'#384955'}
                 box={true}
                 boxStyle={styles.radio_box}
                 textStyle={{marginLeft:10,fontSize:16}}
@@ -2167,7 +2165,7 @@ function replaceElement(array, before, after) {
                 setSetting_list7(e.value);
               }}
               animationTypes={['rotate']}
-              activeColor={'#191970'}
+              activeColor={'#384955'}
               box={true}
               boxStyle={styles.radio_box}
               textStyle={{marginLeft:10,fontSize:16}}
@@ -2187,7 +2185,7 @@ function replaceElement(array, before, after) {
                 setSetting_list8(e.value);
               }}
               animationTypes={['rotate']}
-              activeColor={'#191970'}
+              activeColor={'#384955'}
               box={true}
               boxStyle={styles.radio_box}
               textStyle={{marginLeft:10,fontSize:16}}
@@ -2207,7 +2205,7 @@ function replaceElement(array, before, after) {
                 setSetting_list10(e.value);
               }}
               animationTypes={['rotate']}
-              activeColor={'#191970'}
+              activeColor={'#384955'}
               box={true}
               boxStyle={styles.radio_box}
               textStyle={{marginLeft:10,fontSize:16}}
@@ -2456,9 +2454,10 @@ function replaceElement(array, before, after) {
 }
 
 const styles = StyleSheet.create({
-  header_img: {
-    width:150,
-    height:45,
+  headertitle: {
+    color:'#fff',
+    fontWeight:'700',
+    fontSize:20
   },
   form: {
     width: "90%",
@@ -2466,7 +2465,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize:20,
-    color:'#1d449a',
+    color:'#384955',
     fontWeight:'bold',
     marginTop: 20,
   },
@@ -2516,9 +2515,9 @@ const styles = StyleSheet.create({
     marginHorizontal:5,
     padding:10,
     backgroundColor: '#fff',
-    borderColor: '#191970',
+    borderColor: '#878787',
     fontSize:16,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderRadius: 8,
     color:'#000000'
   },
@@ -2526,9 +2525,9 @@ const styles = StyleSheet.create({
     marginHorizontal:5,
     padding:10,
     backgroundColor: '#fff',
-    borderColor: '#191970',
+    borderColor: '#878787',
     fontSize:16,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderRadius: 8,
     textAlign: 'right',
     width:'20%',
@@ -2540,9 +2539,9 @@ const styles = StyleSheet.create({
     marginHorizontal:5,
     padding:10,
     backgroundColor: '#fff',
-    borderColor: '#191970',
+    borderColor: '#878787',
     fontSize:16,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderRadius: 8,
     color:'#000000'
   },
@@ -2567,7 +2566,7 @@ const styles = StyleSheet.create({
   submit: {
     marginTop:30,
     marginBottom:50,
-    backgroundColor: '#47a9ce',
+    backgroundColor: '#384955',
     borderRadius: 8,
     alignSelf: 'center',
   },
@@ -2586,10 +2585,8 @@ const styles = StyleSheet.create({
   photoAdd: {
     height:35,
     marginTop: 15,
-    borderWidth: 1,
     borderRadius: 8,
-    borderColor: '#47a9ce',
-    backgroundColor: '#47a9ce',
+    backgroundColor: '#384955',
     justifyContent: 'center',
   },
   photoDel: {
@@ -2597,8 +2594,8 @@ const styles = StyleSheet.create({
     marginTop: 5,
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: '#696969',
-    backgroundColor: '#696969',
+    borderColor: '#384955',
+    backgroundColor: '#fff',
     justifyContent: 'center',
   },
   photoAddImg: {
@@ -2609,7 +2606,7 @@ const styles = StyleSheet.create({
   photoDelImg: {
     marginRight:5,
     textAlign:'center',
-    color:'#ffffff',
+    color:'#384955',
   },
   hide_view: {
     display: "none"
@@ -2625,12 +2622,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width:80,
     height:35,
-    backgroundColor:'#1f2d53',
+    backgroundColor:'#384955',
   },
   delbtn:{
     backgroundColor:'transparent',
     borderWidth:1,
-    borderColor:'#1f2d53',
+    borderColor:'#384955',
     marginLeft:10,
   },
   btn_text: {
@@ -2650,14 +2647,14 @@ const styles = StyleSheet.create({
     height:40,
     width:160,
     backgroundColor: '#fff',
-    borderColor: '#191970',
-    borderWidth: 1.5,
+    borderColor: '#878787',
+    borderWidth: 1,
     borderRadius: 8,
   },
   dropDownContainer: {
     width:160,
-    borderColor: '#191970',
-    borderWidth: 1.5,
+    borderColor: '#878787',
+    borderWidth: 1,
     zIndex:998,
   },
   dropDownlabel: {
@@ -2677,7 +2674,7 @@ const styles = StyleSheet.create({
   },
   moddal_submit: {
     marginVertical:20,
-    backgroundColor: '#47a9ce',
+    backgroundColor: '#00A0F3',
     borderRadius: 8,
     alignSelf: 'center',
   },

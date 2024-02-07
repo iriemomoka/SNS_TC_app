@@ -21,8 +21,8 @@ import { GetDB,db_select,db_write } from '../components/Databace';
 
 LogBox.ignoreAllLogs()
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = 'https://www.total-cloud.net/';
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = 'https://www.total-cloud.net/';
 
 const Width = Dimensions.get("window").width;
 
@@ -84,7 +84,7 @@ export default function TalkScreen(props) {
   const [reload, setReload] = useState("");
 
   navigation.setOptions({
-    headerStyle: !global.fc_flg?{ backgroundColor: '#1d449a', height: 110}:{ backgroundColor: '#fd2c77', height: 110},
+    headerStyle: !global.fc_flg?{ backgroundColor: '#6C9BCF', height: 110}:{ backgroundColor: '#FF8F8F', height: 110},
   });
   
   // 端末の戻るボタン
@@ -207,6 +207,7 @@ export default function TalkScreen(props) {
           />
         </TouchableOpacity>
       ),
+      
     });
     
     const backHandler = BackHandler.addEventListener(
@@ -639,13 +640,13 @@ export default function TalkScreen(props) {
           right: {
             backgroundColor: 'white',
             borderWidth: 1.5,
-            borderColor: '#346cb8',
+            borderColor: !global.fc_flg?"#6C9BCF":"#FF8F8F",
             marginRight: 5,
             marginVertical: 5,
             maxWidth: '75%',
           },
           left: {
-            backgroundColor: (stamp==='スタンプ'?'transparent':'#346cb8'),
+            backgroundColor: (stamp==='スタンプ'?'transparent':!global.fc_flg?"#d9faff":"#F4E1E4"),
             marginLeft: 5,
             marginVertical: 5,
             borderBottomLeftRadius: 1,
@@ -1387,7 +1388,7 @@ export default function TalkScreen(props) {
             >
               <MaterialCommunityIcons
                 name="phone"
-                color={global.fc_flg?"#fd2c77":"#1d449a"}
+                color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
                 size={30}
               />
               <Text style={styles.menutext}>電話をかける</Text>
@@ -1416,7 +1417,7 @@ export default function TalkScreen(props) {
           >
             <MaterialCommunityIcons
               name="account-cog"
-              color={global.fc_flg?"#fd2c77":"#1d449a"}
+              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
               size={30}
             />
             <Text style={styles.menutext}>お客様編集</Text>
@@ -1445,7 +1446,7 @@ export default function TalkScreen(props) {
           >
             <MaterialCommunityIcons
               name="file-table"
-              color={global.fc_flg?"#fd2c77":"#1d449a"}
+              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
               size={30}
             />
             <Text style={styles.menutext}>契約進行表</Text>
@@ -1474,7 +1475,7 @@ export default function TalkScreen(props) {
           >
             <MaterialCommunityIcons
               name="file-account"
-              color={global.fc_flg?"#fd2c77":"#1d449a"}
+              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
               size={30}
             />
             <Text style={styles.menutext}>契約進行表(法人)</Text>
@@ -1543,7 +1544,7 @@ export default function TalkScreen(props) {
               }}
               style={{flex: 1}}
             >
-              <Message {...props}/>
+              <Message {...props} />
             </GestureRecognizer>
           );
         }}
@@ -1556,7 +1557,7 @@ export default function TalkScreen(props) {
         renderSend={(props) => {
           return (
             <Send {...props} containerStyle={styles.sendContainer}>
-              <Feather name='send' color='gray' size={25} />
+              <Feather name='send' color='#fff' size={25} />
             </Send>
           );
         }}
@@ -1586,6 +1587,11 @@ export default function TalkScreen(props) {
         user={{_id: 1,text:msgtext}}
         textInputStyle={styles.textInput}
         textStyle={{color: "black"}}
+        listViewProps={{
+          style: {
+            backgroundColor: '#fff',
+          },
+        }}
         keyboardShouldPersistTaps={'never'}
         // 入力欄クリックした時のイベント
         textInputProps = {{
@@ -1595,7 +1601,7 @@ export default function TalkScreen(props) {
         renderActions={(props) => {
           return (
             // 選択されている送信ツール（LINE、メール、行動内容）のアイコン表示
-            <Actions {...props} icon={() => <Feather name={'menu'} color={!global.fc_flg?'#191970':'#ffffff'} size={25} />} />
+            <Actions {...props} icon={() => <Feather name={'menu'} color={"#fff"} size={25} />} />
           );
         }}
         // ↑を押したときのイベント
@@ -1626,7 +1632,7 @@ export default function TalkScreen(props) {
             <InputToolbar {...props}
             editable={false}
               containerStyle={[{
-                backgroundColor:!global.fc_flg?'#47a9ce':'#fe95bb'},
+                backgroundColor:!global.fc_flg?"#6C9BCF":"#FF8F8F"},
                 menu?{height:255}:'',
                 menu&&menu_height?{height:255+menu_height}:'',
               ]}
@@ -1643,19 +1649,19 @@ export default function TalkScreen(props) {
           >
             <View style={[styles.menu,{marginTop:15}]}>
               <TouchableOpacity style={!customer.line?{display:"none"}:styles.menuBox} onPress={()=>menuPress(1)} >
-                <Feather name='message-circle' color='#191970' size={30} />
+                <Feather name='message-circle' color='#404040' size={30} />
                 <Text style={styles.iconText}>LINE</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuBox} onPress={()=>menuPress(2)} >
-                <Feather name='mail' color='#191970' size={28} />
+                <Feather name='mail' color='#404040' size={28} />
                 <Text style={styles.iconText}>メール</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuBox} onPress={()=>menuPress(3)} >
-                <Feather name='edit' color='#191970' size={25} />
+                <Feather name='edit' color='#404040' size={25} />
                 <Text style={styles.iconText}>行動内容</Text>
               </TouchableOpacity>
               <TouchableOpacity style={customer.line&&video_option?styles.menuBox:{display:"none"}} onPress={() =>online_call(route.customer)}>
-                <Feather name='video' color='#191970' size={28} />
+                <Feather name='video' color='#404040' size={28} />
                 <Text style={styles.iconText}>オンライン{"\n"}通話</Text>
               </TouchableOpacity>
               <MyModal0
@@ -1741,11 +1747,11 @@ export default function TalkScreen(props) {
             </View>
             <View style={!customer.line?{display:"none"}:styles.menu}>
               <TouchableOpacity style={styles.menuBox} onPress={()=>menuPress(4)}>
-                <Feather name='home' color='#191970' size={28} />
+                <Feather name='home' color='#404040' size={28} />
                 <Text style={styles.iconText}>オススメ{"\n"}物件</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuBox}onPress={()=>menuPress(5)}>
-                <Feather name='file-text' color='#191970' size={28} />
+                <Feather name='file-text' color='#404040' size={28} />
                 <Text style={styles.iconText}>定型文</Text>
               </TouchableOpacity>
               
@@ -1845,7 +1851,7 @@ const styles = StyleSheet.create({
     height:80,
     backgroundColor:'#fafafa',
     borderWidth:1.5,
-    borderColor:'#191970',
+    borderColor:'#404040',
     borderRadius:20,
     marginHorizontal:5,
     justifyContent: 'center',
@@ -1854,7 +1860,7 @@ const styles = StyleSheet.create({
   iconText: {
     fontSize:12,
     fontWeight:'600',
-    color:'#191970',
+    color:'#404040',
     marginTop:5,
     textAlign:'center',
   },

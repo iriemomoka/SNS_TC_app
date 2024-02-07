@@ -50,8 +50,8 @@ const storage = new Storage({
 
 const db = SQLite.openDatabase("db");
 
-// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-let domain = "https://www.total-cloud.net/";
+let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+// let domain = 'https://www.total-cloud.net/';
 
 Notifications.setBadgeCountAsync(0);
 
@@ -99,8 +99,8 @@ export default function Company(props) {
 
     navigation.setOptions({
       headerStyle: !global.fc_flg
-        ? { backgroundColor: "#1d449a", height: 110}
-        : { backgroundColor: "#fd2c77", height: 110},
+        ? { backgroundColor: "#6C9BCF", height: 110}
+        : { backgroundColor: "#FF8F8F", height: 110},
       headerTitle: () => (
         <Text style={styles.headertitle}>社内チャット</Text>
       ),
@@ -120,7 +120,7 @@ export default function Company(props) {
             />
           </TouchableOpacity>
           <>
-          <View style={bell_count?[styles.bell,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]:{display:'none'}}>
+          <View style={bell_count?[styles.bell,{backgroundColor:!global.fc_flg?"red":"#574141"}]:{display:'none'}}>
             <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
           </View>
           <TouchableOpacity
@@ -874,11 +874,11 @@ export default function Company(props) {
         >
           <MaterialCommunityIcons
             name="bell"
-            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
             size={35}
           />
           <Text style={styles.menutext}>通知</Text>
-          <View style={bell_count?[styles.bell2,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]:{display:'none'}}>
+          <View style={bell_count?[styles.bell2,{backgroundColor:!global.fc_flg?"red":"#574141"}]:{display:'none'}}>
             <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
           </View>
         </TouchableOpacity>
@@ -902,7 +902,7 @@ export default function Company(props) {
         >
           <MaterialCommunityIcons
             name="account"
-            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
             size={35}
           />
           <Text style={styles.menutext}>設定</Text>
@@ -927,10 +927,33 @@ export default function Company(props) {
         >
           <MaterialCommunityIcons
             name="crown"
-            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
             size={35}
           />
           <Text style={styles.menutext}>売上順位</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menulist}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [{
+                name: 'Thanks' ,
+                params: route.params,
+                websocket:route.websocket,
+                websocket2: route.websocket2,
+                profile:route.profile,
+                previous:'Company',
+              }],
+            });
+          }}
+        >
+          <MaterialCommunityIcons
+            name="heart"
+            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
+            size={35}
+          />
+          <Text style={styles.menutext}>ありがとう</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.menulist}
@@ -938,7 +961,7 @@ export default function Company(props) {
         >
           <MaterialCommunityIcons
             name="logout"
-            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
             size={35}
           />
           <Text style={styles.menutext}>ログアウト</Text>
@@ -1013,7 +1036,7 @@ export default function Company(props) {
                     <View style={styles.icon2}>
                       <MaterialCommunityIcons
                         name="home-account"
-                        color={!global.fc_flg?"#1d449a":"#fd2c77"}
+                        color={!global.fc_flg?"#6C9BCF":"#FF8F8F"}
                         size={40}
                       />
                     </View>
@@ -1071,7 +1094,7 @@ export default function Company(props) {
     }
   },[shop_staffs,date,filteredStaffs])
 
-  const bgc = !global.fc_flg?"#fff4b3":"#f5d3df";
+  const bgc = !global.fc_flg?"#E6F4F1":"#FFF6F5";
   const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
 
   function staffsSearch(txt) {
@@ -1119,7 +1142,7 @@ export default function Company(props) {
           style={{margin: 0,justifyContent:'flex-start'}}
           onBackdropPress={()=>setAddchat(false)}
         >
-        <View style={[styles.roomheader,{height:headerHeight},Platform.OS === 'ios'&&{paddingTop:statusBarHeight},{backgroundColor:global.fc_flg?"#fd2c77":"#1d449a"}]}>
+        <View style={[styles.roomheader,{height:headerHeight},Platform.OS === 'ios'&&{paddingTop:statusBarHeight},{backgroundColor:global.fc_flg?"#FF8F8F":"#6C9BCF"}]}>
           <Text style={[styles.headertitle,{marginLeft:16}]}>社内チャット</Text>
           
           <View style={{marginRight:5,flexDirection:'row',marginLeft:'auto'}}>
@@ -1137,7 +1160,7 @@ export default function Company(props) {
                 />
               </TouchableOpacity>
               <>
-              <View style={bell_count?[styles.bell,{backgroundColor:!global.fc_flg?"red":"blueviolet"}]:{display:'none'}}>
+              <View style={bell_count?[styles.bell,{backgroundColor:!global.fc_flg?"red":"#574141"}]:{display:'none'}}>
                 <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
               </View>
               <TouchableOpacity
@@ -1179,10 +1202,10 @@ export default function Company(props) {
             > 
             <MaterialCommunityIcons
               name="wechat"
-              color={!global.fc_flg?"#1d449a":"#fd2c77"}
+              color={!global.fc_flg?"#6C9BCF":"#FF8F8F"}
               size={30}
             />
-              <Text style={[styles.roomtext,{color:!global.fc_flg?"#1d449a":"#fd2c77"}]}>チャット</Text>
+              <Text style={[styles.roomtext,{color:!global.fc_flg?"#6C9BCF":"#FF8F8F"}]}>チャット</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.roomblock}>
@@ -1207,10 +1230,10 @@ export default function Company(props) {
             > 
             <MaterialCommunityIcons
               name="account-group"
-              color={!global.fc_flg?"#1d449a":"#fd2c77"}
+              color={!global.fc_flg?"#6C9BCF":"#FF8F8F"}
               size={30}
             />
-              <Text style={[styles.roomtext,{color:!global.fc_flg?"#1d449a":"#fd2c77"}]}>グループ</Text>
+              <Text style={[styles.roomtext,{color:!global.fc_flg?"#6C9BCF":"#FF8F8F"}]}>グループ</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1269,7 +1292,21 @@ export default function Company(props) {
               ],
             });
           }}
-          active={[false,true,false]}
+          onPress3={() => {
+            navigation.reset({
+              index: 0,
+              routes: [{
+                name: 'TimeLine' ,
+                params: route.params,
+                websocket:route.websocket,
+                websocket2: route.websocket2,
+                profile:route.profile,
+                previous:'Company',
+                withAnimation: true
+              }],
+            });
+          }}
+          active={[false,true,false,false]}
         />
       </View>
     </SideMenu>
