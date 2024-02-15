@@ -59,6 +59,8 @@ export default function LogInScreen(props) {
 
   const { navigation,route } = props;
   const [cus_notifications, setCus_notifications] = useState(null);
+  const [chat_notifications, setChat_notifications] = useState(null);
+  const [TL_notifications, setTL_notifications] = useState(false);
   
   const [isLoading, setLoading] = useState(false);
   const [id, setID] = useState('');
@@ -104,6 +106,15 @@ export default function LogInScreen(props) {
         const cus_data = response.notification.request.content.data.customer;
         setCus_notifications(cus_data);
         
+      }
+      if (response.notification.request.content.data.room_id && !global.sp_id) {
+    
+        const room_id = response.notification.request.content.data.room_id;
+        setChat_notifications(room_id);
+        
+      }
+      if (response.notification.request.content.data.timeline && !global.sp_id) {
+        setTL_notifications(true);
       }
     })
 
@@ -284,6 +295,8 @@ export default function LogInScreen(props) {
                 flg:'ローカル',
                 previous:'LogIn',
                 notifications:cus_notifications?cus_notifications:null,
+                notifications2:chat_notifications?chat_notifications:null,
+                notifications3:TL_notifications?TL_notifications:null,
               }],
             });
           }
@@ -383,6 +396,8 @@ export default function LogInScreen(props) {
               flg:'トークン',
               previous:'LogIn',
               notifications:cus_notifications?cus_notifications:null,
+              notifications2:chat_notifications?chat_notifications:null,
+              notifications3:TL_notifications?TL_notifications:null,
             }],
           });
       
@@ -390,7 +405,7 @@ export default function LogInScreen(props) {
       }
     }
       
-  }, [station,address,rocalDB,cus_notifications]);
+  }, [station,address,rocalDB,cus_notifications,TL_notifications,chat_notifications]);
   
   async function Insert_staff_db(account,pass,data){
 

@@ -80,7 +80,8 @@
     "react-native-web": "~0.19.6",
     "react-native-webview": "13.2.2",
     "react-navigation": "^4.4.4",
-    "expo-haptics": "~12.4.0"
+    "expo-haptics": "~12.4.0",
+    "expo-linear-gradient": "~12.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

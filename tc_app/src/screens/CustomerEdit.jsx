@@ -298,6 +298,22 @@ export default function CustomerEdit(props) {
 
           }
         }
+        if (
+          response.notification.request.content.data.timeline &&
+          global.sp_id
+        ) {
+          navigation.reset({
+            index: 0,
+            routes: [{
+              name: 'TimeLine' ,
+              params: route.params,
+              websocket:route.websocket,
+              websocket2: route.websocket2,
+              profile:route.profile,
+              withAnimation: true
+            }],
+          });
+        }
     });
 
     return () => {
