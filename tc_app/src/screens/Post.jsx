@@ -29,13 +29,10 @@ import {
 } from "react-native";
 import * as Notifications from "expo-notifications";
 import { MaterialCommunityIcons,Ionicons,Octicons } from '@expo/vector-icons';
-import SideMenu from 'react-native-side-menu-updated';
 import * as SQLite from "expo-sqlite";
-import { useHeaderHeight } from '@react-navigation/elements';
-import Constants from 'expo-constants';
 import { Feather } from "@expo/vector-icons";
 import Modal from "react-native-modal";
-import * as ImagePicker from 'expo-image-picker';
+import { GestureHandlerRootView,PanGestureHandler } from 'react-native-gesture-handler';
 
 import Loading from "../components/Loading";
 import { GetDB,db_select,db_write } from '../components/Databace';
@@ -63,14 +60,46 @@ export default function Post(props) {
 
   const [isLoading, setLoading] = useState(false);
 
-  const { navigation, route } = props;
+  var { navigation, route } = props;
+
+  route = route.params;
+
+  const [edit, setEdit] = useState(false);
 
   const [modal, setModal] = useState(false);
 
   // 1:返信 2:ありがとう
   const [modal_flg, setModal_flg] = useState("1");
 
+  const [thank, setThank] = useState({
+    "follow_user_id": "",
+    "ins_dt": "",
+    "send_date": "",
+    "thank_id": "",
+    "thank_message": "",
+    "upd_dt": "",
+    "user_id": "",
+  });
+
+  const [follow_my, setFollow_my] = useState({
+    "follow_user_list": "",
+    "follower_user_list": "",
+    "upd_dt": "",
+    "user_id": "",
+  });
+  const [follow_you, setFollow_you] = useState({
+    "follow_user_list": "",
+    "follower_user_list": "",
+    "upd_dt": "",
+    "user_id": "",
+  });
+  const [follow_flg, setFollow_flg] = useState(false);
+  const [follower_flg, setFollower_flg] = useState(false);
+
   const [postCM, setPostCM] = useState('');
+  const [postFav, setPostFav] = useState(route.post.fav);
+  const [postCom, setPostCom] = useState(route.post.comment_all);
+  const [postNiceall, setPostNiceall] = useState(route.post.nice_all);
   const [thanks, setThanks] = useState('');
 
   const [Comment, setComment] = useState([]);
@@ -112,17 +141,7 @@ export default function Post(props) {
           color='white'
           size={30}
           onPress={() => {
-            navigation.reset({
-              index: 0,
-              routes: [{
-                name: 'TimeLine' ,
-                params: route.params,
-                websocket:route.websocket,
-                websocket2: route.websocket2,
-                profile:route.profile,
-                previous:'Post',
-              }],
-            });
+            navigation.goBack();
           }}
           style={{paddingHorizontal:15,paddingVertical:10}}
         />
@@ -221,6 +240,22 @@ export default function Post(props) {
 
           }
         }
+        if (
+          response.notification.request.content.data.timeline &&
+          global.sp_id
+        ) {
+          navigation.reset({
+            index: 0,
+            routes: [{
+              name: 'TimeLine' ,
+              params: route.params,
+              websocket:route.websocket,
+              websocket2: route.websocket2,
+              profile:route.profile,
+              withAnimation: true
+            }],
+          });
+        }
       });
 
     return () => {
@@ -247,10 +282,11 @@ export default function Post(props) {
     const json = await getPost();
 
     if (json) {
+
       if (route.flg == 1) {
         setComment(json["comment"]);
       } else if (route.flg == 2) {
-        var posts = json["post"];
+        var posts = [...json["post"].filter(item => !Comment.some(item2 => item2.timeline_id === item.timeline_id)), ...Comment];
         posts.forEach(item => {
           item.name_1 = route.post.name_1;
           item.name_2 = route.post.name_2;
@@ -262,7 +298,22 @@ export default function Post(props) {
         if(json["challenge"]) {
           setChallenge(json["challenge"][0]);
         }
+
+        
+        if(json["thank"]) {
+          setThank(json["thank"][0]);
+        }
       }
+
+      setFollow_my(json["follow_my"][0]);
+      setFollow_you(json["follow_you"][0]);
+
+      var follow_user = (json["follow_my"][0]["follow_user_list"]).split(",");
+      setFollow_flg(follow_user.includes(route.post.user_id))
+
+      var follower_user = (json["follow_my"][0]["follower_user_list"]).split(",");
+      setFollower_flg(follower_user.includes(route.post.user_id))
+
     }
 
     setLoading(false);
@@ -302,7 +353,7 @@ export default function Post(props) {
     await onRefresh(false);
   };
 
-  const getPost = useCallback(() => {
+  const getPost = useCallback((page = 0) => {
     
     const signal = abortControllerRef.current.signal;
 
@@ -319,7 +370,8 @@ export default function Post(props) {
           act: "post",
           fc_flg: global.fc_flg,
           flg:route.flg,
-          post_data:route.post
+          post_data:route.post,
+          page:page
         }),
         signal
       })
@@ -339,11 +391,42 @@ export default function Post(props) {
 
   },[abortControllerRef]);
 
+  const endRefreshPost = useCallback(async() => {
+
+    setLoading(true);
+
+    const json = await getPost(Comment.length);
+    
+    if (json != false) {
+      if (json["post"]) {
+        var posts = [...Comment, ...json["post"].filter(item => !Comment.some(item2 => item2.timeline_id === item.timeline_id))];
+        posts.forEach(item => {
+          item.name_1 = route.post.name_1;
+          item.name_2 = route.post.name_2;
+          item.shop_name = route.post.shop_name;
+          item.staff_photo1 = route.post.staff_photo1;
+        });
+        setComment(posts);
+      }
+    }
+
+    setLoading(false);
+  });
+
   const CommentList = useMemo(() => {
 
     return (
       <View style={[{paddingHorizontal:10,marginBottom:240},route.flg == 2&&{marginTop:10}]}>
         <FlatList
+          onEndReached={()=>endRefreshPost()}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={async()=>{
+                await onRefresh();
+              }}
+            />
+          }
           ref={listRef}
           initialNumToRender={10}
           data={Comment}
@@ -392,10 +475,14 @@ export default function Post(props) {
                   </View>
                   {route.flg == 2 && item.timeline_img&&(
                     <TouchableOpacity
-                      onPress={()=>{
-                        Image.getSize({uri:item.timeline_img}, (width, height) => {
-                          setTLimg_size({width:width,height:height});
+                      onPress={async()=>{
+                        const {imgWidth, imgHeight} = await new Promise((resolve) => {
+                          Image.getSize(item.timeline_img, (width, height) => {
+                            resolve({imgWidth: width, imgHeight: height});
+                          });
                         });
+
+                        setTLimg_size({width:imgWidth,height:imgHeight});
                         setTLimg(item.timeline_img);
                         setTLimg_mdl(true);
                       }}
@@ -434,46 +521,279 @@ export default function Post(props) {
     )
   },[Comment,checked])
 
-  const ChangeFavorite = (index,fav) => {
+  function setFollow_fetch() {
 
-    let newlist = [...Comment];
+    setFollow_flg(!follow_flg);
 
-    if (fav) {
-      if (newlist[index].nice_list != "") {
-        var nice_list = newlist[index].nice_list.split(",");
-      } else {
-        var nice_list = [];
-      }
-      const del_nice  = nice_list.filter(item => item !== route.params.account);
-      const new_nice  = del_nice.join(",");
-      newlist[index].nice_list = new_nice;
+    var newFollow_my  = follow_my;
+    var newFollow_you = follow_you;
+    
+    var follow_my_list = newFollow_my["follow_user_list"]!=""?newFollow_my["follow_user_list"].split(","):[];
+    var follower_you_list = newFollow_you["follower_user_list"]!=""?newFollow_you["follower_user_list"].split(","):[];
 
-      const nice_all = newlist[index].nice_all;
-      if (nice_all > 0) {
-        newlist[index].nice_all = nice_all - 1;
-      } else {
-        newlist[index].nice_all = 1;
-      }
+    if(!follow_flg) {
+      // フォロー
+      follow_my_list.push(route.post.user_id);
+      newFollow_my["follow_user_list"] = follow_my_list.join(",");
+      follower_you_list.push(route.params.account);
+      newFollow_you["follower_user_list"] = follower_you_list.join(",");
     } else {
-      if (newlist[index].nice_list != "") {
-        var nice_list = newlist[index].nice_list.split(",");
-      } else {
-        var nice_list = [];
-      }
-      nice_list.push(route.params.account);
-      const new_nice  = nice_list.join(",");
-      newlist[index].nice_list = new_nice;
-
-      const nice_all = newlist[index].nice_all;
-      if (nice_all > 0) {
-        newlist[index].nice_all = nice_all + 1;
-      } else {
-        newlist[index].nice_all = 1;
-      }
+      //フォロー解除
+      follow_my_list = follow_my_list.filter(item => item !== route.post.user_id);
+      newFollow_my["follow_user_list"] = follow_my_list.join(",");
+      follower_you_list = follower_you_list.filter(item => item !== route.params.account);
+      newFollow_you["follower_user_list"] = follower_you_list.join(",");
     }
 
-    setComment(newlist);
-    setChecked(!checked);
+    fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: JSON.stringify({
+        ID: route.params.account,
+        pass: route.params.password,
+        act: "post",
+        fc_flg: global.fc_flg,
+        flg:3,
+        follow_flg:!follow_flg?1:"",
+        post_data:route.post,
+        follow:newFollow_my["follow_user_list"],
+        follower:newFollow_you["follower_user_list"],
+      }),
+    })
+    .then((response) => response.json())
+    .then((json) => {
+      setFollow_my(json["follow_my"][0]);
+      setFollow_you(json["follow_you"][0]);
+    })
+    .catch((error) => {
+      console.log(error);
+      Alert.alert("フォローに失敗しました");
+    });
+    
+  }
+
+  const ChangeFavorite = (index,fav) => {
+
+    if (index != "") {
+      let newlist = [...Comment];
+  
+      if (fav) {
+        if (newlist[index].nice_list != "") {
+          var nice_list = newlist[index].nice_list.split(",");
+        } else {
+          var nice_list = [];
+        }
+        const del_nice  = nice_list.filter(item => item !== route.params.account);
+        const new_nice  = del_nice.join(",");
+        newlist[index].nice_list = new_nice;
+  
+        const nice_all = newlist[index].nice_all;
+        if (nice_all > 0) {
+          newlist[index].nice_all = nice_all - 1;
+        } else {
+          newlist[index].nice_all = 1;
+        }
+      } else {
+        if (newlist[index].nice_list != "") {
+          var nice_list = newlist[index].nice_list.split(",");
+        } else {
+          var nice_list = [];
+        }
+        nice_list.push(route.params.account);
+        const new_nice  = nice_list.join(",");
+        newlist[index].nice_list = new_nice;
+  
+        const nice_all = newlist[index].nice_all;
+        if (nice_all > 0) {
+          newlist[index].nice_all = nice_all + 1;
+        } else {
+          newlist[index].nice_all = 1;
+        }
+      }
+  
+      setComment(newlist);
+      setChecked(!checked);
+      
+      setFetch(route.flg,newlist[index]);
+    } else {
+      var newdata = route.post;
+      setPostFav(!postFav);
+      if (postFav) {
+        if (postNiceall > 0) {
+          var nice_list = newdata["nice_list"].split(",");
+          newdata["nice_all"] = postNiceall - 1;
+          setPostNiceall(postNiceall - 1);
+        } else {
+          var nice_list = [];
+          newdata["nice_all"] = 0;
+          setPostNiceall(0);
+        }
+        const del_nice  = nice_list.filter(item => item !== route.params.account);
+        const new_nice  = del_nice.join(",");
+        newdata["nice_list"] = new_nice;
+      } else {
+        if (postNiceall > 0) {
+          var nice_list = newdata["nice_list"].split(",");
+          newdata["nice_all"] = postNiceall + 1;
+          setPostNiceall(postNiceall + 1);
+        } else {
+          var nice_list = [];
+          newdata["nice_all"] = 1;
+          setPostNiceall(1);
+        }
+        nice_list.push(route.params.account);
+        const new_nice  = nice_list.join(",");
+        newdata["nice_list"] = new_nice;
+      }
+      setFetch(2,newdata);
+    }
+  }
+
+  const sendComment = async() => {
+    if (postCM == "") {
+      Alert.alert("エラー","コメントが未入力です");
+      return;
+    }
+
+    var data = {
+      timeline_id:route.post.timeline_id,
+      comment_note:postCM,
+    }
+
+    setPostCom(Number(postCom) + 1);
+    await setFetch(3,data);
+    ModalClose();
+    await onRefresh();
+  }
+
+  const sendThank = async() => {
+
+    var data = {
+      thank_id:thank.thank_id,
+      user_id:route.post.user_id,
+      thank_message:thanks,
+    }
+
+    await setFetch(4,data);
+    ModalClose();
+    await onRefresh();
+  }
+
+  const ClearThanks = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+        `確認`,
+        `${route.post.name_1} ${route.post.name_2}さんへのありがとうを取り消しますか？`,
+        [
+          {text: "はい", onPress: () => {resolve(true);}},
+          {text: "いいえ", onPress: () => {resolve(false);}, style: "cancel"},
+        ]
+      );
+    });
+
+    const thanks_check = await AsyncAlert();
+    if (!thanks_check) return;
+
+    var data = {
+      thank_id:thank.thank_id,
+    }
+
+    setThank({
+      "follow_user_id": "",
+      "ins_dt": "",
+      "send_date": "",
+      "thank_id": "",
+      "thank_message": "",
+      "upd_dt": "",
+      "user_id": "",
+    });
+
+    await setFetch(5,data);
+    ModalClose();
+    await onRefresh();
+  }
+
+  const ModalClose = async(check_flg = false) => {
+    
+    if (check_flg && edit) {
+      const AsyncAlert = async () => new Promise((resolve) => {
+        Alert.alert(
+          `確認`,
+          `入力した内容を保存せずに閉じていいですか？`,
+          [
+            {text: "はい", onPress: () => {resolve(true);}},
+            {text: "いいえ", onPress: () => {resolve(false);}, style: "cancel"},
+          ]
+        );
+      });
+  
+      const modal_check = await AsyncAlert();
+      if (!modal_check) return;
+    }
+
+    setModal(false);
+    setModal_flg('1');
+    setPostCM("");
+    setThanks("");
+    setEdit(false);
+  }
+
+  function setFetch(flg,data) {
+
+    var err = "";
+
+    let formData = new FormData();
+    formData.append('ID',route.params.account);
+    formData.append('pass',route.params.password);
+    formData.append('act',"timeline");
+    formData.append('fc_flg',global.fc_flg);
+    formData.append('formdata_flg',1);
+    formData.append('page',0);
+    
+    for (const key in data) {
+      formData.append(key, data[key]);
+    }
+
+    if (flg == 1) { // コメントのいいね
+      err = "コメントのいいね";
+      formData.append('comment_fav_flg',1);
+    } else if (flg == 2) { // いいね
+      err = "いいね";
+      formData.append('favorite_flg',1);
+    } else if (flg == 3) { // コメント
+      err = "コメント";
+      formData.append('comment_flg',1);
+    } else if (flg == 4) { // ありがとう
+      err = "ありがとう";
+      formData.append('thanks_flg',1);
+    } else if (flg == 5) { // ありがとう取り消し
+      err = "ありがとう取り消し";
+      formData.append('thanks_clear_flg',1);
+    }
+    
+    fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'multipart/form-data',
+      },
+      body: formData,
+    })
+    .then((response) => response.json())
+    .then((json) => {
+      if(!json) {
+        Alert.alert(err+"に失敗しました");
+      }
+    })
+    .catch((error) => {
+      console.log(error)
+      Alert.alert(err+"に失敗しました");
+    })
+
   }
 
   const [keyboardStatus, setKeyboardStatus] = useState(false);
@@ -498,298 +818,366 @@ export default function Post(props) {
   const btn = !global.fc_flg?"#81aee6":"#e6c4f5";
   const bbc = !global.fc_flg?"#6c93c4":"#c4a3d4";
 
+  const velocityThreshold = 0.3;
+  const directionalOffsetThreshold = 80;
+
+  const isValidSwipe = (velocity, directionalOffset) => {
+    return (
+      Math.abs(velocity) > velocityThreshold &&
+      Math.abs(directionalOffset) < directionalOffsetThreshold
+    );
+  };
+
+  const onPanGestureEvent = useCallback((event) => {
+    const { velocityY, velocityX, translationX } = event.nativeEvent;
+  
+    if (Math.abs(velocityY) > 300) {
+      return;
+    }
+  
+    if (!isValidSwipe(velocityX, translationX)) {
+      return;
+    }
+  
+    if (velocityX > 0) {
+      navigation.goBack();
+    }
+  }, []);
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : -50}
-    >
-      <View style={[styles.container,{backgroundColor:bgc}]}>
-        <Loading isLoading={isLoading} />
-        {route.flg == 1?(
-          <>
-          <View style={styles.post}>
-            <View style={styles.postItem}>
-              <View style={styles.ListInner}>
-                {route.post.staff_photo1?
-                  (
-                    <Image
-                      style={styles.icon}
-                      source={{uri:domain+"img/staff_img/"+route.post.staff_photo1}}
-                    />
-                  ):(
-                    <Image
-                      style={styles.icon}
-                      source={require('../../assets/photo4.png')}
-                    />
-                  )
-                }
-                <View>
-                  <Text style={styles.shop}>
-                    {route.post.shop_name}
-                  </Text>
-                  <Text style={styles.name}>
-                    {route.post.name_1}{route.post.name_2}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.follow,{backgroundColor:rsl}]}
-                  onPress={()=>{}}
-                >
-                  <Text style={styles.follow_txt}>フォローする</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={[styles.message,{fontSize:17,marginVertical:15}]}>
-                {route.post.timeline_note}
-              </Text>
-              {route.post.timeline_img&&(
-                <TouchableOpacity
-                  onPress={()=>{
-                    Image.getSize({uri:route.post.timeline_img}, (width, height) => {
-                      setTLimg_size({width:width,height:height});
-                    });
-                    setTLimg(route.post.timeline_img);
-                    setTLimg_mdl(true);
-                  }}
-                  activeOpacity={1}
-                >
-                <Image
-                  style={styles.timeline_img}
-                  source={{uri:route.post.timeline_img}}
-                />
-                </TouchableOpacity>
-              )}
-              <View style={styles.score}>
-                <TouchableOpacity
-                  style={{flexDirection:'row'}}
-                  activeOpacity={1}
-                  onPress={()=>{
-                    setModal_flg("1")
-                    setModal(true);
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="chat-outline"
-                    color={"#b3b3b3"}
-                    size={18}
-                  />
-                  <Text style={styles.score_text}>
-                    {route.post.comment_all}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={{flexDirection:'row'}}
-                  activeOpacity={1}
-                  onPress={()=>ChangeFavorite(index,route.post.fav)}
-                >
-                  <MaterialCommunityIcons
-                    name={route.post.fav?"heart":"heart-outline"}
-                    color={route.post.fav?"#F23D3D":"#b3b3b3"}
-                    size={18}
-                  />
-                  <Text style={styles.score_text}>
-                    {route.post.nice_all}
-                  </Text>
-                </TouchableOpacity>
-                <Text style={styles.date}>
-                  {route.post.ins_dt?route.post.ins_dt:''}
-                </Text>
-              </View>
-            </View>
-          </View>
-          </>
-        ):(
-          <View style={styles.post}>
-            <View style={styles.postItem}>
-              <View style={styles.ListInner}>
-                {route.post.staff_photo1?
-                  (
-                    
+    <GestureHandlerRootView style={{flex:1}}>
+      <PanGestureHandler onActivated={onPanGestureEvent}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : -50}
+        >
+          <View style={[styles.container,{backgroundColor:bgc}]}>
+            <Loading isLoading={isLoading} />
+            {route.flg == 1?(
+              <>
+              <View style={styles.post}>
+                <View style={styles.postItem}>
+                  <View style={styles.ListInner}>
+                    {route.post.staff_photo1?
+                      (
+                        <Image
+                          style={styles.icon}
+                          source={{uri:domain+"img/staff_img/"+route.post.staff_photo1}}
+                        />
+                      ):(
+                        <Image
+                          style={styles.icon}
+                          source={require('../../assets/photo4.png')}
+                        />
+                      )
+                    }
+                    <View>
+                      <Text style={styles.shop}>
+                        {route.post.shop_name}
+                      </Text>
+                      <Text style={styles.name}>
+                        {route.post.name_1}{route.post.name_2}
+                      </Text>
+                    </View>
+                    {route.params.account != route.post.user_id && (
                       <TouchableOpacity
-                      onPress={()=>{
-                        Image.getSize({uri:domain+"img/staff_img/"+route.post.staff_photo1}, (width, height) => {
-                          setTLimg_size({width:width,height:height});
+                        style={[styles.follow,{backgroundColor:rsl}]}
+                        onPress={()=>{setFollow_fetch()}}
+                      >
+                        <Text style={styles.follow_txt}>{follow_flg?"フォロー解除":"フォローする"}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <Text style={[styles.message,{fontSize:17,marginVertical:15}]}>
+                    {route.post.timeline_note}
+                  </Text>
+                  {route.post.timeline_img&&(
+                    <TouchableOpacity
+                      onPress={async()=>{
+                        const {imgWidth, imgHeight} = await new Promise((resolve) => {
+                          Image.getSize(route.post.timeline_img, (width, height) => {
+                            resolve({imgWidth: width, imgHeight: height});
+                          });
                         });
-                        setTLimg(domain+"img/staff_img/"+route.post.staff_photo1);
+
+                        setTLimg_size({width:imgWidth,height:imgHeight});
+                        setTLimg(route.post.timeline_img);
                         setTLimg_mdl(true);
                       }}
                       activeOpacity={1}
                     >
-                      <Image
-                        style={styles.icon2}
-                        source={{uri:domain+"img/staff_img/"+route.post.staff_photo1}}
-                      />
-                    </TouchableOpacity>
-                  ):(
                     <Image
-                      style={styles.icon2}
-                      source={require('../../assets/photo4.png')}
+                      style={styles.timeline_img}
+                      source={{uri:route.post.timeline_img}}
                     />
-                  )
-                }
-                <View>
-                  <Text style={styles.shop2}>
-                    {route.post.shop_name}
-                  </Text>
-                  <Text style={styles.name2}>
-                    {route.post.name_1}{route.post.name_2}
-                  </Text>
-                  {route.params.account != route.post.user_id && (
-                    <View style={{flexDirection:'row',justifyContent:'center',marginTop:8}}>
-                      <TouchableOpacity
-                        style={[styles.follow2,{borderColor:rsl,backgroundColor:'#fff',borderWidth:1.5}]}
-                        onPress={()=>{
-                          setModal_flg("2")
-                          setModal(true);
-                        }}
-                      >
-                        <Text style={[styles.follow2_txt,{color:rsl}]}>ありがとう送信</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.follow2,{backgroundColor:rsl,marginLeft:5}]}
-                        onPress={()=>{}}
-                      >
-                        <Text style={styles.follow2_txt}>フォローする</Text>
-                      </TouchableOpacity>
-                    </View>
+                    </TouchableOpacity>
                   )}
+                  <View style={styles.score}>
+                    <TouchableOpacity
+                      style={{flexDirection:'row'}}
+                      activeOpacity={1}
+                      onPress={()=>{
+                        setModal_flg("1")
+                        setModal(true);
+                      }}
+                    >
+                      <MaterialCommunityIcons
+                        name="chat-outline"
+                        color={"#b3b3b3"}
+                        size={18}
+                      />
+                      <Text style={styles.score_text}>
+                        {postCom}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{flexDirection:'row'}}
+                      activeOpacity={1}
+                      onPress={()=>ChangeFavorite("",postFav)}
+                    >
+                      <MaterialCommunityIcons
+                        name={postFav?"heart":"heart-outline"}
+                        color={postFav?"#F23D3D":"#b3b3b3"}
+                        size={18}
+                      />
+                      <Text style={styles.score_text}>
+                        {postNiceall}
+                      </Text>
+                    </TouchableOpacity>
+                    <Text style={styles.date}>
+                      {route.post.ins_dt?route.post.ins_dt:''}
+                    </Text>
+                  </View>
                 </View>
               </View>
-              <Text style={styles.label}>今日のチャレンジ</Text>
-              <Text style={styles.challenge}>{challenge.challenge_content}</Text>
-            </View>
-          </View>
-        )}
-        {CommentList}
-        <Modal
-          isVisible={modal}
-          backdropOpacity={0.5}
-          animationInTiming={300}
-          animationOutTiming={500}
-          animationIn={'slideInDown'}
-          animationOut={'slideOutUp'}
-          onBackdropPress={()=>{
-            keyboardStatus?Keyboard.dismiss():setModal(false)
-          }}
-          style={{zIndex:999}}
-        >
-          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-            <TouchableWithoutFeedback
-              onPress={()=>Keyboard.dismiss()}
-            >
-              <View style={styles.modal}>
-                <TouchableOpacity
-                  style={styles.close}
-                  onPress={()=>setModal(false)}
-                >
-                  <Feather name='x-circle' color='gray' size={35} />
-                </TouchableOpacity>
-                <Text style={styles.modallabel}>{modal_flg=="1"?"コメント":`${route.post.name_1}${route.post.name_2}さんへありがとうを送る`}</Text>
-                <TextInput
-                  onChangeText={(text) => {
-                    modal_flg=="1"?
-                    setPostCM(text):
-                    setThanks(text);
-                  }}
-                  value={modal_flg=="1"?postCM:thanks}
-                  style={styles.textarea}
-                  multiline={true}
-                  disableFullscreenUI={true}
-                  numberOfLines={11}
-                  placeholder={modal_flg=="1"?"返信をポスト":""}
-                />
-                <TouchableOpacity
-                  onPress={()=>setModal(false)}
-                  style={styles.submit}
-                  >
-                  <Text style={styles.submitText}>{modal_flg == "1"?"投　稿":"送　信"}</Text>
-                </TouchableOpacity>
+              </>
+            ):(
+              <View style={styles.post}>
+                <View style={styles.postItem}>
+                  <View style={styles.ListInner}>
+                    {route.post.staff_photo1?
+                      (
+                        <TouchableOpacity
+                          onPress={async()=>{
+                            const {imgWidth, imgHeight} = await new Promise((resolve) => {
+                              Image.getSize(domain+"img/staff_img/"+route.post.staff_photo1, (width, height) => {
+                                resolve({imgWidth: width, imgHeight: height});
+                              });
+                            });
+    
+                            setTLimg_size({width:imgWidth,height:imgHeight});
+                            setTLimg(domain+"img/staff_img/"+route.post.staff_photo1);
+                            setTLimg_mdl(true);
+                          }}
+                          activeOpacity={1}
+                        >
+                          <Image
+                            style={styles.icon2}
+                            source={{uri:domain+"img/staff_img/"+route.post.staff_photo1}}
+                          />
+                        </TouchableOpacity>
+                      ):(
+                        <Image
+                          style={styles.icon2}
+                          source={require('../../assets/photo4.png')}
+                        />
+                      )
+                    }
+                    <View style={{flex:1}}>
+                      <View style={{flexDirection:'row',alignItems:'center'}}>
+                        <View>
+                          <Text style={styles.shop2}>
+                            {route.post.shop_name}
+                          </Text>
+                          <Text style={styles.name2}>
+                            {route.post.name_1}{route.post.name_2}
+                          </Text>
+                        </View>
+                        {(route.params.account != route.post.user_id && follower_flg) &&(
+                          <View style={{padding:3,backgroundColor:"#dbdbdb",borderRadius:5,marginLeft:'auto'}}>
+                            <Text style={{color:'#999',fontSize:11}}>フォローされています</Text>
+                          </View>
+                        )}
+                      </View>
+                      {route.params.account != route.post.user_id && (
+                        <View style={{flexDirection:'row',marginTop:8}}>
+                          <TouchableOpacity
+                            style={[styles.follow2,{borderColor:rsl,backgroundColor:'#fff',borderWidth:1.5}]}
+                            onPress={()=>{
+                              setModal_flg("2")
+                              setModal(true);
+                              setThanks(thank.thank_id&&thank.thank_message);
+                            }}
+                          >
+                            <Text style={[styles.follow2_txt,{color:rsl}]}>{thank.thank_id?"ありがとう送信済":"ありがとう送信"}</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.follow2,{backgroundColor:rsl,marginLeft:5}]}
+                            onPress={()=>{setFollow_fetch()}}
+                          >
+                            <Text style={styles.follow2_txt}>{follow_flg?"フォロー解除":"フォローする"}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                  <Text style={styles.label}>今日のチャレンジ</Text>
+                  <Text style={styles.challenge}>{challenge.challenge_content}</Text>
+                </View>
               </View>
-            </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
-        </Modal>
-        <Modal
-          isVisible={TLimg_mdl}
-          swipeDirection={['up']}
-          onSwipeComplete={()=>setTLimg_mdl(false)}
-          backdropOpacity={1}
-          animationInTiming={100}
-          animationOutTiming={300}
-          animationIn={'fadeIn'}
-          animationOut={'fadeOut'}
-          propagateSwipe={true}
-          transparent={true}
-          onBackdropPress={()=>setTLimg_mdl(false)}
-          style={{alignItems:'center',zIndex:999}}
-        >
-          <TouchableOpacity
-            style={styles.clsbtn}
-            onPress={()=>setTLimg_mdl(false)}
-            activeOpacity={0.8}
-          >
-            <MaterialCommunityIcons
-              name="close-circle"
-              color="#999"
-              size={30}
-            />
-          </TouchableOpacity>
-          <View style={{width:Width,height:Width / (TLimg_size.width / TLimg_size.height)}}>
-            <Image
-              style={{width:"100%",height:"100%"}}
-              source={{uri:TLimg}}
+            )}
+            {CommentList}
+            <Modal
+              isVisible={modal}
+              backdropOpacity={0.5}
+              animationInTiming={300}
+              animationOutTiming={500}
+              animationIn={'slideInDown'}
+              animationOut={'slideOutUp'}
+              onBackdropPress={()=>{
+                keyboardStatus?Keyboard.dismiss():ModalClose(true)
+              }}
+              style={{zIndex:999}}
+            >
+              <KeyboardAvoidingView behavior={"position"} keyboardVerticalOffset={30}>
+                <TouchableWithoutFeedback
+                  onPress={()=>Keyboard.dismiss()}
+                >
+                  <View style={styles.modal}>
+                    <TouchableOpacity
+                      style={styles.close}
+                      onPress={()=>ModalClose(true)}
+                    >
+                      <Feather name='x-circle' color='gray' size={35} />
+                    </TouchableOpacity>
+                    <Text style={styles.modallabel}>{modal_flg=="1"?"コメント":`${route.post.name_1}${route.post.name_2}さんへありがとうを送る`}</Text>
+                    <TextInput
+                      onChangeText={(text) => {
+                        if (text) setEdit(true);
+                        modal_flg=="1"?
+                        setPostCM(text):
+                        setThanks(text);
+                      }}
+                      value={modal_flg=="1"?postCM:thanks}
+                      style={styles.textarea}
+                      multiline={true}
+                      disableFullscreenUI={true}
+                      numberOfLines={11}
+                      placeholder={modal_flg=="1"?"返信をポスト":""}
+                    />
+                    <TouchableOpacity
+                      onPress={()=>{
+                        if (modal_flg=="1") { // コメント
+                          sendComment();
+                        } else { // ありがとう
+                          sendThank();
+                        }
+                      }}
+                      style={styles.submit}
+                      >
+                      <Text style={styles.submitText}>{modal_flg == "1"?"投　稿":"送　信"}</Text>
+                    </TouchableOpacity>
+                    {(modal_flg=="2"&&thank.thank_id)&&(
+                    <TouchableOpacity
+                      onPress={()=>{
+                        ClearThanks();
+                      }}
+                      style={[styles.submit,{backgroundColor:"#a6a6a6",borderBottomColor:"#8c8c8c",marginTop:5}]}
+                      >
+                      <Text style={styles.submitText}>取り消す</Text>
+                    </TouchableOpacity>
+                    )}
+                  </View>
+                </TouchableWithoutFeedback>
+              </KeyboardAvoidingView>
+            </Modal>
+            <Modal
+              isVisible={TLimg_mdl}
+              swipeDirection={['up']}
+              onSwipeComplete={()=>setTLimg_mdl(false)}
+              backdropOpacity={1}
+              animationInTiming={100}
+              animationOutTiming={300}
+              animationIn={'fadeIn'}
+              animationOut={'fadeOut'}
+              propagateSwipe={true}
+              transparent={true}
+              onBackdropPress={()=>setTLimg_mdl(false)}
+              style={{alignItems:'center',zIndex:999}}
+            >
+              <TouchableOpacity
+                style={styles.clsbtn}
+                onPress={()=>setTLimg_mdl(false)}
+                activeOpacity={0.8}
+              >
+                <MaterialCommunityIcons
+                  name="close-circle"
+                  color="#999"
+                  size={30}
+                />
+              </TouchableOpacity>
+              <View style={{width:Width,height:Width / (TLimg_size.width / TLimg_size.height)}}>
+                <Image
+                  style={{width:"100%",height:"100%"}}
+                  source={{uri:TLimg}}
+                />
+              </View>
+            </Modal>
+            <Footer
+              onPress0={() => {
+                navigation.reset({
+                  index: 0,
+                  routes: [{
+                    name: 'CommunicationHistory' ,
+                    params: route.params,
+                    websocket:route.websocket,
+                    websocket2: route.websocket2,
+                    profile:route.profile,
+                    previous:'TimeLine',
+                    withAnimation: true,
+                  }],
+                });
+              }}
+              onPress1={() => {
+                navigation.reset({
+                  index: 0,
+                  routes: [{
+                    name: 'Company' ,
+                    params: route.params,
+                    websocket:route.websocket,
+                    websocket2: route.websocket2,
+                    profile:route.profile,
+                    previous:'TimeLine',
+                    withAnimation: true
+                  }],
+                });
+              }}
+              onPress2={() => {
+                navigation.reset({
+                  index: 0,
+                  routes: [
+                    {
+                      name: "Schedule",
+                      params: route.params,
+                      websocket: route.websocket,
+                      websocket2: route.websocket2,
+                      profile: route.profile,
+                      previous:'TimeLine',
+                      withAnimation: true
+                    },
+                  ],
+                });
+              }}
+              onPress3={() => {
+                navigation.goBack();
+              }}
+              active={[false,false,false,true]}
             />
           </View>
-        </Modal>
-        <Footer
-          onPress0={() => {
-            navigation.reset({
-              index: 0,
-              routes: [{
-                name: 'CommunicationHistory' ,
-                params: route.params,
-                websocket:route.websocket,
-                websocket2: route.websocket2,
-                profile:route.profile,
-                previous:'TimeLine',
-                withAnimation: true
-              }],
-            });
-          }}
-          onPress1={() => {
-            navigation.reset({
-              index: 0,
-              routes: [{
-                name: 'Company' ,
-                params: route.params,
-                websocket:route.websocket,
-                websocket2: route.websocket2,
-                profile:route.profile,
-                previous:'TimeLine',
-                withAnimation: true
-              }],
-            });
-          }}
-          onPress2={() => {
-            navigation.reset({
-              index: 0,
-              routes: [
-                {
-                  name: "Schedule",
-                  params: route.params,
-                  websocket: route.websocket,
-                  websocket2: route.websocket2,
-                  profile: route.profile,
-                  previous:'TimeLine',
-                  withAnimation: true
-                },
-              ],
-            });
-          }}
-          onPress3={() => {}}
-          active={[false,false,false,true]}
-        />
-      </View>
-  </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </PanGestureHandler>
+    </GestureHandlerRootView>
   );
 }
 

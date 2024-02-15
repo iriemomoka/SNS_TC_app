@@ -64,8 +64,16 @@ export default function Thanks(props) {
 
   const { navigation, route } = props;
 
-  // 0：申込手続き 1：契約準備 3：契約
+  const [edit, setEdit] = useState(false);
+
+  // 0：みんなへ 1：あなたへ
   const [form, setForm] = useState(0);
+
+  const [thank_my, setThank_my] = useState({
+    "thank_month": "0",
+    "thank_today": "0",
+    "thank_yesterday": "0",
+  });
 
   const [thanks_all, setThanks_all] = useState([]); // 全件格納用
   const [thanks, setThanks] = useState([]); // 表示用
@@ -221,6 +229,22 @@ export default function Thanks(props) {
 
           }
         }
+        if (
+          response.notification.request.content.data.timeline &&
+          global.sp_id
+        ) {
+          navigation.reset({
+            index: 0,
+            routes: [{
+              name: 'TimeLine' ,
+              params: route.params,
+              websocket:route.websocket,
+              websocket2: route.websocket2,
+              profile:route.profile,
+              withAnimation: true
+            }],
+          });
+        }
       });
 
     return () => {
@@ -242,92 +266,24 @@ export default function Thanks(props) {
 
   const onRefresh = useCallback(async() => {
 
-    // const json = await getCOM();
+    const json = await getThanks();
 
-    var sql = `select * from staff_all `;
+    if (json) {
 
-    const testShop = [
-      "00001",
-      "00002",
-      "12345",
-      "99999",
-      "feides",
-    ]
+      setThank_my(json["thank_my"]);
 
-    if (!testShop.includes(route.params.shop_id)) {
-      sql += ` where shop_id != '00001' and shop_id != '00002' and shop_id != '12345' and shop_id != '99999' and shop_id != 'feides' ;`;
-    }
-
-    var sl = await db_select(sql);
-    
-    if (sl != false) {
-
-      setLoading(true);
-
-      // thanks:falseを初期値として代入
-      sl.forEach(value => value.thanks = false);
-
-      // thank_message:""を初期値として代入
-      sl.forEach(value => value.thank_message = "");
-
-      for (var s2=0;s2<sl.length;s2++) {
-        var value = sl[s2];
-        if (value["staff_photo1"]) {
-          const imageUrl = domain+"img/staff_img/"+value["staff_photo1"];
-          value["staff_photo1"] = imageUrl;
-        }
-      }
-
+      var sl = json["thanks_all"];
+      sl.forEach(value => value.thanks = value.thank_id ? true : false);
       setStaffs(sl);
-
+  
       var onlyShop = sl.filter((item) => item.shop_id == route.params.shop_id );
       setStaff_list(onlyShop);
 
+      if (json["thank_to_me"] != null) {
+        setThanks_all(json["thank_to_me"]);
+        setThanks(json["thank_to_me"]);
+      }
     }
-
-    const testThanks = [
-      {
-        name_1: "スタッフ1",
-        name_2: "太郎",
-        staff_photo1: "",
-        shop_name: "賃貸住宅サービスJR東京店",
-        shop_id: "00001",
-        user_id: "demotc01",
-        follow_user_id: "test1",
-        send_date: "2024-01-13 15:35:00",
-        thank_message: "まじで感謝",
-        ins_dt: "2024-01-13 15:35:00",
-        upd_dt: "2024-01-13 15:35:00",
-      },
-      {
-        name_1: "スタッフ2",
-        name_2: "次郎",
-        staff_photo1: "https://www.total-cloud.net/img/staff_img/demotc01-1.jpg",
-        shop_name: "賃貸住宅サービスJR東京店",
-        shop_id: "99999",
-        user_id: "demotc01",
-        follow_user_id: "test2",
-        send_date: "2024-01-13 15:35:00",
-        thank_message: "",
-        ins_dt: "2024-01-13 15:35:00",
-        upd_dt: "2024-01-13 15:35:00",
-      },
-      {
-        name_1: "スタッフ3",
-        name_2: "三郎",
-        staff_photo1: "",
-        shop_name: "賃貸住宅サービスJR東京店",
-        shop_id: "99999",
-        user_id: "demotc01",
-        follow_user_id: "test3",
-        send_date: "2024-01-13 15:35:00",
-        thank_message: "コマウォヨ~~~~~~~",
-        ins_dt: "2024-01-13 15:35:00",
-        upd_dt: "2024-01-13 15:35:00",
-      },
-    ]
-
-    setThanks_all(testThanks);
 
     setLoading(false);
 
@@ -387,7 +343,7 @@ export default function Thanks(props) {
 
     }
 
-  }, [name,form,filter]);
+  }, [name,form,filter,staffs]);
 
   const appState = useRef(AppState.currentState);
   const abortControllerRef = useRef(new AbortController());
@@ -420,7 +376,7 @@ export default function Thanks(props) {
     await onRefresh(false);
   };
 
-  const getCOM = useCallback(() => {
+  const getThanks = useCallback(() => {
     
     const signal = abortControllerRef.current.signal;
 
@@ -434,7 +390,7 @@ export default function Thanks(props) {
         body: JSON.stringify({
           ID: route.params.account,
           pass: route.params.password,
-          act: "company",
+          act: "thanks",
           fc_flg: global.fc_flg,
         }),
         signal
@@ -472,18 +428,22 @@ export default function Thanks(props) {
               {item.staff_photo1?
                 (
                   <TouchableOpacity
-                    onPress={()=>{
-                      Image.getSize({uri:item.staff_photo1}, (width, height) => {
-                        setimg_size({width:width,height:height});
+                    onPress={async()=>{
+                      const {imgWidth, imgHeight} = await new Promise((resolve) => {
+                        Image.getSize(domain+"img/staff_img/"+item.staff_photo1, (width, height) => {
+                          resolve({imgWidth: width, imgHeight: height});
+                        });
                       });
-                      setimg(item.staff_photo1);
+
+                      setimg_size({width:imgWidth,height:imgHeight});
+                      setimg(domain+"img/staff_img/"+item.staff_photo1);
                       setimg_mdl(true);
                     }}
                     activeOpacity={1}
                   >
                     <Image
                       style={styles.icon}
-                      source={{uri:item.staff_photo1}}
+                      source={{uri:domain+"img/staff_img/"+item.staff_photo1}}
                     />
                   </TouchableOpacity>
                 ):(
@@ -508,6 +468,7 @@ export default function Thanks(props) {
                   const newItem = { ...item,index:index}
                   setToStaff(newItem);
                   setModal(true);
+                  setThanks_txt(newItem?newItem.thank_message:"");
                 }}
               >
                 <MaterialCommunityIcons
@@ -526,57 +487,66 @@ export default function Thanks(props) {
 
   const ThanksList = useMemo(() => {
 
-    return (
-      <FlatList
-        scrollEnabled={false}
-        bounces={false}
-        ref={listRef2}
-        initialNumToRender={10}
-        data={thanks}
-        renderItem={({ item,index }) => {
-          return (
-            <>
-            <TouchableOpacity
-              style={styles.ListItem2}
-              onPress={()=>{}}
-              activeOpacity={1}
-            >
-              <View style={styles.ListInner2}>
-                {item.staff_photo1?
-                  (
-                    <Image
-                      style={styles.icon2}
-                      source={{uri:item.staff_photo1}}
-                    />
-                  ):(
-                    <Image
-                      style={styles.icon2}
-                      source={require('../../assets/photo4.png')}
-                    />
-                  )
-                }
-                <View>
-                  <Text style={styles.shop2}>
-                    {item.shop_name}
-                  </Text>
-                  <Text style={styles.name2}>
-                    {item.name_1}{item.name_2}
-                  </Text>
-                  <Text style={styles.message2}>
-                    {item.thank_message}
+    if (thanks == null || thanks.length == 0) {
+      return (
+        <View style={{flex:1,height:150,justifyContent:'center',alignItems:'center'}}>
+          <Text style={{color:"#999"}}>あなたへのありがとうはまだありません</Text>
+        </View>
+      )
+    } else {
+      return (
+        <FlatList
+          scrollEnabled={false}
+          bounces={false}
+          ref={listRef2}
+          initialNumToRender={10}
+          data={thanks}
+          renderItem={({ item,index }) => {
+            return (
+              <>
+              <TouchableOpacity
+                style={styles.ListItem2}
+                onPress={()=>{}}
+                activeOpacity={1}
+              >
+                <View style={styles.ListInner2}>
+                  {item.staff_photo1?
+                    (
+                      <Image
+                        style={styles.icon2}
+                        source={{uri:domain+"img/staff_img/"+item.staff_photo1}}
+                      />
+                    ):(
+                      <Image
+                        style={styles.icon2}
+                        source={require('../../assets/photo4.png')}
+                      />
+                    )
+                  }
+                  <View>
+                    <Text style={styles.shop2}>
+                      {item.shop_name}
+                    </Text>
+                    <Text style={styles.name2}>
+                      {item.name_1}{item.name_2}
+                    </Text>
+                    <Text style={styles.message2}>
+                      {item.thank_message}
+                    </Text>
+                  </View>
+                  <Text style={styles.date2}>
+                    {item.ins_dt?item.send_date:''}
                   </Text>
                 </View>
-                <Text style={styles.date2}>
-                  {item.ins_dt?item.ins_dt:''}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            </>
-          );
-        }}
-        keyExtractor={(item) => `${item.follow_user_id}`}
-      />
-    )
+              </TouchableOpacity>
+              </>
+            );
+          }}
+          keyExtractor={(item) => `${item.follow_user_id}`}
+        />
+      )
+    }
+
   },[thanks])
 
   const ChangeFavorite = (index) => {
@@ -587,26 +557,116 @@ export default function Thanks(props) {
 
     newlist[index].thank_message = thanks_txt;
 
-    setStaff_list(newlist);
+    fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: JSON.stringify({
+        ID: route.params.account,
+        pass: route.params.password,
+        act: "thanks",
+        fc_flg: global.fc_flg,
+        thanks_flg:1,
+        thank_id:newlist[index].thank_id,
+        user_id:newlist[index].account,
+        thank_message:thanks_txt,
+      }),
+    })
+    .then((response) => response.json())
+    .then((json) => {
+      if (json) {
+        var sl = json["thanks_all"];
+        sl.forEach(value => value.thanks = value.thank_id ? true : false);
+        setStaffs(sl);
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      Alert.alert("ありがとうに失敗しました");
+    });
+    
     setChecked(!checked);
 
   }
 
-  const ClearFavorite = (index) => {
+  const ClearFavorite = async(index) => {
 
     let newlist = [...staff_list];
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+        `確認`,
+        `${newlist[index].name_1} ${newlist[index].name_2}さんへのありがとうを取り消しますか？`,
+        [
+          {text: "はい", onPress: () => {resolve(true);}},
+          {text: "いいえ", onPress: () => {resolve(false);}, style: "cancel"},
+        ]
+      );
+    });
+
+    const thanks_check = await AsyncAlert();
+    if (!thanks_check) return;
 
     newlist[index].thanks = false;
     newlist[index].thank_message = "";
 
-    setStaff_list(newlist);
+    fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: JSON.stringify({
+        ID: route.params.account,
+        pass: route.params.password,
+        act: "thanks",
+        fc_flg: global.fc_flg,
+        thanks_clear_flg:1,
+        thank_id:newlist[index].thank_id,
+      }),
+    })
+    .then((response) => response.json())
+    .then((json) => {
+      if (json) {
+        var sl = json["thanks_all"];
+        sl.forEach(value => value.thanks = value.thank_id ? true : false);
+        setStaffs(sl);
+      }
+      closeModal();
+    })
+    .catch((error) => {
+      console.log(error);
+      Alert.alert("ありがとう取消に失敗しました");
+      closeModal();
+    });
+    
     setChecked(!checked);
 
   }
 
-  const closeModal = () => {
+  const closeModal = async(check_flg = false) => {
+    
+    if (check_flg && edit) {
+      const AsyncAlert = async () => new Promise((resolve) => {
+        Alert.alert(
+          `確認`,
+          `入力した内容を保存せずに閉じていいですか？`,
+          [
+            {text: "はい", onPress: () => {resolve(true);}},
+            {text: "いいえ", onPress: () => {resolve(false);}, style: "cancel"},
+          ]
+        );
+      });
+  
+      const modal_check = await AsyncAlert();
+      if (!modal_check) return;
+    }
+
     setModal(false);
     setThanks_txt("");
+    setEdit(false);
   }
 
   const [keyboardStatus, setKeyboardStatus] = useState(false);
@@ -639,21 +699,22 @@ export default function Thanks(props) {
       <ScrollView
         style={styles.container}
         showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="always"
       >
         <Text style={styles.label}>あなたのチャレンジや仕事を助けてくれたり、元気を与えてくれたり、安心させてくれた人へメッセージを添えて「ありがとう」を伝えましょう。</Text>
         <View style={styles.thanks}>
           <Text style={styles.thk_txt}>あなたへのありがとう</Text>
           <View style={{marginHorizontal:10,marginLeft:'auto'}}>
             <Text style={styles.label1}>昨日</Text>
-            <Text style={styles.thk_num}>4</Text>
+            <Text style={styles.thk_num}>{thank_my.thank_yesterday}</Text>
           </View>
           <View style={{marginHorizontal:10}}>
             <Text style={styles.label1}>今日</Text>
-            <Text style={styles.thk_num}>2</Text>
+            <Text style={styles.thk_num}>{thank_my.thank_today}</Text>
           </View>
           <View style={{marginHorizontal:10}}>
             <Text style={styles.label1}>今月</Text>
-            <Text style={styles.thk_num}>37</Text>
+            <Text style={styles.thk_num}>{thank_my.thank_month}</Text>
           </View>
         </View>
         <TextInput
@@ -716,25 +777,28 @@ export default function Thanks(props) {
           animationIn={'slideInDown'}
           animationOut={'slideOutUp'}
           onBackdropPress={()=>{
-            keyboardStatus?Keyboard.dismiss():closeModal()
+            keyboardStatus?Keyboard.dismiss():closeModal(true)
           }}
           style={{zIndex:999}}
         >
-          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <KeyboardAvoidingView behavior={"position"} keyboardVerticalOffset={30}>
             <TouchableWithoutFeedback
               onPress={()=>Keyboard.dismiss()}
             >
               <View style={styles.modal}>
                 <TouchableOpacity
                   style={styles.close}
-                  onPress={()=>closeModal()}
+                  onPress={()=>closeModal(true)}
                 >
                   <Feather name='x-circle' color='gray' size={35} />
                 </TouchableOpacity>
                 <Text style={styles.modallabel}>{`${toStaff&&toStaff.name_1+" "+toStaff.name_2}さんへありがとうと一緒にメッセージを送りましょう`}</Text>
                 <TextInput
-                  onChangeText={(text) => setThanks_txt(text)}
-                  value={(toStaff&&toStaff.thanks)?toStaff.thank_message:thanks_txt}
+                  onChangeText={(text) => {
+                    if (text) setEdit(true);
+                    setThanks_txt(text);
+                  }}
+                  value={thanks_txt}
                   style={styles.textarea}
                   multiline={true}
                   disableFullscreenUI={true}
@@ -754,7 +818,6 @@ export default function Thanks(props) {
                 <TouchableOpacity
                   onPress={()=>{
                     ClearFavorite(toStaff&&toStaff.index);
-                    closeModal();
                   }}
                   style={[styles.submit,{backgroundColor:"#a6a6a6",borderBottomColor:"#8c8c8c",marginTop:5}]}
                   >
@@ -891,7 +954,7 @@ const styles = StyleSheet.create({
     marginLeft:3
   },
   DropDown: {
-    width: 120,
+    width: 130,
     fontSize: 16,
     minHeight: 35,
     marginVertical:5,
