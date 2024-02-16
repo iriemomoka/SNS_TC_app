@@ -276,7 +276,7 @@ index 2ff651d..c6ae2db 100644
  });
  export function InputToolbar(props) {
 diff --git a/node_modules/react-native-gifted-chat/lib/MessageText.js b/node_modules/react-native-gifted-chat/lib/MessageText.js
-index dd834d6..54fdf7a 100644
+index dd834d6..8e9f4b9 100644
 --- a/node_modules/react-native-gifted-chat/lib/MessageText.js
 +++ b/node_modules/react-native-gifted-chat/lib/MessageText.js
 @@ -1,6 +1,7 @@
@@ -298,7 +298,7 @@ index dd834d6..54fdf7a 100644
          },
          link: {
 -            color: 'black',
-+            color: 'white',
++            color: 'blue',
              textDecorationLine: 'underline',
          },
      }),
@@ -311,7 +311,7 @@ index dd834d6..54fdf7a 100644
          },
          link: {
 -            color: 'white',
-+            color: '#1f2d53',
++            color: 'blue',
              textDecorationLine: 'underline',
          },
      }),

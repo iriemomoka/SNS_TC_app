@@ -276,7 +276,8 @@ export default function BellScreen(props) {
               fontSize: 12,
             },
             left: {
-              fontSize: 12
+              fontSize: 12,
+              color: '#1f2d53',
             },
         }}
         wrapperStyle={{

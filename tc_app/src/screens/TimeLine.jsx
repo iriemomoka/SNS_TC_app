@@ -446,7 +446,9 @@ export default function TimeLine(props) {
     formData.append('page',0);
     
     for (const key in data) {
-      formData.append(key, data[key]);
+      if (key != 'timeline_img') {
+        formData.append(key, data[key]);
+      }
     }
 
     if (flg == "1") { // 今日のチャレンジ
