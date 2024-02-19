@@ -21,6 +21,7 @@ import CustomerEdit from './src/screens/CustomerEdit';
 import TimeLine from './src/screens/TimeLine';
 import Post from './src/screens/Post';
 import Thanks from './src/screens/Thanks';
+import Follow from './src/screens/Follow';
 
 import { Context1 } from './src/components/ExportContext';
 
@@ -119,6 +120,10 @@ export default function App() {
             <Stack.Screen
               name="Thanks"
               component={Thanks}
+            />
+            <Stack.Screen
+              name="Follow"
+              component={Follow}
             />
           </Stack.Navigator>
         </NavigationContainer>

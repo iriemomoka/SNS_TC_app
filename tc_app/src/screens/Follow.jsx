@@ -58,32 +58,22 @@ Notifications.setBadgeCountAsync(0);
 
 const Width = Dimensions.get("window").width;
 
-export default function Thanks(props) {
+export default function Follow(props) {
 
   const [isLoading, setLoading] = useState(false);
 
-  const { navigation, route } = props;
+  var { navigation, route } = props;
 
-  const [edit, setEdit] = useState(false);
-
-  // 0：みんなへ 1：あなたへ
+  route = route.params;
+  
+  // 0：フォロー中 1：フォロワー
   const [form, setForm] = useState(route.flg?1:0);
 
-  const [thank_my, setThank_my] = useState({
-    "thank_month": "0",
-    "thank_today": "0",
-    "thank_yesterday": "0",
-  });
+  const [follow_all, setFollow_all] = useState([]); // 全件格納用
+  const [follow_list, setFollow_list] = useState([]); // 表示用
 
-  const [thanks_all, setThanks_all] = useState([]); // 全件格納用
-  const [thanks, setThanks] = useState([]); // 表示用
-
-  const [staffs, setStaffs] = useState([]); // 全件格納用
-  const [staff_list, setStaff_list] = useState([]); // 表示用
-
-  const [modal, setModal] = useState(false);
-  const [toStaff, setToStaff] = useState(null);
-  const [thanks_txt, setThanks_txt] = useState("");
+  const [follower_all, setFollower_all] = useState([]); // 全件格納用
+  const [follower_list, setFollower_list] = useState([]); // 表示用
 
   const [name, setName] = useState("");
 
@@ -111,8 +101,9 @@ export default function Thanks(props) {
     }
 
     navigation.setOptions({
+      headerTitleAlign: 'center',
       headerTitle: () => (
-        <Text style={styles.headertitle}>ありがとう</Text>
+        <Text style={styles.headertitle}>{route.params.name_1}{route.params.name_2}</Text>
       ),
       headerLeft: () => (
         <Feather
@@ -120,17 +111,7 @@ export default function Thanks(props) {
           color='white'
           size={30}
           onPress={() => {
-            navigation.reset({
-              index: 0,
-              routes: [{
-                name: route.previous,
-                params: route.params,
-                websocket:route.websocket,
-                websocket2: route.websocket2,
-                profile:route.profile,
-                previous:'Thanks',
-              }],
-            });
+            navigation.goBack();
           }}
           style={{paddingHorizontal:15,paddingVertical:10}}
         />
@@ -266,118 +247,22 @@ export default function Thanks(props) {
 
   const onRefresh = useCallback(async() => {
 
-    const json = await getThanks();
+    var follow_where = (route.follow.follow).map(item => ` account = '${item}' `).join('or');
+    var follower_where = (route.follow.follower).map(item => ` account = '${item}' `).join('or');
 
-    if (json) {
+    var sql = `select * from staff_all where ${follow_where};`;
+    var follow = await db_select(sql);
+    setFollow_all(follow);
+    setFollow_list(follow);
 
-      setThank_my(json["thank_my"]);
-
-      var sl = json["thanks_all"];
-      sl.forEach(value => value.thanks = value.thank_id ? true : false);
-      setStaffs(sl);
-  
-      var onlyShop = sl.filter((item) => item.shop_id == route.params.shop_id );
-      setStaff_list(onlyShop);
-
-      if (json["thank_to_me"] != null) {
-
-        var tm = json["thank_to_me"];
-
-        tm.forEach(obj => {
-          obj.thank_message_to_me = obj.thank_message;
-          obj.thank_id_to_me = obj.thank_id;
-          delete obj.thank_message;
-          delete obj.thank_id;
-        });
-
-        tm_list: for (var m=0;m<tm.length;m++) {
-          var tmItem = tm[m];
-          for (var s=0;s<sl.length;s++) {
-            var slItem = sl[s];
-            if (slItem.account == tmItem.account) {
-              tmItem.thanks = slItem.thanks;
-              tmItem.thank_message = slItem.thank_message;
-              tmItem.thank_id = slItem.thank_id;
-              continue tm_list;
-            } else {
-              tmItem.thanks = false;
-              tmItem.thank_message = "";
-              tmItem.thank_id = "";
-            }
-          }
-        }
-
-        setThanks_all(tm);
-        setThanks(tm);
-      }
-    }
-
-    setLoading(false);
+    var sql = `select * from staff_all where ${follower_where};`;
+    var follower = await db_select(sql);
+    setFollower_all(follower);
+    setFollower_list(follower);
 
     return;
 
   }, [abortControllerRef]);
-
-  useEffect(() => {
-
-    if (form == "0") {
-      var filteredStaffs = staffs.filter(function(item) {
-        if (item.account == route.params.account || item.account == "*****") {
-          return item;
-        } else {
-          return (
-            (item.name_1 && item.name_1.includes(name)) ||
-            (item.name_2 && item.name_2.includes(name)) ||
-            (item.shop_name && item.shop_name.includes(name))
-          );
-        }
-      });
-  
-      const staff_list = name?filteredStaffs:staffs;
-      var newStaffList = [];
-  
-      if (filter.includes('1')) {
-        newStaffList = staff_list.filter((item) => item.shop_id == route.params.shop_id );
-      } else {
-        newStaffList = staff_list;
-      }
-
-      if (filter.includes('2')) {
-        const newStaffList2 = newStaffList.filter((item) => item.thanks == true );
-        setStaff_list(newStaffList2);
-      } else {
-        setStaff_list(newStaffList);
-      }
-
-    } else {
-
-      var filteredStaffs = thanks_all.filter(function(item) {
-        return (
-          (item.name_1 && item.name_1.includes(name)) ||
-          (item.name_2 && item.name_2.includes(name)) ||
-          (item.shop_name && item.shop_name.includes(name))
-        );
-      });
-  
-      const thanks_list = name?filteredStaffs:thanks_all;
-      var newThankList = [];
-
-      if (filter.includes('1')) {
-        newThankList = thanks_list.filter((item) => item.shop_id == route.params.shop_id );
-      } else {
-        newThankList = thanks_list
-      }
-
-      if (filter.includes('2')) {
-        var newThankList2 = newThankList.filter((item) => item.thanks == true );
-        setThanks(newThankList2);
-      } else {
-        setThanks(newThankList);
-      }
-
-    }
-
-  }, [name,form,filter,staffs,thanks_all]);
 
   const appState = useRef(AppState.currentState);
   const abortControllerRef = useRef(new AbortController());
@@ -410,42 +295,7 @@ export default function Thanks(props) {
     await onRefresh(false);
   };
 
-  const getThanks = useCallback(() => {
-    
-    const signal = abortControllerRef.current.signal;
-
-    return new Promise((resolve, reject)=>{
-      fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: JSON.stringify({
-          ID: route.params.account,
-          pass: route.params.password,
-          act: "thanks",
-          fc_flg: global.fc_flg,
-        }),
-        signal
-      })
-      .then((response) => response.json())
-      .then((json) => {
-        resolve(json);
-      })
-      .catch((error) => {
-        if (error.name == 'AbortError') {
-          resolve('AbortError');
-        } else {
-          console.log(error);
-          resolve(false);
-        }
-      });
-    })
-
-  },[abortControllerRef]);
-
-  const SendList = useMemo(() => {
+  const FollowList = useMemo(() => {
 
     return (
       <FlatList
@@ -455,7 +305,7 @@ export default function Thanks(props) {
         bounces={false}
         ref={listRef}
         initialNumToRender={10}
-        data={staff_list}
+        data={follow_list}
         renderItem={({ item,index }) => {
           return (
             <View style={styles.ListItem}>
@@ -495,271 +345,70 @@ export default function Thanks(props) {
                   {item.name_1}{item.name_2}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={{flexDirection:'row'}}
-                activeOpacity={1}
-                onPress={()=>{
-                  setToStaff(item);
-                  setModal(true);
-                  setThanks_txt(item?item.thank_message:"");
-                }}
-              >
-                <MaterialCommunityIcons
-                  name={item.thanks?"heart":"heart-outline"}
-                  color={item.thanks?"#F23D3D":"#b3b3b3"}
-                  size={30}
-                />
-              </TouchableOpacity>
             </View>
           );
         }}
         keyExtractor={(item) => `${item.account}`}
       />
     )
-  },[staff_list,checked])
+  },[follow_list,checked])
 
-  const ThanksList = useMemo(() => {
+  const FollowerList = useMemo(() => {
 
-    if (thanks == null || thanks.length == 0) {
-      return (
-        <View style={{flex:1,height:150,justifyContent:'center',alignItems:'center'}}>
-          <Text style={{color:"#999"}}>あなたへのありがとうはまだありません</Text>
-        </View>
-      )
-    } else {
-      return (
-        <FlatList
-          scrollEnabled={false}
-          bounces={false}
-          ref={listRef2}
-          initialNumToRender={10}
-          data={thanks}
-          renderItem={({ item,index }) => {
-            return (
-              <>
-              <TouchableOpacity
-                style={styles.ListItem2}
-                onPress={()=>{
-                  setToStaff(item);
-                  setModal(true);
-                  setThanks_txt(item?item.thank_message:"");
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={styles.ListInner2}>
-                  {item.staff_photo1?
-                    (
-                      <Image
-                        style={styles.icon2}
-                        source={{uri:domain+"img/staff_img/"+item.staff_photo1}}
-                      />
-                    ):(
-                      <Image
-                        style={styles.icon2}
-                        source={require('../../assets/photo4.png')}
-                      />
-                    )
-                  }
-                  <View>
-                    <Text style={styles.shop2}>
-                      {item.shop_name}
-                    </Text>
-                    <Text style={styles.name2}>
-                      {item.name_1}{item.name_2}
-                    </Text>
-                    <Text style={styles.message2}>
-                      {item.thank_message_to_me}
-                    </Text>
-                  </View>
-                  <View style={styles.date2_box}>
-                    <Text style={styles.date2}>
-                      {item.ins_dt?item.send_date:''}
-                    </Text>
-                    <Text style={[styles.thanks2,{color:item.thanks?"#999":'#f59898'}]}>
-                      {item.thanks?"ありがとう送信済":"ありがとう未送信"}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-              </>
-            );
-          }}
-          keyExtractor={(item) => `${item.follow_user_id}`}
-        />
-      )
-    }
+    return (
+      <FlatList
+        scrollEnabled={false}
+        bounces={false}
+        ref={listRef2}
+        initialNumToRender={10}
+        data={follower_list}
+        renderItem={({ item,index }) => {
+          return (
+            <View style={styles.ListItem}>
+              {item.staff_photo1?
+                (
+                  <TouchableOpacity
+                    onPress={async()=>{
+                      const {imgWidth, imgHeight} = await new Promise((resolve) => {
+                        Image.getSize(domain+"img/staff_img/"+item.staff_photo1, (width, height) => {
+                          resolve({imgWidth: width, imgHeight: height});
+                        });
+                      });
 
-  },[thanks])
-
-  const ChangeFavorite = (item) => {
-
-    fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: JSON.stringify({
-        ID: route.params.account,
-        pass: route.params.password,
-        act: "thanks",
-        fc_flg: global.fc_flg,
-        thanks_flg:1,
-        thank_id:item.thank_id,
-        user_id:item.account,
-        thank_message:thanks_txt,
-      }),
-    })
-    .then((response) => response.json())
-    .then((json) => {
-      if (json) {
-        var sl = json["thanks_all"];
-        sl.forEach(value => value.thanks = value.thank_id ? true : false);
-        setStaffs(sl);
-
-        if (json["thank_to_me"] != null) {
-  
-          var tm = json["thank_to_me"];
-  
-          tm.forEach(obj => {
-            obj.thank_message_to_me = obj.thank_message;
-            obj.thank_id_to_me = obj.thank_id;
-            delete obj.thank_message;
-            delete obj.thank_id;
-          });
-  
-          tm_list: for (var m=0;m<tm.length;m++) {
-            var tmItem = tm[m];
-            for (var s=0;s<sl.length;s++) {
-              var slItem = sl[s];
-              if (slItem.account == tmItem.account) {
-                tmItem.thanks = slItem.thanks;
-                tmItem.thank_message = slItem.thank_message;
-                tmItem.thank_id = slItem.thank_id;
-                continue tm_list;
-              } else {
-                tmItem.thanks = false;
-                tmItem.thank_message = "";
-                tmItem.thank_id = "";
+                      setimg_size({width:imgWidth,height:imgHeight});
+                      setimg(domain+"img/staff_img/"+item.staff_photo1);
+                      setimg_mdl(true);
+                    }}
+                    activeOpacity={1}
+                  >
+                    <Image
+                      style={styles.icon}
+                      source={{uri:domain+"img/staff_img/"+item.staff_photo1}}
+                    />
+                  </TouchableOpacity>
+                ):(
+                  <Image
+                    style={styles.icon}
+                    source={require('../../assets/photo4.png')}
+                  />
+                )
               }
-            }
-          }
-          setThanks_all(tm);
-        }
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-      Alert.alert("ありがとうに失敗しました");
-    });
-    
-    setChecked(!checked);
+              <View style={styles.ListInner}>
+                <Text style={[styles.shop,item.invisible&&{color:"#999"}]} numberOfLines={1}>
+                  {item.shop_name}
+                </Text>
+                <Text style={[styles.name,item.invisible&&{color:"#999"}]} numberOfLines={1}>
+                  {item.name_1}{item.name_2}
+                </Text>
+              </View>
+            </View>
+          );
+        }}
+        keyExtractor={(item) => `${item.account}`}
+      />
+    )
 
-  }
-
-  const ClearFavorite = async(item) => {
-
-    const AsyncAlert = async () => new Promise((resolve) => {
-      Alert.alert(
-        `確認`,
-        `${item.name_1} ${item.name_2}さんへのありがとうを取り消しますか？`,
-        [
-          {text: "はい", onPress: () => {resolve(true);}},
-          {text: "いいえ", onPress: () => {resolve(false);}, style: "cancel"},
-        ]
-      );
-    });
-
-    const thanks_check = await AsyncAlert();
-    if (!thanks_check) return;
-
-    fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: JSON.stringify({
-        ID: route.params.account,
-        pass: route.params.password,
-        act: "thanks",
-        fc_flg: global.fc_flg,
-        thanks_clear_flg:1,
-        thank_id:item.thank_id,
-      }),
-    })
-    .then((response) => response.json())
-    .then((json) => {
-      if (json) {
-        var sl = json["thanks_all"];
-        sl.forEach(value => value.thanks = value.thank_id ? true : false);
-        setStaffs(sl);
-
-        if (json["thank_to_me"] != null) {
-
-          var tm = json["thank_to_me"];
-
-          tm.forEach(obj => {
-            obj.thank_message_to_me = obj.thank_message;
-            obj.thank_id_to_me = obj.thank_id;
-            delete obj.thank_message;
-            delete obj.thank_id;
-          });
-
-          tm_list: for (var m=0;m<tm.length;m++) {
-            var tmItem = tm[m];
-            for (var s=0;s<sl.length;s++) {
-              var slItem = sl[s];
-              if (slItem.account == tmItem.account) {
-                tmItem.thanks = slItem.thanks;
-                tmItem.thank_message = slItem.thank_message;
-                tmItem.thank_id = slItem.thank_id;
-                continue tm_list;
-              } else {
-                tmItem.thanks = false;
-                tmItem.thank_message = "";
-                tmItem.thank_id = "";
-              }
-            }
-          }
-
-          setThanks_all(tm);
-        }
-      }
-      closeModal();
-    })
-    .catch((error) => {
-      console.log(error);
-      Alert.alert("ありがとう取消に失敗しました");
-      closeModal();
-    });
-    
-    setChecked(!checked);
-
-  }
-
-  const closeModal = async(check_flg = false) => {
-    
-    if (check_flg && edit) {
-      const AsyncAlert = async () => new Promise((resolve) => {
-        Alert.alert(
-          `確認`,
-          `入力した内容を保存せずに閉じていいですか？`,
-          [
-            {text: "はい", onPress: () => {resolve(true);}},
-            {text: "いいえ", onPress: () => {resolve(false);}, style: "cancel"},
-          ]
-        );
-      });
-  
-      const modal_check = await AsyncAlert();
-      if (!modal_check) return;
-    }
-
-    setModal(false);
-    setThanks_txt("");
-    setEdit(false);
-  }
+  },[follower_list])
 
   const [keyboardStatus, setKeyboardStatus] = useState(false);
 
@@ -793,22 +442,6 @@ export default function Thanks(props) {
         showsHorizontalScrollIndicator={false}
         keyboardShouldPersistTaps="always"
       >
-        <Text style={styles.label}>あなたのチャレンジや仕事を助けてくれたり、元気を与えてくれたり、安心させてくれた人へメッセージを添えて「ありがとう」を伝えましょう。</Text>
-        <View style={styles.thanks}>
-          <Text style={styles.thk_txt}>あなたへのありがとう</Text>
-          <View style={{marginHorizontal:10,marginLeft:'auto'}}>
-            <Text style={styles.label1}>昨日</Text>
-            <Text style={styles.thk_num}>{thank_my.thank_yesterday}</Text>
-          </View>
-          <View style={{marginHorizontal:10}}>
-            <Text style={styles.label1}>今日</Text>
-            <Text style={styles.thk_num}>{thank_my.thank_today}</Text>
-          </View>
-          <View style={{marginHorizontal:10}}>
-            <Text style={styles.label1}>今月</Text>
-            <Text style={styles.thk_num}>{thank_my.thank_month}</Text>
-          </View>
-        </View>
         <TextInput
           style={styles.searchInput}
           value={name}
@@ -838,88 +471,19 @@ export default function Thanks(props) {
             style={form==0?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
             activeOpacity={0.8}
           >
-            <Text style={styles.tab_txt}>みんなへ</Text>
-            <MaterialCommunityIcons
-              name={"mother-heart"}
-              color={form==0?"#d9376e":"#000"}
-              size={20}
-            />
+            <Text style={styles.tab_txt}>フォロー中</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={()=>{setForm(1)}}
             style={form==1?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
             activeOpacity={0.8}
           >
-            <Text style={styles.tab_txt}>あなたへ</Text>
-            <MaterialCommunityIcons
-              name={"hand-heart-outline"}
-              color={form==1?"#d9376e":"#000"}
-              size={20}
-            />
+            <Text style={styles.tab_txt}>フォロワー</Text>
           </TouchableOpacity>
         </View>
         <View style={{width:"100%",paddingHorizontal:10,paddingVertical:15,backgroundColor:spc}}>
-          {form=="0"?SendList:ThanksList}
+          {form=="0"?FollowList:FollowerList}
         </View>
-        <Modal
-          isVisible={modal}
-          backdropOpacity={0.5}
-          animationInTiming={300}
-          animationOutTiming={500}
-          animationIn={'slideInDown'}
-          animationOut={'slideOutUp'}
-          onBackdropPress={()=>{
-            keyboardStatus?Keyboard.dismiss():closeModal(true)
-          }}
-          style={{zIndex:999}}
-        >
-          <KeyboardAvoidingView behavior={"position"} keyboardVerticalOffset={30}>
-            <TouchableWithoutFeedback
-              onPress={()=>Keyboard.dismiss()}
-            >
-              <View style={styles.modal}>
-                <TouchableOpacity
-                  style={styles.close}
-                  onPress={()=>closeModal(true)}
-                >
-                  <Feather name='x-circle' color='gray' size={35} />
-                </TouchableOpacity>
-                <Text style={styles.modallabel}>{`${toStaff&&toStaff.name_1+" "+toStaff.name_2}さんへありがとうと一緒にメッセージを送りましょう`}</Text>
-                <TextInput
-                  onChangeText={(text) => {
-                    if (text) setEdit(true);
-                    setThanks_txt(text);
-                  }}
-                  value={thanks_txt}
-                  style={styles.textarea}
-                  multiline={true}
-                  disableFullscreenUI={true}
-                  numberOfLines={11}
-                  placeholder={""}
-                />
-                <TouchableOpacity
-                  onPress={()=>{
-                    ChangeFavorite(toStaff)
-                    closeModal();
-                  }}
-                  style={styles.submit}
-                  >
-                  <Text style={styles.submitText}>送　信</Text>
-                </TouchableOpacity>
-                {(toStaff&&toStaff.thanks)&&(
-                <TouchableOpacity
-                  onPress={()=>{
-                    ClearFavorite(toStaff);
-                  }}
-                  style={[styles.submit,{backgroundColor:"#a6a6a6",borderBottomColor:"#8c8c8c",marginTop:5}]}
-                  >
-                  <Text style={styles.submitText}>取り消す</Text>
-                </TouchableOpacity>
-                )}
-              </View>
-            </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
-        </Modal>
         <Modal
           isVisible={img_mdl}
           swipeDirection={['up']}
@@ -963,7 +527,7 @@ const styles = StyleSheet.create({
   headertitle: {
     color:'#fff',
     fontWeight:'700',
-    fontSize:20
+    fontSize:16
   },
   header_img: {
     width: 150,

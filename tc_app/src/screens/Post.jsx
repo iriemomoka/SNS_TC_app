@@ -95,6 +95,8 @@ export default function Post(props) {
   });
   const [follow_flg, setFollow_flg] = useState(false);
   const [follower_flg, setFollower_flg] = useState(false);
+  const [follow_len, setFollow_len] = useState([]);
+  const [follower_len, setFollower_len] = useState([]);
 
   const [postCM, setPostCM] = useState('');
   const [postFav, setPostFav] = useState(route.post.fav);
@@ -286,14 +288,17 @@ export default function Post(props) {
       if (route.flg == 1) {
         setComment(json["comment"]);
       } else if (route.flg == 2) {
-        var posts = [...json["post"].filter(item => !Comment.some(item2 => item2.timeline_id === item.timeline_id)), ...Comment];
-        posts.forEach(item => {
-          item.name_1 = route.post.name_1;
-          item.name_2 = route.post.name_2;
-          item.shop_name = route.post.shop_name;
-          item.staff_photo1 = route.post.staff_photo1;
-        });
-        setComment(posts);
+
+        if (json["post"] != null) {
+          var posts = [...json["post"].filter(item => !Comment.some(item2 => item2.timeline_id === item.timeline_id)), ...Comment];
+          posts.forEach(item => {
+            item.name_1 = route.post.name_1;
+            item.name_2 = route.post.name_2;
+            item.shop_name = route.post.shop_name;
+            item.staff_photo1 = route.post.staff_photo1;
+          });
+          setComment(posts);
+        }
         
         if(json["challenge"]) {
           setChallenge(json["challenge"][0]);
@@ -309,10 +314,12 @@ export default function Post(props) {
       setFollow_you(json["follow_you"][0]);
 
       var follow_user = (json["follow_my"][0]["follow_user_list"]).split(",");
-      setFollow_flg(follow_user.includes(route.post.user_id))
+      setFollow_flg(follow_user.includes(route.post.user_id));
+      setFollow_len(follow_user);
 
       var follower_user = (json["follow_my"][0]["follower_user_list"]).split(",");
-      setFollower_flg(follower_user.includes(route.post.user_id))
+      setFollower_flg(follower_user.includes(route.post.user_id));
+      setFollower_len(follow_user);
 
     }
 
@@ -565,6 +572,7 @@ export default function Post(props) {
     })
     .then((response) => response.json())
     .then((json) => {
+      console.log(json["test"]);
       setFollow_my(json["follow_my"][0]);
       setFollow_you(json["follow_you"][0]);
     })
@@ -1020,6 +1028,68 @@ export default function Post(props) {
                           </TouchableOpacity>
                         </View>
                       )}
+                      <View style={{flexDirection:'row',marginTop:8}}>
+                        <TouchableOpacity
+                          style={{}}
+                          onPress={()=>{
+                            var data = {
+                              flg:0,
+                              name_1:route.post.name_1,
+                              name_2:route.post.name_2,
+                              shop_name:route.post.shop_name,
+                              staff_photo1:route.post.staff_photo1,
+                              follow:follow_len,
+                              follower:follower_len
+                            }
+                            navigation.navigate(
+                              'Follow',{
+                                name: 'Follow' ,
+                                params: route.params,
+                                websocket:route.websocket,
+                                websocket2: route.websocket2,
+                                profile:route.profile,
+                                previous:'Post',
+                                follow:data
+                              }
+                            );
+                          }}
+                        >
+                          <Text style={{}}>
+                            <Text style={{fontWeight:'700'}}>{follow_len.length}</Text>
+                            フォロー中
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={{}}
+                          onPress={()=>{
+                            var data = {
+                              flg:1,
+                              name_1:route.post.name_1,
+                              name_2:route.post.name_2,
+                              shop_name:route.post.shop_name,
+                              staff_photo1:route.post.staff_photo1,
+                              follow:follow_len,
+                              follower:follower_len
+                            }
+                            navigation.navigate(
+                              'Follow',{
+                                name: 'Follow' ,
+                                params: route.params,
+                                websocket:route.websocket,
+                                websocket2: route.websocket2,
+                                profile:route.profile,
+                                previous:'Post',
+                                follow:data
+                              }
+                            );
+                          }}
+                        >
+                          <Text style={{marginLeft:10}}>
+                            <Text style={{fontWeight:'700'}}>{follower_len.length}</Text>
+                            フォロワー
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                   <Text style={styles.label}>今日のチャレンジ</Text>
