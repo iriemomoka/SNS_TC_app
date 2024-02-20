@@ -246,15 +246,34 @@ export default function Post(props) {
           response.notification.request.content.data.timeline &&
           global.sp_id
         ) {
-          navigation.reset({
-            index: 0,
-            routes: [{
-              name: 'TimeLine' ,
+          const tl_data = response.notification.request.content.data.timeline;
+          navigation.navigate(
+            'Post',{
+              name: 'Post' ,
               params: route.params,
               websocket:route.websocket,
               websocket2: route.websocket2,
               profile:route.profile,
-              withAnimation: true
+              previous:'TimeLine',
+              post: tl_data,
+              flg:tl_data["flg"],
+            }
+          );
+        }
+        if (
+          response.notification.request.content.data.thank &&
+          global.sp_id
+        ) {
+          navigation.reset({
+            index: 0,
+            routes: [{
+              name: 'Thanks' ,
+              params: route.params,
+              websocket:route.websocket,
+              websocket2: route.websocket2,
+              profile:route.profile,
+              previous:'TimeLine',
+              flg:1
             }],
           });
         }
@@ -315,11 +334,17 @@ export default function Post(props) {
 
       var follow_user = (json["follow_my"][0]["follow_user_list"]).split(",");
       setFollow_flg(follow_user.includes(route.post.user_id));
-      setFollow_len(follow_user);
 
-      var follower_user = (json["follow_my"][0]["follower_user_list"]).split(",");
-      setFollower_flg(follower_user.includes(route.post.user_id));
-      setFollower_len(follow_user);
+      var follower_user_you   = (json["follow_you"][0]["follow_user_list"]).split(",");
+      follower_user_you = follower_user_you.filter(item => item !== "");
+
+      var followerer_user_you = (json["follow_you"][0]["follower_user_list"]).split(",");
+      followerer_user_you = followerer_user_you.filter(item => item !== "");
+
+      setFollower_flg(follower_user_you.includes(route.params.account));
+
+      setFollow_len(follower_user_you);
+      setFollower_len(followerer_user_you);
 
     }
 
@@ -572,7 +597,6 @@ export default function Post(props) {
     })
     .then((response) => response.json())
     .then((json) => {
-      console.log(json["test"]);
       setFollow_my(json["follow_my"][0]);
       setFollow_you(json["follow_you"][0]);
     })
@@ -1032,15 +1056,6 @@ export default function Post(props) {
                         <TouchableOpacity
                           style={{}}
                           onPress={()=>{
-                            var data = {
-                              flg:0,
-                              name_1:route.post.name_1,
-                              name_2:route.post.name_2,
-                              shop_name:route.post.shop_name,
-                              staff_photo1:route.post.staff_photo1,
-                              follow:follow_len,
-                              follower:follower_len
-                            }
                             navigation.navigate(
                               'Follow',{
                                 name: 'Follow' ,
@@ -1049,7 +1064,10 @@ export default function Post(props) {
                                 websocket2: route.websocket2,
                                 profile:route.profile,
                                 previous:'Post',
-                                follow:data
+                                user_id:route.post.user_id,
+                                name_1:route.post.name_1,
+                                name_2:route.post.name_2,
+                                flg:0,
                               }
                             );
                           }}
@@ -1062,15 +1080,6 @@ export default function Post(props) {
                         <TouchableOpacity
                           style={{}}
                           onPress={()=>{
-                            var data = {
-                              flg:1,
-                              name_1:route.post.name_1,
-                              name_2:route.post.name_2,
-                              shop_name:route.post.shop_name,
-                              staff_photo1:route.post.staff_photo1,
-                              follow:follow_len,
-                              follower:follower_len
-                            }
                             navigation.navigate(
                               'Follow',{
                                 name: 'Follow' ,
@@ -1079,7 +1088,10 @@ export default function Post(props) {
                                 websocket2: route.websocket2,
                                 profile:route.profile,
                                 previous:'Post',
-                                follow:data
+                                user_id:route.post.user_id,
+                                name_1:route.post.name_1,
+                                name_2:route.post.name_2,
+                                flg:1,
                               }
                             );
                           }}

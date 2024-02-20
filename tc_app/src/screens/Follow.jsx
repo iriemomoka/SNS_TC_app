@@ -69,6 +69,13 @@ export default function Follow(props) {
   // 0：フォロー中 1：フォロワー
   const [form, setForm] = useState(route.flg?1:0);
 
+  const [follow_my, setFollow_my] = useState({
+    "follow_user_list": "",
+    "follower_user_list": "",
+    "upd_dt": "",
+    "user_id": "",
+  });
+
   const [follow_all, setFollow_all] = useState([]); // 全件格納用
   const [follow_list, setFollow_list] = useState([]); // 表示用
 
@@ -76,14 +83,6 @@ export default function Follow(props) {
   const [follower_list, setFollower_list] = useState([]); // 表示用
 
   const [name, setName] = useState("");
-
-  const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState(['1']);
-
-  const filterList = [
-    {label: '自分の店舗のスタッフを表示', value: '1'},
-    {label: 'ありがとうを送った人を表示', value: '2'},
-  ]
 
   const [img_mdl, setimg_mdl] = useState(false);
   const [img, setimg] = useState("");
@@ -103,7 +102,7 @@ export default function Follow(props) {
     navigation.setOptions({
       headerTitleAlign: 'center',
       headerTitle: () => (
-        <Text style={styles.headertitle}>{route.params.name_1}{route.params.name_2}</Text>
+        <Text style={styles.headertitle}>{route.name_1}{route.name_2}</Text>
       ),
       headerLeft: () => (
         <Feather
@@ -214,15 +213,34 @@ export default function Follow(props) {
           response.notification.request.content.data.timeline &&
           global.sp_id
         ) {
-          navigation.reset({
-            index: 0,
-            routes: [{
-              name: 'TimeLine' ,
+          const tl_data = response.notification.request.content.data.timeline;
+          navigation.navigate(
+            'Post',{
+              name: 'Post' ,
               params: route.params,
               websocket:route.websocket,
               websocket2: route.websocket2,
               profile:route.profile,
-              withAnimation: true
+              previous:'TimeLine',
+              post: tl_data,
+              flg:tl_data["flg"],
+            }
+          );
+        }
+        if (
+          response.notification.request.content.data.thank &&
+          global.sp_id
+        ) {
+          navigation.reset({
+            index: 0,
+            routes: [{
+              name: 'Thanks' ,
+              params: route.params,
+              websocket:route.websocket,
+              websocket2: route.websocket2,
+              profile:route.profile,
+              previous:'TimeLine',
+              flg:1
             }],
           });
         }
@@ -247,22 +265,75 @@ export default function Follow(props) {
 
   const onRefresh = useCallback(async() => {
 
-    var follow_where = (route.follow.follow).map(item => ` account = '${item}' `).join('or');
-    var follower_where = (route.follow.follower).map(item => ` account = '${item}' `).join('or');
+    const json = await getFollow();
 
-    var sql = `select * from staff_all where ${follow_where};`;
-    var follow = await db_select(sql);
-    setFollow_all(follow);
-    setFollow_list(follow);
-
-    var sql = `select * from staff_all where ${follower_where};`;
-    var follower = await db_select(sql);
-    setFollower_all(follower);
-    setFollower_list(follower);
+    setFollow_data(json);
 
     return;
 
   }, [abortControllerRef]);
+
+  function setFollow_data(json) {
+    setFollow_my(json["follow_my"][0]);
+
+    var follow_user_list   = json["follow_my"][0]["follow_user_list"].split(',');
+    follow_user_list = follow_user_list.filter(item => item !== "");
+    var follower_user_list = json["follow_my"][0]["follower_user_list"].split(',');
+    follower_user_list = follower_user_list.filter(item => item !== "");
+
+    var follow_all_follow   = json["follow_all"]["follow"];
+    var follow_all_follower = json["follow_all"]["follower"];
+
+    follow_all_follow.forEach(value => 
+      value.follow_flg = follow_user_list.includes(value.user_id) ? true : false
+    );
+    
+    follow_all_follower.forEach(value => 
+      value.follow_flg = follow_user_list.includes(value.user_id) ? true : false
+    );
+
+    setFollow_all(follow_all_follow);
+    setFollow_list(follow_all_follow);
+    
+    setFollower_all(follow_all_follower);
+    setFollower_list(follow_all_follower);
+  }
+
+  const getFollow = useCallback(() => {
+    
+    const signal = abortControllerRef.current.signal;
+
+    return new Promise((resolve, reject)=>{
+      fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: JSON.stringify({
+          ID: route.params.account,
+          pass: route.params.password,
+          act: "follow",
+          fc_flg: global.fc_flg,
+          user_id:route.user_id,
+        }),
+        signal
+      })
+      .then((response) => response.json())
+      .then((json) => {
+        resolve(json);
+      })
+      .catch((error) => {
+        if (error.name == 'AbortError') {
+          resolve('AbortError');
+        } else {
+          console.log(error);
+          resolve(false);
+        }
+      });
+    })
+
+  },[abortControllerRef]);
 
   const appState = useRef(AppState.currentState);
   const abortControllerRef = useRef(new AbortController());
@@ -294,6 +365,37 @@ export default function Follow(props) {
   const resumeFetchWithDelay = async() => {
     await onRefresh(false);
   };
+
+  useEffect(() => {
+
+    if (form == "0") {
+      
+      var filteredFollow = follow_all.filter(function(item) {
+        return (
+          (item.name_1 && item.name_1.includes(name)) ||
+          (item.name_2 && item.name_2.includes(name)) ||
+          (item.shop_name && item.shop_name.includes(name))
+        );
+      });
+
+  
+      setFollow_list(name?filteredFollow:follow_all);
+
+    } else {
+
+      var filteredFollower = follower_all.filter(function(item) {
+        return (
+          (item.name_1 && item.name_1.includes(name)) ||
+          (item.name_2 && item.name_2.includes(name)) ||
+          (item.shop_name && item.shop_name.includes(name))
+        );
+      });
+  
+      setFollower_list(name?filteredFollower:follower_all);
+
+    }
+
+  }, [name,form]);
 
   const FollowList = useMemo(() => {
 
@@ -345,10 +447,18 @@ export default function Follow(props) {
                   {item.name_1}{item.name_2}
                 </Text>
               </View>
+              {route.params.account != item.user_id && (
+                <TouchableOpacity
+                  style={styles.follow}
+                  onPress={()=>{setFollow_fetch(1,index)}}
+                >
+                  <Text style={styles.follow_txt}>{item.follow_flg?"フォロー中":"フォローする"}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           );
         }}
-        keyExtractor={(item) => `${item.account}`}
+        keyExtractor={(item) => `${item.user_id}`}
       />
     )
   },[follow_list,checked])
@@ -401,34 +511,103 @@ export default function Follow(props) {
                   {item.name_1}{item.name_2}
                 </Text>
               </View>
+              {route.params.account != item.user_id && (
+                <TouchableOpacity
+                  style={styles.follow}
+                  onPress={()=>{setFollow_fetch(2,index)}}
+                >
+                  <Text style={styles.follow_txt}>{item.follow_flg?"フォロー中":"フォローする"}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           );
         }}
-        keyExtractor={(item) => `${item.account}`}
+        keyExtractor={(item) => `${item.user_id}`}
       />
     )
 
   },[follower_list])
 
-  const [keyboardStatus, setKeyboardStatus] = useState(false);
+  async function setFollow_fetch(flg,index) {
 
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
-      setKeyboardStatus(true);
-    });
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardStatus(false);
+    var newList = [];
+
+    if (flg == 1) { // フォロー中
+      var newList = [...follow_list];
+    } else { // フォロワー
+      var newList = [...follower_list];
+    }
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+        `確認`,
+        `${newList[index].name_1} ${newList[index].name_2}さんのフォローを解除しますか？`,
+        [
+          {text: "はい", onPress: () => {resolve(true);}},
+          {text: "いいえ", onPress: () => {resolve(false);}, style: "cancel"},
+        ]
+      );
     });
 
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
+    if (newList[index]["follow_flg"]) {
+      const kaijyo_check = await AsyncAlert();
+      if (!kaijyo_check) return;
+    }
+
+    newList[index]["follow_flg"] = !newList[index]["follow_flg"];
+
+    if (flg == 1) { // フォロー中
+      setFollow_list(newList);
+    } else { // フォロワー
+      setFollower_list(newList);
+    }
+
+    var follow_user_list = follow_my["follow_user_list"].split(',');
+    follow_user_list = follow_user_list.filter(item => item !== "");
+
+    var follow_ = "";
+
+    if(newList[index]["follow_flg"]) {
+      // フォロー解除
+      follow_user_list.push(newList[index]["user_id"]);
+      follow_ = follow_user_list.join(",");
+    } else {
+      //フォロー
+      follow_user_list = follow_user_list.filter(item => item !== newList[index]["user_id"]);
+      follow_ = follow_user_list.join(",");
+    }
+    
+    fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: JSON.stringify({
+        ID: route.params.account,
+        pass: route.params.password,
+        act: "follow",
+        fc_flg: global.fc_flg,
+        user_id:route.user_id,
+        user_id_follower:newList[index]["user_id"],
+        upd_flg:1,
+        follow:follow_,
+        follow_flg:newList[index]["follow_flg"]?1:"",
+      }),
+    })
+    .then((response) => response.json())
+    .then((json) => {
+      setFollow_data(json);
+    })
+    .catch((error) => {
+      console.log(error);
+      Alert.alert("フォローに失敗しました");
+    });
+    
+  }
 
   const bgc = !global.fc_flg?"#E6F4F1":"#FFF6F5";
   const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
-  const chk = !global.fc_flg?"#81aee6":"#e6c4f5";
 
   return (
     <KeyboardAvoidingView
@@ -450,20 +629,6 @@ export default function Follow(props) {
           }}
           placeholder="店舗名、名前が検索できます"
           placeholderTextColor="#b3b3b3"
-        />
-        <DropDownPicker
-          style={styles.DropDown}
-          dropDownContainerStyle={styles.dropDownContainer}
-          open={open}
-          value={filter}
-          items={filterList}
-          setOpen={setOpen}
-          setValue={setFilter}
-          placeholder="フィルター"
-          multipleText="フィルター"
-          multiple={true}
-          TickIconComponent={()=><MaterialCommunityIcons name={"check-circle"} color={chk} size={20} />}
-          disableBorderRadius={false}
         />
         <View style={{flexDirection:'row',width:'100%'}}>
           <TouchableOpacity
@@ -585,6 +750,7 @@ const styles = StyleSheet.create({
     borderColor: "#dddddd",
     borderWidth: 1,
     backgroundColor: "#ffffff",
+    marginBottom:10,
   },
   check: {
     flexDirection:'row',
@@ -725,74 +891,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
   },
-  clsbtn: {
-    position:'absolute',
-    top:20,
-    left:-20,
-    width:60,
-    height:60,
-    justifyContent:'center',
-    alignItems:'center',
-  },
-  modal: {
-    justifyContent: 'center',
-    backgroundColor: "#ffffff",
-    width:'100%',
-    padding:10,
-    paddingTop:20,
-    borderRadius: 5,
-  },
-  modallabel: {
-    color:"#666",
-    marginBottom:10,
-    marginLeft:5,
-    fontSize:14,
-    fontWeight:'500',
-    maxWidth:250
-  },
-  textarea: {
-    width:'100%',
-    height:200,
-    padding:8,
-    borderColor: '#999',
-    fontSize:16,
-    borderWidth: 1,
-    borderRadius: 8,
-    textAlignVertical: 'top'
-  },
-  close: {
-    position: 'absolute',
-    top:0,
-    right:0,
-    width:50,
-    height:50,
-    justifyContent:'center',
-    alignItems:'center',
-    zIndex:1000
-  },
-  submit:{
+  follow: {
+    backgroundColor:'#fff',
+    borderWidth:1,
+    borderColor:'#999',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginTop:10,
-    borderRadius: 8,
-    width:"100%",
-    height:40,
-    backgroundColor:"#81aee6",
-    borderBottomColor:"#6c93c4",
-    borderBottomWidth:3,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    marginLeft:'auto',
+    borderRadius: 100,
+    width:90,
+    height:25,
+    shadowColor: "#999",
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity:1,
+    shadowRadius:1.5,
     elevation:5
   },
-  submitText: {
-    fontSize:16,
-    color:'#ffffff',
-    fontWeight:"600"
+  follow_txt: {
+    fontSize:12,
+    color:'#999',
+    fontWeight:'500'
   },
 });

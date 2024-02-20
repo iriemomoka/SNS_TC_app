@@ -191,15 +191,34 @@ export default function BellScreen(props) {
           response.notification.request.content.data.timeline &&
           global.sp_id
         ) {
-          navigation.reset({
-            index: 0,
-            routes: [{
-              name: 'TimeLine' ,
+          const tl_data = response.notification.request.content.data.timeline;
+          navigation.navigate(
+            'Post',{
+              name: 'Post' ,
               params: route.params,
               websocket:route.websocket,
               websocket2: route.websocket2,
               profile:route.profile,
-              withAnimation: true
+              previous:'TimeLine',
+              post: tl_data,
+              flg:tl_data["flg"],
+            }
+          );
+        }
+        if (
+          response.notification.request.content.data.thank &&
+          global.sp_id
+        ) {
+          navigation.reset({
+            index: 0,
+            routes: [{
+              name: 'Thanks' ,
+              params: route.params,
+              websocket:route.websocket,
+              websocket2: route.websocket2,
+              profile:route.profile,
+              previous:'TimeLine',
+              flg:1
             }],
           });
         }

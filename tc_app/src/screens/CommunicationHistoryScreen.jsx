@@ -50,7 +50,7 @@ const storage = new Storage({
 const db = SQLite.openDatabase("db");
 
 let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-// let domain = "https://www.total-cloud.net/";
+// let domain = 'https://www.total-cloud.net/';
 
 Notifications.setBadgeCountAsync(0);
 
@@ -254,15 +254,34 @@ export default function CommunicationHistoryScreen(props) {
           response.notification.request.content.data.timeline &&
           global.sp_id
         ) {
-          navigation.reset({
-            index: 0,
-            routes: [{
-              name: 'TimeLine' ,
+          const tl_data = response.notification.request.content.data.timeline;
+          navigation.navigate(
+            'Post',{
+              name: 'Post' ,
               params: route.params,
               websocket:route.websocket,
               websocket2: route.websocket2,
               profile:route.profile,
-              withAnimation: true
+              previous:'TimeLine',
+              post: tl_data,
+              flg:tl_data["flg"],
+            }
+          );
+        }
+        if (
+          response.notification.request.content.data.thank &&
+          global.sp_id
+        ) {
+          navigation.reset({
+            index: 0,
+            routes: [{
+              name: 'Thanks' ,
+              params: route.params,
+              websocket:route.websocket,
+              websocket2: route.websocket2,
+              profile:route.profile,
+              previous:'TimeLine',
+              flg:1
             }],
           });
         }
@@ -355,6 +374,33 @@ export default function CommunicationHistoryScreen(props) {
           websocket2: route.websocket2,
           profile:route.profile,
           withAnimation: true
+        }],
+      });
+    }
+    if (route.notifications3) {
+      const tl_data = route.notifications3;
+      navigation.navigate(
+        'Post',{
+          name: 'Post' ,
+          params: route.params,
+          websocket:route.websocket,
+          websocket2: route.websocket2,
+          profile:route.profile,
+          post: tl_data,
+          flg:tl_data["flg"],
+        }
+      );
+    }
+    if (route.notifications4) {
+      navigation.reset({
+        index: 0,
+        routes: [{
+          name: 'Thanks' ,
+          params: route.params,
+          websocket:route.websocket,
+          websocket2: route.websocket2,
+          profile:route.profile,
+          flg:1
         }],
       });
     }

@@ -324,9 +324,11 @@ export default function TimeLine(props) {
       
       setThank_send(json["thanks"]["thank_send"]);
   
-      var sl = json["thanks_shop"];
-      sl.forEach(value => value.thanks = value.thank_id ? true : false);
-      setStaff_list(sl);
+      if (json["thanks_shop"]) {
+        var sl = json["thanks_shop"];
+        sl.forEach(value => value.thanks = value.thank_id ? true : false);
+        setStaff_list(sl);
+      }
   
       if (json["challenge"]) {
         setChallenge(json["challenge"][0]);
@@ -1324,9 +1326,11 @@ export default function TimeLine(props) {
     .then((response) => response.json())
     .then((json) => {
       if (json) {
-        var sl = json["thanks_shop"];
-        sl.forEach(value => value.thanks = value.thank_id ? true : false);
-        setStaff_list(sl);
+        if (json["thanks_shop"]) {
+          var sl = json["thanks_shop"];
+          sl.forEach(value => value.thanks = value.thank_id ? true : false);
+          setStaff_list(sl);
+        }
         setThank_send(json["thanks"]["thank_send"]);
       }
     })
@@ -1379,8 +1383,10 @@ export default function TimeLine(props) {
     .then((json) => {
       if (json) {
         var sl = json["thanks_shop"];
-        sl.forEach(value => value.thanks = value.thank_id ? true : false);
-        setStaff_list(sl);
+        if (json["thanks_shop"]) {
+          sl.forEach(value => value.thanks = value.thank_id ? true : false);
+          setStaff_list(sl);
+        }
         setThank_send(json["thanks"]["thank_send"]);
       }
       setThanks_mdl(false);

@@ -60,7 +60,8 @@ export default function LogInScreen(props) {
   const { navigation,route } = props;
   const [cus_notifications, setCus_notifications] = useState(null);
   const [chat_notifications, setChat_notifications] = useState(null);
-  const [TL_notifications, setTL_notifications] = useState(false);
+  const [post_notifications, setPost_notifications] = useState(null);
+  const [thank_notifications, setThank_notifications] = useState(null);
   
   const [isLoading, setLoading] = useState(false);
   const [id, setID] = useState('');
@@ -114,7 +115,11 @@ export default function LogInScreen(props) {
         
       }
       if (response.notification.request.content.data.timeline && !global.sp_id) {
-        setTL_notifications(true);
+        const tl_data = response.notification.request.content.data.timeline;
+        setPost_notifications(tl_data);
+      }
+      if (response.notification.request.content.data.thank && !global.sp_id) {
+        setThank_notifications(true);
       }
     })
 
@@ -296,7 +301,8 @@ export default function LogInScreen(props) {
                 previous:'LogIn',
                 notifications:cus_notifications?cus_notifications:null,
                 notifications2:chat_notifications?chat_notifications:null,
-                notifications3:TL_notifications?TL_notifications:null,
+                notifications3:post_notifications?post_notifications:null,
+                notifications4:thank_notifications?thank_notifications:null,
               }],
             });
           }
@@ -397,7 +403,8 @@ export default function LogInScreen(props) {
               previous:'LogIn',
               notifications:cus_notifications?cus_notifications:null,
               notifications2:chat_notifications?chat_notifications:null,
-              notifications3:TL_notifications?TL_notifications:null,
+              notifications3:post_notifications?post_notifications:null,
+              notifications4:thank_notifications?thank_notifications:null,
             }],
           });
       
@@ -405,7 +412,7 @@ export default function LogInScreen(props) {
       }
     }
       
-  }, [station,address,rocalDB,cus_notifications,TL_notifications,chat_notifications]);
+  }, [station,address,rocalDB,cus_notifications,post_notifications,chat_notifications,thank_notifications]);
   
   async function Insert_staff_db(account,pass,data){
 
