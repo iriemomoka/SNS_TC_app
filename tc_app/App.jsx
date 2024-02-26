@@ -22,6 +22,8 @@ import TimeLine from './src/screens/TimeLine';
 import Post from './src/screens/Post';
 import Thanks from './src/screens/Thanks';
 import Follow from './src/screens/Follow';
+import SurveyList from './src/screens/SurveyList';
+import SurveyAnswer from './src/screens/SurveyAnswer';
 
 import { Context1 } from './src/components/ExportContext';
 
@@ -29,11 +31,11 @@ const Stack = createStackNavigator();
 LogBox.ignoreLogs(['Setting a timer']);
 
 export default function App() {
-  
+
   const [chatbell, setChatbell] = useState(0);
 
   return (
-    
+
     <Context1.Provider value={{chatbell, setChatbell}}>
       <RootSiblingParent>
         <StatusBar translucent={true} hidden={false} />
@@ -124,6 +126,14 @@ export default function App() {
             <Stack.Screen
               name="Follow"
               component={Follow}
+            />
+            <Stack.Screen
+              name="SurveyList"
+              component={SurveyList}
+            />
+            <Stack.Screen
+              name="SurveyAnswer"
+              component={SurveyAnswer}
             />
           </Stack.Navigator>
         </NavigationContainer>
