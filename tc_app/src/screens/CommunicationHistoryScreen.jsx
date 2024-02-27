@@ -1293,6 +1293,31 @@ export default function CommunicationHistoryScreen(props) {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.menulist}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "SurveyList",
+                  params: route.params,
+                  websocket: route.websocket,
+                  websocket2: route.websocket2,
+                  profile: route.profile,
+                  previous:'CommunicationHistory'
+                },
+              ],
+            });
+          }}
+        >
+          <MaterialCommunityIcons
+            name="pencil"
+            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
+            size={35}
+          />
+          <Text style={styles.menutext}>アンケート一覧</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menulist}
           onPress={() => logout()}
         >
           <MaterialCommunityIcons
