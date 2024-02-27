@@ -81,9 +81,28 @@ export default function TimeLine(props) {
     upd_dt: "",
   });
 
+  const [challenge_tl, setChallenge_tl] = useState({
+    nice_all: 0,
+    comment_all: 0,
+  });
+
+  const [challenge_result, setChallenge_result] = useState({
+    challenge_id: "",
+    user_id: "",
+    challenge_dt: "",
+    challenge_content: "",
+    challenge_result: 0,
+    challenge_comment:"",
+    feeling_today: "",
+    del_flg: "",
+    ins_dt: "",
+    upd_dt: "",
+  });
+
   const [modal, setModal] = useState(false);
 
   // 1:今日のチャレンジ 2:TL投稿 3:コメント 4: 今日のチャレンジ未入力 5:完了
+  // 6:前日のチャレンジ結果未入力 7:昨日の完了
   const [modal_flg, setModal_flg] = useState("1");
   const [challenge_content, setChallenge_content] = useState("");
   const [challenge_comment, setChallenge_comment] = useState("");
@@ -312,7 +331,7 @@ export default function TimeLine(props) {
   const onRefresh = useCallback(async() => {
 
     const json = await getTL();
-
+    
     if(json) {
       
       setLoading(true);
@@ -330,14 +349,29 @@ export default function TimeLine(props) {
         setStaff_list(sl);
       }
   
-      if (json["challenge"]) {
-        setChallenge(json["challenge"][0]);
+      if (json["challenge"]["challenge"]) {
+        setChallenge(json["challenge"]["challenge"][0]);
     
-        setStar(json["challenge"][0]["challenge_result"]);
-        setChallenge_comment(json["challenge"][0]["challenge_comment"]);
+        setStar(json["challenge"]["challenge"][0]["challenge_result"]);
+        setChallenge_comment(json["challenge"]["challenge"][0]["challenge_comment"]);
+
+        if (json["challenge"]["challenge_tl"]) {
+          const c_tl = json["challenge"]["challenge_tl"][0];
+          setChallenge_tl({nice_all: c_tl["nice_all"],comment_all: c_tl["comment_all"]});
+        }
+        
       } else {
         setModal(true);
         setModal_flg("4");
+      }
+
+      if (json["challenge_result"]) {
+        const challenge_result = json["challenge_result"][0];
+        setChallenge_result(challenge_result);
+        if (challenge_result["challenge_result"] == 0) {
+          setModal(true);
+          setModal_flg("6");
+        }
       }
 
     }
@@ -482,7 +516,7 @@ export default function TimeLine(props) {
       }
     }
 
-    if (flg == "1") { // 今日のチャレンジ
+    if (flg == "1") { // 今日のチャレンジ or 昨日のチャレンジ
       err = "登録";
       formData.append('challenge_flg',1);
     } else if (flg == "2") { // 投稿
@@ -514,7 +548,13 @@ export default function TimeLine(props) {
       if(!json) {
         Alert.alert(err+"に失敗しました");
       } else {
-        if (flg == "2") {
+        
+        if (!json["challenge"]["challenge"]) {
+          setModal(true);
+          setModal_flg("4");
+        }
+
+        if (flg == "1" || flg == "2") {
           setTL(TL_all => [ ...json["timeline"].filter(item => !TL_all.some(item2 => item2.timeline_id === item.timeline_id)),...TL_all]);
           setTL_all(TL_all => [ ...json["timeline"].filter(item => !TL_all.some(item2 => item2.timeline_id === item.timeline_id)),...TL_all]);
         }
@@ -875,7 +915,17 @@ export default function TimeLine(props) {
               <Text style={[styles.result_text,{color:challenge.challenge_result>0?rsl:"#c7c7c7"}]}>完了</Text>
             </TouchableOpacity>
           </View>
-          <View style={{flexDirection:'row',marginVertical:10}}>
+          <View style={{flexDirection:'row',marginBottom:3,marginTop:10}}>
+            <Text style={styles.label}>今日のチャレンジへのいいね</Text>
+            <Text style={styles.thank}>{String(challenge_tl.nice_all)}</Text>
+            <Text style={styles.label}>件</Text>
+          </View>
+          <View style={{flexDirection:'row',marginVertical:3}}>
+            <Text style={styles.label}>今日のチャレンジへのコメント</Text>
+            <Text style={styles.thank}>{String(challenge_tl.comment_all)}</Text>
+            <Text style={styles.label}>件</Text>
+          </View>
+          <View style={{flexDirection:'row',marginVertical:3}}>
             <Text style={styles.label}>今日送ったありがとう件数</Text>
             <Text style={styles.thank}>{String(thank_send)}</Text>
             <Text style={styles.label}>件</Text>
@@ -883,16 +933,16 @@ export default function TimeLine(props) {
         </View>
       </View>
     )
-  },[challenge,thank_send,checked]);
+  },[challenge,thank_send,checked,challenge_tl]);
 
   const TLList = useMemo(() => {
 
-    if (challenge.challenge_content == "") {
+    if (challenge_result.challenge_result == 0 || challenge.challenge_content == "") {
       return (
         <>
           {ChallengeView}
           <View style={{alignSelf:'center'}}>
-            <Text style={{color:'#666',textAlign:'center',marginTop:130}}>今日のチャレンジを入力すると{"\n"}タイムラインが表示されます</Text>
+            <Text style={{color:'#666',textAlign:'center',marginTop:130}}>チャレンジを入力すると{"\n"}タイムラインが表示されます</Text>
           </View>
         </>
       )
@@ -1069,7 +1119,7 @@ export default function TimeLine(props) {
         />
       )
     }
-  },[TL,challenge,thank_send,checked])
+  },[TL,challenge,challenge_result,thank_send,checked])
 
   const SendList = useMemo(() => {
 
@@ -1168,6 +1218,7 @@ export default function TimeLine(props) {
     setModal(false);
     setModal_flg('1');
     setChallenge_content("");
+    setStar(0);
     setTimeline_note("");
     setComment("");
     setComment_index("");
@@ -1177,6 +1228,12 @@ export default function TimeLine(props) {
   }
 
   const ChangeFeeling = (flg) => {
+    
+    if (challenge.challenge_content == "") {
+      Alert.alert('','今日のチャレンジが入力されていません！')
+      return;
+    }
+
     setChallenge(state => ({ ...state, feeling_today: flg }));
     const data = { ...challenge, feeling_today: flg }
     setFetch("1",data);
@@ -1227,12 +1284,16 @@ export default function TimeLine(props) {
     }
   }
 
-  const ChangeResult = () => {
+  const ChangeResult = (flg) => {
 
     var err = "";
 
     if (star == 0) {
-      err += "・今日のチャレンジの結果を選択してください\n";
+      if (flg) {
+        err += "・昨日のチャレンジの結果を選択してください\n";
+      } else {
+        err += "・今日のチャレンジの結果を選択してください\n";
+      }
     }
 
     if (challenge_comment == "") {
@@ -1244,11 +1305,19 @@ export default function TimeLine(props) {
       return;
     }
 
-    setChallenge(state => ({ ...state, challenge_result: star, challenge_comment: challenge_comment }));
+    var data = {}
 
-    const data = { ...challenge, challenge_result: star, challenge_comment: challenge_comment };
+    if (flg) {
+      setChallenge_result(state => ({ ...state, challenge_result: star, challenge_comment: challenge_comment }));
+
+      data = { ...challenge_result, challenge_result: star, challenge_comment: challenge_comment };
+    } else {
+      setChallenge(state => ({ ...state, challenge_result: star, challenge_comment: challenge_comment }));
+
+      data = { ...challenge, challenge_result: star, challenge_comment: challenge_comment };
+    }
+
     setFetch("1",data);
-
     ModalClose(false);
 
   }
@@ -1600,17 +1669,25 @@ export default function TimeLine(props) {
           style={{zIndex:999}}
         >
           
-          {modal_flg == "4"?(
+          {modal_flg == "4"||modal_flg == "6"?(
             <View style={styles.popup}>
-              <Text style={styles.noChallenge}>今日のチャレンジを入力しましょう！</Text>
+              {modal_flg == "4"?(
+                <Text style={styles.noChallenge}>今日のチャレンジを入力しましょう！</Text>
+              ):(
+                <Text style={styles.noChallenge}>昨日のチャレンジの結果が未入力です！</Text>
+              )}
               <View style={{flexDirection:'row'}} >
                 <TouchableOpacity
                   style={styles.popup_btn}
                   activeOpacity={0.7}
                   onPress={()=>{
+                    if (modal_flg == "4") {
+                      setModal_flg("1");
+                      setChallenge_content(challenge.challenge_content);
+                    } else {
+                      setModal_flg("7");
+                    }
                     setModal(true);
-                    setModal_flg("1");
-                    setChallenge_content(challenge.challenge_content);
                   }}
                 >
                   <Text style={styles.popup_btn_txt}>入力する</Text>
@@ -1618,218 +1695,324 @@ export default function TimeLine(props) {
                 <TouchableOpacity
                   style={[styles.popup_btn,{backgroundColor:"#a6a6a6",borderBottomColor:"#8c8c8c"}]}
                   activeOpacity={0.7}
-                  onPress={()=>{ModalClose()}}
+                  onPress={async()=>{
+                    await ModalClose()
+                    if (modal_flg == "6" && !challenge.challenge_content) {
+                      setModal(true);
+                      setModal_flg("4");
+                    }
+                  }}
                 >
                   <Text style={styles.popup_btn_txt}>閉じる</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ):modal_flg == "5"?(
-            <View style={[styles.modal,{maxHeight:"85%"}]}>
-              <TouchableOpacity
-                style={styles.close}
-                onPress={()=>ModalClose()}
-              >
-                <Feather name='x-circle' color='gray' size={35} />
-              </TouchableOpacity>
-              <ScrollView keyboardShouldPersistTaps="always">
-                <Text style={styles.modallabel}>今日のチャレンジ</Text>
-                <Text style={styles.modaltext}>{challenge.challenge_content}</Text>
-                <Text style={styles.modallabel}>今日のチャレンジの結果</Text>
-                <View style={{flexDirection:'row',marginVertical:10,justifyContent:'center'}} >
-                  <TouchableOpacity
-                    style={{marginHorizontal:10}}
-                    onPress={()=>{ChangeStar(1)}}
-                  >
-                    <Octicons
-                      name={star>=1?"star-fill":"star"}
-                      color={star>=1?"#ffe633":"#c7c7c7"}
-                      size={35}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{marginHorizontal:10}}
-                    onPress={()=>{ChangeStar(2)}}
-                  >
-                    <Octicons
-                      name={star>=2?"star-fill":"star"}
-                      color={star>=2?"#ffe633":"#c7c7c7"}
-                      size={35}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{marginHorizontal:10}}
-                    onPress={()=>{ChangeStar(3)}}
-                  >
-                    <Octicons
-                      name={star>=3?"star-fill":"star"}
-                      color={star>=3?"#ffe633":"#c7c7c7"}
-                      size={35}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{marginHorizontal:10}}
-                    onPress={()=>{ChangeStar(4)}}
-                  >
-                    <Octicons
-                      name={star>=4?"star-fill":"star"}
-                      color={star>=4?"#ffe633":"#c7c7c7"}
-                      size={35}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{marginHorizontal:10}}
-                    onPress={()=>{ChangeStar(5)}}
-                  >
-                    <Octicons
-                      name={star>=5?"star-fill":"star"}
-                      color={star>=5?"#ffe633":"#c7c7c7"}
-                      size={35}
-                    />
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.modallabel}>結果コメント</Text>
-                <TextInput
-                  onChangeText={(text) => {
-                    if (text) setEdit(true);
-                    setChallenge_comment(text);
-                  }}
-                  value={challenge_comment}
-                  style={[styles.textarea,{marginBottom:10}]}
-                  multiline={true}
-                  disableFullscreenUI={true}
-                  numberOfLines={11}
-                />
-                {staff_list.length>0&&(
-                  <>
-                    <Text style={styles.modallabel}>ありがとうを送る</Text>
-                    {SendList}
-                    <Modal
-                      isVisible={thanks_mdl}
-                      backdropOpacity={0.5}
-                      animationInTiming={300}
-                      animationOutTiming={500}
-                      animationIn={'slideInDown'}
-                      animationOut={'slideOutUp'}
-                      onBackdropPress={async()=>{
-                        if (keyboardStatus) {
-                          Keyboard.dismiss()
-                        } else {
-
-                          if (edit) {
-                            const AsyncAlert = async () => new Promise((resolve) => {
-                              Alert.alert(
-                                `確認`,
-                                `入力した内容を保存せずに閉じていいですか？`,
-                                [
-                                  {text: "はい", onPress: () => {resolve(true);}},
-                                  {text: "いいえ", onPress: () => {resolve(false);}, style: "cancel"},
-                                ]
-                              );
-                            });
-                        
-                            const modal_check = await AsyncAlert();
-                            if (!modal_check) return;
-                          }
-
-                          setThanks_mdl(false);
-                          setThanks_txt("");
-                          setEdit(false);
-                        }
-                      }}
-                      style={{zIndex:999}}
+            <TouchableWithoutFeedback onPress={()=>Keyboard.dismiss()} >
+              <View style={[styles.modal,{maxHeight:"85%"}]}>
+                <TouchableOpacity
+                  style={styles.close}
+                  onPress={()=>ModalClose()}
+                >
+                  <Feather name='x-circle' color='gray' size={35} />
+                </TouchableOpacity>
+                <ScrollView keyboardShouldPersistTaps="always">
+                  <Text style={styles.modallabel}>今日のチャレンジ</Text>
+                  <Text style={styles.modaltext}>{challenge.challenge_content}</Text>
+                  <Text style={styles.modallabel}>今日のチャレンジの結果</Text>
+                  <View style={{flexDirection:'row',marginVertical:10,justifyContent:'center'}} >
+                    <TouchableOpacity
+                      style={{marginHorizontal:10}}
+                      onPress={()=>{ChangeStar(1)}}
                     >
-                      <KeyboardAvoidingView behavior={"position"} keyboardVerticalOffset={30}>
-                        <TouchableWithoutFeedback
-                          onPress={()=>Keyboard.dismiss()}
-                        >
-                          <View style={styles.modal}>
-                            <TouchableOpacity
-                              style={styles.close}
-                              onPress={async()=>{
+                      <Octicons
+                        name={star>=1?"star-fill":"star"}
+                        color={star>=1?"#ffe633":"#c7c7c7"}
+                        size={35}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{marginHorizontal:10}}
+                      onPress={()=>{ChangeStar(2)}}
+                    >
+                      <Octicons
+                        name={star>=2?"star-fill":"star"}
+                        color={star>=2?"#ffe633":"#c7c7c7"}
+                        size={35}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{marginHorizontal:10}}
+                      onPress={()=>{ChangeStar(3)}}
+                    >
+                      <Octicons
+                        name={star>=3?"star-fill":"star"}
+                        color={star>=3?"#ffe633":"#c7c7c7"}
+                        size={35}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{marginHorizontal:10}}
+                      onPress={()=>{ChangeStar(4)}}
+                    >
+                      <Octicons
+                        name={star>=4?"star-fill":"star"}
+                        color={star>=4?"#ffe633":"#c7c7c7"}
+                        size={35}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{marginHorizontal:10}}
+                      onPress={()=>{ChangeStar(5)}}
+                    >
+                      <Octicons
+                        name={star>=5?"star-fill":"star"}
+                        color={star>=5?"#ffe633":"#c7c7c7"}
+                        size={35}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.modallabel}>結果コメント</Text>
+                  <TextInput
+                    onChangeText={(text) => {
+                      if (text) setEdit(true);
+                      setChallenge_comment(text);
+                    }}
+                    value={challenge_comment}
+                    style={[styles.textarea,{marginBottom:10}]}
+                    multiline={true}
+                    disableFullscreenUI={true}
+                    numberOfLines={11}
+                  />
+                  {staff_list.length>0&&(
+                    <>
+                      <Text style={styles.modallabel}>ありがとうを送る</Text>
+                      {SendList}
+                      <Modal
+                        isVisible={thanks_mdl}
+                        backdropOpacity={0.5}
+                        animationInTiming={300}
+                        animationOutTiming={500}
+                        animationIn={'slideInDown'}
+                        animationOut={'slideOutUp'}
+                        onBackdropPress={async()=>{
+                          if (keyboardStatus) {
+                            Keyboard.dismiss()
+                          } else {
 
-                                if (edit) {
-                                  const AsyncAlert = async () => new Promise((resolve) => {
-                                    Alert.alert(
-                                      `確認`,
-                                      `入力した内容を保存せずに閉じていいですか？`,
-                                      [
-                                        {text: "はい", onPress: () => {resolve(true);}},
-                                        {text: "いいえ", onPress: () => {resolve(false);}, style: "cancel"},
-                                      ]
-                                    );
-                                  });
-                              
-                                  const modal_check = await AsyncAlert();
-                                  if (!modal_check) return;
-                                }
+                            if (edit) {
+                              const AsyncAlert = async () => new Promise((resolve) => {
+                                Alert.alert(
+                                  `確認`,
+                                  `入力した内容を保存せずに閉じていいですか？`,
+                                  [
+                                    {text: "はい", onPress: () => {resolve(true);}},
+                                    {text: "いいえ", onPress: () => {resolve(false);}, style: "cancel"},
+                                  ]
+                                );
+                              });
+                          
+                              const modal_check = await AsyncAlert();
+                              if (!modal_check) return;
+                            }
 
-                                setThanks_mdl(false);
-                                setThanks_txt("");
-                                setEdit(false);
-                              }}
-                            >
-                              <Feather name='x-circle' color='gray' size={35} />
-                            </TouchableOpacity>
-                            <Text style={[styles.modallabel,{maxWidth:250}]}>{`${toStaff&&toStaff.name_1+" "+toStaff.name_2}さんへありがとうと一緒にメッセージを送りましょう`}</Text>
-                            <TextInput
-                              onChangeText={(text) => {
-                                if (text) setEdit(true);
-                                setThanks_txt(text);
-                              }}
-                              value={thanks_txt}
-                              style={styles.textarea}
-                              multiline={true}
-                              disableFullscreenUI={true}
-                              numberOfLines={11}
-                              placeholder={""}
-                            />
-                            <TouchableOpacity
-                              onPress={()=>{
-                                ChangeThanks(toStaff&&toStaff.index)
-                                setThanks_mdl(false);
-                                setThanks_txt("");
-                                setEdit(false);
-                              }}
-                              style={styles.submit}
+                            setThanks_mdl(false);
+                            setThanks_txt("");
+                            setEdit(false);
+                          }
+                        }}
+                        style={{zIndex:999}}
+                      >
+                        <KeyboardAvoidingView behavior={"position"} keyboardVerticalOffset={30}>
+                          <TouchableWithoutFeedback
+                            onPress={()=>Keyboard.dismiss()}
+                          >
+                            <View style={styles.modal}>
+                              <TouchableOpacity
+                                style={styles.close}
+                                onPress={async()=>{
+
+                                  if (edit) {
+                                    const AsyncAlert = async () => new Promise((resolve) => {
+                                      Alert.alert(
+                                        `確認`,
+                                        `入力した内容を保存せずに閉じていいですか？`,
+                                        [
+                                          {text: "はい", onPress: () => {resolve(true);}},
+                                          {text: "いいえ", onPress: () => {resolve(false);}, style: "cancel"},
+                                        ]
+                                      );
+                                    });
+                                
+                                    const modal_check = await AsyncAlert();
+                                    if (!modal_check) return;
+                                  }
+
+                                  setThanks_mdl(false);
+                                  setThanks_txt("");
+                                  setEdit(false);
+                                }}
                               >
-                              <Text style={styles.submitText}>送　信</Text>
-                            </TouchableOpacity>
-                            {(toStaff&&toStaff.thanks)&&(
-                            <TouchableOpacity
-                              onPress={()=>{
-                                ClearThanks(toStaff&&toStaff.index);
-                                setEdit(false);
-                              }}
-                              style={[styles.submit,{backgroundColor:"#a6a6a6",borderBottomColor:"#8c8c8c",marginTop:5}]}
-                              >
-                              <Text style={styles.submitText}>取り消す</Text>
-                            </TouchableOpacity>
-                            )}
-                          </View>
-                        </TouchableWithoutFeedback>
-                      </KeyboardAvoidingView>
-                    </Modal>
-                  </>
-                )}
-                <View style={{flexDirection:'row',justifyContent:'center',marginBottom:10}} >
+                                <Feather name='x-circle' color='gray' size={35} />
+                              </TouchableOpacity>
+                              <Text style={[styles.modallabel,{maxWidth:250}]}>{`${toStaff&&toStaff.name_1+" "+toStaff.name_2}さんへありがとうと一緒にメッセージを送りましょう`}</Text>
+                              <TextInput
+                                onChangeText={(text) => {
+                                  if (text) setEdit(true);
+                                  setThanks_txt(text);
+                                }}
+                                value={thanks_txt}
+                                style={styles.textarea}
+                                multiline={true}
+                                disableFullscreenUI={true}
+                                numberOfLines={11}
+                                placeholder={""}
+                              />
+                              <TouchableOpacity
+                                onPress={()=>{
+                                  ChangeThanks(toStaff&&toStaff.index)
+                                  setThanks_mdl(false);
+                                  setThanks_txt("");
+                                  setEdit(false);
+                                }}
+                                style={styles.submit}
+                                >
+                                <Text style={styles.submitText}>送　信</Text>
+                              </TouchableOpacity>
+                              {(toStaff&&toStaff.thanks)&&(
+                              <TouchableOpacity
+                                onPress={()=>{
+                                  ClearThanks(toStaff&&toStaff.index);
+                                  setEdit(false);
+                                }}
+                                style={[styles.submit,{backgroundColor:"#a6a6a6",borderBottomColor:"#8c8c8c",marginTop:5}]}
+                                >
+                                <Text style={styles.submitText}>取り消す</Text>
+                              </TouchableOpacity>
+                              )}
+                            </View>
+                          </TouchableWithoutFeedback>
+                        </KeyboardAvoidingView>
+                      </Modal>
+                    </>
+                  )}
+                  <View style={{flexDirection:'row',justifyContent:'center',marginBottom:10}} >
+                    <TouchableOpacity
+                      style={styles.popup_btn}
+                      activeOpacity={0.7}
+                      onPress={()=>{ChangeResult(false)}}
+                    >
+                      <Text style={styles.popup_btn_txt}>完了</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.popup_btn,{backgroundColor:"#a6a6a6",borderBottomColor:"#8c8c8c"}]}
+                      activeOpacity={0.7}
+                      onPress={()=>{ModalClose()}}
+                    >
+                      <Text style={styles.popup_btn_txt}>閉じる</Text>
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          ):modal_flg == "7"?(
+            <KeyboardAvoidingView behavior={"position"} keyboardVerticalOffset={30}>
+              <TouchableWithoutFeedback onPress={()=>Keyboard.dismiss()} >
+                <View style={styles.modal}>
                   <TouchableOpacity
-                    style={styles.popup_btn}
-                    activeOpacity={0.7}
-                    onPress={()=>{ChangeResult()}}
+                    style={styles.close}
+                    onPress={()=>ModalClose()}
                   >
-                    <Text style={styles.popup_btn_txt}>完了</Text>
+                    <Feather name='x-circle' color='gray' size={35} />
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.popup_btn,{backgroundColor:"#a6a6a6",borderBottomColor:"#8c8c8c"}]}
-                    activeOpacity={0.7}
-                    onPress={()=>{ModalClose()}}
-                  >
-                    <Text style={styles.popup_btn_txt}>閉じる</Text>
-                  </TouchableOpacity>
+                  <ScrollView keyboardShouldPersistTaps="always">
+                    <Text style={styles.modallabel}>昨日のチャレンジ</Text>
+                    <Text style={styles.modaltext}>{challenge_result.challenge_content}</Text>
+                    <Text style={styles.modallabel}>昨日のチャレンジの結果</Text>
+                    <View style={{flexDirection:'row',marginVertical:10,justifyContent:'center'}} >
+                      <TouchableOpacity
+                        style={{marginHorizontal:10}}
+                        onPress={()=>{ChangeStar(1)}}
+                      >
+                        <Octicons
+                          name={star>=1?"star-fill":"star"}
+                          color={star>=1?"#ffe633":"#c7c7c7"}
+                          size={35}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{marginHorizontal:10}}
+                        onPress={()=>{ChangeStar(2)}}
+                      >
+                        <Octicons
+                          name={star>=2?"star-fill":"star"}
+                          color={star>=2?"#ffe633":"#c7c7c7"}
+                          size={35}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{marginHorizontal:10}}
+                        onPress={()=>{ChangeStar(3)}}
+                      >
+                        <Octicons
+                          name={star>=3?"star-fill":"star"}
+                          color={star>=3?"#ffe633":"#c7c7c7"}
+                          size={35}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{marginHorizontal:10}}
+                        onPress={()=>{ChangeStar(4)}}
+                      >
+                        <Octicons
+                          name={star>=4?"star-fill":"star"}
+                          color={star>=4?"#ffe633":"#c7c7c7"}
+                          size={35}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{marginHorizontal:10}}
+                        onPress={()=>{ChangeStar(5)}}
+                      >
+                        <Octicons
+                          name={star>=5?"star-fill":"star"}
+                          color={star>=5?"#ffe633":"#c7c7c7"}
+                          size={35}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.modallabel}>結果コメント</Text>
+                    <TextInput
+                      onChangeText={(text) => {
+                        if (text) setEdit(true);
+                        setChallenge_comment(text);
+                      }}
+                      value={challenge_comment}
+                      style={[styles.textarea,{marginBottom:10}]}
+                      multiline={true}
+                      disableFullscreenUI={true}
+                      numberOfLines={11}
+                    />
+                    <View style={{flexDirection:'row',justifyContent:'center',marginBottom:10}} >
+                      <TouchableOpacity
+                        style={styles.popup_btn}
+                        activeOpacity={0.7}
+                        onPress={()=>{ChangeResult(true)}}
+                      >
+                        <Text style={styles.popup_btn_txt}>完了</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.popup_btn,{backgroundColor:"#a6a6a6",borderBottomColor:"#8c8c8c"}]}
+                        activeOpacity={0.7}
+                        onPress={()=>{ModalClose()}}
+                      >
+                        <Text style={styles.popup_btn_txt}>閉じる</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </ScrollView>
                 </View>
-              </ScrollView>
-            </View>
+              </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
           ):(
             <KeyboardAvoidingView behavior={"position"} keyboardVerticalOffset={30}>
               <TouchableWithoutFeedback

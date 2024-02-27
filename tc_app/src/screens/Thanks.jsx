@@ -586,9 +586,6 @@ export default function Thanks(props) {
                     <Text style={styles.name2}>
                       {item.name_1}{item.name_2}
                     </Text>
-                    <Text style={styles.message2}>
-                      {item.thank_message_to_me}
-                    </Text>
                   </View>
                   <View style={styles.date2_box}>
                     <Text style={styles.date2}>
@@ -599,6 +596,9 @@ export default function Thanks(props) {
                     </Text>
                   </View>
                 </View>
+                <Text style={styles.message2}>
+                  {item.thank_message_to_me}
+                </Text>
               </TouchableOpacity>
               </>
             );

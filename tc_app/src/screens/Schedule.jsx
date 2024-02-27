@@ -409,7 +409,7 @@ export default function Schedule(props) {
 
     // 【個人ID】設定No8.同じお客様のスケジュールはまとめて表示制御部分
     var option = false;
-    if (((route.params.setting_list).split(",")).includes('8')) {
+    if (route.params.setting_list && ((route.params.setting_list).split(",")).includes('8')) {
       option = true;
     }
 
@@ -507,7 +507,7 @@ export default function Schedule(props) {
 
     // 【個人ID】設定No8.同じお客様のスケジュールはまとめて表示制御部分
     var option = false;
-    if (((route.params.setting_list).split(",")).includes('8')) {
+    if (route.params.setting_list && ((route.params.setting_list).split(",")).includes('8')) {
       option = true;
     }
 
