@@ -163,6 +163,8 @@ export default function SurveyList(props) {
                         profile: route.profile,
                         evaluation_title: item.evaluation_title,
                         evaluation_note: item.evaluation_note,
+                        target_staff_id: item.target_staff_id,
+                        full_name: item.name_1 + " " + item.name_2,
                       },
                     ],
                   });
@@ -178,6 +180,9 @@ export default function SurveyList(props) {
                         : ""}
                     </Text>
                   </View>
+                  <Text style={styles.target_name}>
+                    {"対象者：" + item.name_1 + " " + item.name_2}
+                  </Text>
                   <Text style={styles.date}>
                     {item.evaluation_end_time
                       ? "【期限】" + item.evaluation_end_time.substring(0, 10)
@@ -254,7 +259,12 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 18,
-    marginBottom: 5,
+    marginTop: 5,
+  },
+  target_name: {
+    position: "absolute",
+    left: 0,
+    bottom: 30,
   },
   date: {
     position: "absolute",

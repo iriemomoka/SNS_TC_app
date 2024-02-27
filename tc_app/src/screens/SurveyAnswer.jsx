@@ -50,7 +50,6 @@ export default function SurveyAnswer(props) {
   const [isLoading, setLoading] = useState(false);
   const [reload, setReload] = useState("");
   const [questions, setQuestions] = useState([]);
-  const [staffs, setStaffs] = useState([]);
   const [answers, setAnswers] = useState([]);
 
   const radioEvaluation = [
@@ -63,7 +62,6 @@ export default function SurveyAnswer(props) {
 
   // ラジオボタンの値
   const handleRadioChange = (
-    staffIndex,
     questionIndex,
     value,
     question_no,
@@ -71,15 +69,14 @@ export default function SurveyAnswer(props) {
   ) => {
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
-      [`evaluation_stage ${staffIndex}-${questionIndex}`]: value,
-      [`question_no ${staffIndex}-${questionIndex}`]: question_no,
-      [`target_staff_id ${staffIndex}-${questionIndex}`]: target_staff_id,
+      [`evaluation_stage ${questionIndex}`]: value,
+      [`question_no ${questionIndex}`]: question_no,
+      [`target_staff_id ${questionIndex}`]: target_staff_id,
     }));
   };
 
   // テキストエリアの値
   const handleTextChange = (
-    staffIndex,
     questionIndex,
     text,
     question_no,
@@ -87,9 +84,9 @@ export default function SurveyAnswer(props) {
   ) => {
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
-      [`evaluation_answer ${staffIndex}-${questionIndex}`]: text,
-      [`question_no ${staffIndex}-${questionIndex}`]: question_no,
-      [`target_staff_id ${staffIndex}-${questionIndex}`]: target_staff_id,
+      [`evaluation_answer ${questionIndex}`]: text,
+      [`question_no ${questionIndex}`]: question_no,
+      [`target_staff_id ${questionIndex}`]: target_staff_id,
     }));
   };
 
@@ -132,8 +129,6 @@ export default function SurveyAnswer(props) {
     answerObject = answerObject.map((obj) => {
       return { ...obj, ...registerObject };
     });
-
-    // console.log(answerObject);
 
     let formData = new FormData();
     formData.append("ID", route.params.account);
@@ -224,7 +219,6 @@ export default function SurveyAnswer(props) {
       .then((response) => response.json())
       .then((json) => {
         setQuestions(json["question_list"]);
-        setStaffs(json["staff_list"]);
       })
       .catch((error) => {
         console.log(error);
@@ -252,54 +246,48 @@ export default function SurveyAnswer(props) {
     } else {
       return (
         <>
-          {staffs.map((st, staffIndex) => (
-            <View key={`staff-${staffIndex}`}>
-              {questions.map((q, questionIndex) => (
-                <View key={`question-${questionIndex}`}>
-                  <Text style={styles.questionTitle}>
-                    【
-                    {route.params.account == st.account
-                      ? "自己評価"
-                      : st.name_1 + " " + st.name_2}
-                    】{q.question_note}
-                  </Text>
-                  {q.question_kinds === "記述式" ? (
-                    <TextInput
-                      style={styles.textarea}
-                      multiline={true}
-                      numberOfLines={11}
-                      onChangeText={(text) =>
-                        handleTextChange(
-                          staffIndex,
-                          questionIndex,
-                          text,
-                          q.question_no,
-                          st.target_staff_id
-                        )
-                      }
-                    />
-                  ) : (
-                    <RadioButtonRN
-                      data={radioEvaluation}
-                      box={false}
-                      circleSize={16}
-                      style={styles.radioGroup}
-                      boxStyle={styles.radioBox}
-                      textStyle={styles.radioText}
-                      activeColor={"blue"}
-                      selectedBtn={(e) =>
-                        handleRadioChange(
-                          staffIndex,
-                          questionIndex,
-                          e.value,
-                          q.question_no,
-                          st.target_staff_id
-                        )
-                      }
-                    />
-                  )}
-                </View>
-              ))}
+          {questions.map((q, questionIndex) => (
+            <View key={`question-${questionIndex}`}>
+              <Text style={styles.questionTitle}>
+                【
+                {route.params.account == route.target_staff_id
+                  ? "自己評価"
+                  : route.full_name}
+                】{q.question_note}
+              </Text>
+              {q.question_kinds === "記述式" ? (
+                <TextInput
+                  style={styles.textarea}
+                  multiline={true}
+                  numberOfLines={11}
+                  onChangeText={(text) =>
+                    handleTextChange(
+                      questionIndex,
+                      text,
+                      q.question_no,
+                      route.target_staff_id
+                    )
+                  }
+                />
+              ) : (
+                <RadioButtonRN
+                  data={radioEvaluation}
+                  box={false}
+                  circleSize={16}
+                  style={styles.radioGroup}
+                  boxStyle={styles.radioBox}
+                  textStyle={styles.radioText}
+                  activeColor={"blue"}
+                  selectedBtn={(e) =>
+                    handleRadioChange(
+                      questionIndex,
+                      e.value,
+                      q.question_no,
+                      route.target_staff_id
+                    )
+                  }
+                />
+              )}
             </View>
           ))}
 
@@ -314,7 +302,7 @@ export default function SurveyAnswer(props) {
         </>
       );
     }
-  }, [questions, staffs, answers]);
+  }, [questions, answers]);
 
   return (
     <SideMenu menuPosition={"right"}>
