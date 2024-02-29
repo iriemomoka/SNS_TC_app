@@ -61,32 +61,22 @@ export default function SurveyAnswer(props) {
   ];
 
   // ラジオボタンの値
-  const handleRadioChange = (
-    questionIndex,
-    value,
-    question_no,
-    target_staff_id
-  ) => {
+  const handleRadioChange = (index, value, question_no, target_staff_id) => {
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
-      [`evaluation_stage ${questionIndex}`]: value,
-      [`question_no ${questionIndex}`]: question_no,
-      [`target_staff_id ${questionIndex}`]: target_staff_id,
+      [`evaluation_stage ${index}`]: value,
+      [`question_no ${index}`]: question_no,
+      [`target_staff_id ${index}`]: target_staff_id,
     }));
   };
 
   // テキストエリアの値
-  const handleTextChange = (
-    questionIndex,
-    text,
-    question_no,
-    target_staff_id
-  ) => {
+  const handleTextChange = (index, text, question_no, target_staff_id) => {
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
-      [`evaluation_answer ${questionIndex}`]: text,
-      [`question_no ${questionIndex}`]: question_no,
-      [`target_staff_id ${questionIndex}`]: target_staff_id,
+      [`evaluation_answer ${index}`]: text,
+      [`question_no ${index}`]: question_no,
+      [`target_staff_id ${index}`]: target_staff_id,
     }));
   };
 
@@ -125,6 +115,13 @@ export default function SurveyAnswer(props) {
 
     let answerObject = transformObject(answers);
 
+    // 質問に対する回答が全て入力されていない場合は登録しない。
+    if (questions.length > answerObject.length) {
+      Alert.alert("【登録エラー】", "未入力の項目があります");
+      setLoading(false);
+      return false;
+    }
+
     // 登録に必要なカラムの値を追加する
     answerObject = answerObject.map((obj) => {
       return { ...obj, ...registerObject };
@@ -151,6 +148,21 @@ export default function SurveyAnswer(props) {
         // console.log(json);
         if (json) {
           Alert.alert("アンケートを登録しました");
+
+          navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: "SurveyList",
+                params: route.params,
+                websocket: route.websocket,
+                websocket2: route.websocket2,
+                profile: route.profile,
+                previous: "SurveyAnswer",
+                reload: reload,
+              },
+            ],
+          });
         } else {
           Alert.alert("登録に失敗しました");
         }
@@ -246,8 +258,8 @@ export default function SurveyAnswer(props) {
     } else {
       return (
         <>
-          {questions.map((q, questionIndex) => (
-            <View key={`question-${questionIndex}`}>
+          {questions.map((q, index) => (
+            <View key={`question-${index}`}>
               <Text style={styles.questionTitle}>
                 【
                 {route.params.account == route.target_staff_id
@@ -262,7 +274,7 @@ export default function SurveyAnswer(props) {
                   numberOfLines={11}
                   onChangeText={(text) =>
                     handleTextChange(
-                      questionIndex,
+                      index,
                       text,
                       q.question_no,
                       route.target_staff_id
@@ -280,7 +292,7 @@ export default function SurveyAnswer(props) {
                   activeColor={"blue"}
                   selectedBtn={(e) =>
                     handleRadioChange(
-                      questionIndex,
+                      index,
                       e.value,
                       q.question_no,
                       route.target_staff_id

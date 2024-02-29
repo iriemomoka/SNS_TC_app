@@ -149,7 +149,15 @@ export default function SurveyList(props) {
           renderItem={({ item }) => {
             return (
               <TouchableOpacity
-                style={styles.ListItem}
+                style={[
+                  styles.ListItem,
+                  item.answer_count < item.question_count
+                    ? ""
+                    : { backgroundColor: "#b3b3b3" },
+                ]}
+                disabled={
+                  item.answer_count < item.question_count ? false : true
+                }
                 onPress={() => {
                   navigation.reset({
                     index: 0,
