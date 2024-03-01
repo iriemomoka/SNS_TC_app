@@ -386,6 +386,8 @@ export default function TimeLine(props) {
 
   const endRefresh = useCallback(async() => {
 
+    if (TL_all.length < 20) return;
+
     setLoading(true);
 
     const json = await getTL(TL_all.length);
@@ -937,7 +939,7 @@ export default function TimeLine(props) {
 
   const TLList = useMemo(() => {
 
-    if (challenge_result.challenge_result == 0 || challenge.challenge_content == "") {
+    if ((challenge_result.user_id && challenge_result.challenge_result == 0) || challenge.challenge_content == "") {
       return (
         <>
           {ChallengeView}

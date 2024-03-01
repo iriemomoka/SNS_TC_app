@@ -319,8 +319,8 @@ export default function Post(props) {
           setComment(posts);
         }
         
-        if(json["challenge"]) {
-          setChallenge(json["challenge"][0]);
+        if(json["challenge"]["challenge"]) {
+          setChallenge(json["challenge"]["challenge"][0]);
         }
 
         
@@ -424,6 +424,8 @@ export default function Post(props) {
   },[abortControllerRef]);
 
   const endRefreshPost = useCallback(async() => {
+
+    if (Comment.length < 20) return;
 
     setLoading(true);
 
@@ -1033,24 +1035,44 @@ export default function Post(props) {
                         )}
                       </View>
                       {route.params.account != route.post.user_id && (
-                        <View style={{flexDirection:'row',marginTop:8}}>
+                        <>
+                          <View style={{flexDirection:'row',marginTop:8}}>
+                            <TouchableOpacity
+                              style={[styles.follow2,{borderColor:rsl,backgroundColor:'#fff',borderWidth:1.5}]}
+                              onPress={()=>{
+                                setModal_flg("2")
+                                setModal(true);
+                                setThanks(thank.thank_id&&thank.thank_message);
+                              }}
+                            >
+                              <Text style={[styles.follow2_txt,{color:rsl}]}>{thank.thank_id?"ありがとう送信済":"ありがとう送信"}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.follow2,{backgroundColor:rsl,marginLeft:5}]}
+                              onPress={()=>{setFollow_fetch()}}
+                            >
+                              <Text style={styles.follow2_txt}>{follow_flg?"フォロー解除":"フォローする"}</Text>
+                            </TouchableOpacity>
+                          </View>
                           <TouchableOpacity
-                            style={[styles.follow2,{borderColor:rsl,backgroundColor:'#fff',borderWidth:1.5}]}
+                            style={styles.follow3}
                             onPress={()=>{
-                              setModal_flg("2")
-                              setModal(true);
-                              setThanks(thank.thank_id&&thank.thank_message);
+                              navigation.navigate(
+                                'ThanksPost',{
+                                  name: 'ThanksPost' ,
+                                  params: route.params,
+                                  websocket:route.websocket,
+                                  websocket2: route.websocket2,
+                                  profile:route.profile,
+                                  post:route.post,
+                                  previous:'Post',
+                                }
+                              );
                             }}
                           >
-                            <Text style={[styles.follow2_txt,{color:rsl}]}>{thank.thank_id?"ありがとう送信済":"ありがとう送信"}</Text>
+                            <Text style={styles.follow3_txt}>ありがとう一覧</Text>
                           </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[styles.follow2,{backgroundColor:rsl,marginLeft:5}]}
-                            onPress={()=>{setFollow_fetch()}}
-                          >
-                            <Text style={styles.follow2_txt}>{follow_flg?"フォロー解除":"フォローする"}</Text>
-                          </TouchableOpacity>
-                        </View>
+                        </>
                       )}
                       <View style={{flexDirection:'row',marginTop:8}}>
                         <TouchableOpacity
@@ -1565,6 +1587,27 @@ const styles = StyleSheet.create({
   follow2_txt: {
     fontSize:12,
     color:'#fff',
+    fontWeight:'500'
+  },
+  follow3: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 5,
+    backgroundColor:'#fff',
+    borderColor:'#999',
+    borderWidth:2,
+    width:245,
+    height:30,
+    shadowColor: "#999",
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity:1,
+    shadowRadius:1.5,
+    elevation:5,
+    marginTop:8
+  },
+  follow3_txt: {
+    fontSize:12,
+    color:'#999',
     fontWeight:'500'
   },
   label: {

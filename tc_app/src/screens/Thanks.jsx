@@ -29,12 +29,12 @@ import {
 } from "react-native";
 import * as Notifications from "expo-notifications";
 import { MaterialCommunityIcons,Ionicons,Octicons } from '@expo/vector-icons';
-import SideMenu from 'react-native-side-menu-updated';
 import * as SQLite from "expo-sqlite";
 import DropDownPicker, { Item } from "react-native-dropdown-picker";
 import { Feather } from "@expo/vector-icons";
 import Modal from "react-native-modal";
-import { CheckBox } from 'react-native-elements';
+import Moment from 'moment';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import Loading from "../components/Loading";
 import { GetDB,db_select,db_write } from '../components/Databace';
@@ -80,6 +80,9 @@ export default function Thanks(props) {
 
   const [staffs, setStaffs] = useState([]); // 全件格納用
   const [staff_list, setStaff_list] = useState([]); // 表示用
+
+  const [date, setDate] = useState(new Date());
+  const [show, setShow] = useState(false);
 
   const [modal, setModal] = useState(false);
   const [toStaff, setToStaff] = useState(null);
@@ -283,9 +286,9 @@ export default function Thanks(props) {
     setLoading(false);
   }
 
-  const onRefresh = useCallback(async() => {
+  const onRefresh = useCallback(async(send_date = date) => {
 
-    const json = await getThanks();
+    const json = await getThanks(send_date);
 
     if (json) {
 
@@ -328,6 +331,9 @@ export default function Thanks(props) {
 
         setThanks_all(tm);
         setThanks(tm);
+      } else {
+        setThanks_all([]);
+        setThanks([]);
       }
     }
 
@@ -429,7 +435,7 @@ export default function Thanks(props) {
     await onRefresh(false);
   };
 
-  const getThanks = useCallback(() => {
+  const getThanks = useCallback((send_date) => {
     
     const signal = abortControllerRef.current.signal;
 
@@ -445,6 +451,7 @@ export default function Thanks(props) {
           pass: route.params.password,
           act: "thanks",
           fc_flg: global.fc_flg,
+          send_date:Moment(send_date).format("YYYY-MM-DD"),
         }),
         signal
       })
@@ -518,9 +525,13 @@ export default function Thanks(props) {
                 style={{flexDirection:'row'}}
                 activeOpacity={1}
                 onPress={()=>{
-                  setToStaff(item);
-                  setModal(true);
-                  setThanks_txt(item?item.thank_message:"");
+                  const selectDate = Moment(date).format("YYYY-MM-DD");
+                  const currentDate = Moment(new Date()).format("YYYY-MM-DD")
+                  if (selectDate == currentDate) {
+                    setToStaff(item);
+                    setModal(true);
+                    setThanks_txt(item?item.thank_message:"");
+                  }
                 }}
               >
                 <MaterialCommunityIcons
@@ -559,11 +570,15 @@ export default function Thanks(props) {
               <TouchableOpacity
                 style={styles.ListItem2}
                 onPress={()=>{
-                  setToStaff(item);
-                  setModal(true);
-                  setThanks_txt(item?item.thank_message:"");
+                  const selectDate = Moment(date).format("YYYY-MM-DD");
+                  const currentDate = Moment(new Date()).format("YYYY-MM-DD")
+                  if (selectDate == currentDate) {
+                    setToStaff(item);
+                    setModal(true);
+                    setThanks_txt(item?item.thank_message:"");
+                  }
                 }}
-                activeOpacity={0.8}
+                activeOpacity={1}
               >
                 <View style={styles.ListInner2}>
                   {item.staff_photo1?
@@ -627,6 +642,7 @@ export default function Thanks(props) {
         thank_id:item.thank_id,
         user_id:item.account,
         thank_message:thanks_txt,
+        send_date:Moment(date).format("YYYY-MM-DD"),
       }),
     })
     .then((response) => response.json())
@@ -705,6 +721,7 @@ export default function Thanks(props) {
         fc_flg: global.fc_flg,
         thanks_clear_flg:1,
         thank_id:item.thank_id,
+        send_date:Moment(date).format("YYYY-MM-DD"),
       }),
     })
     .then((response) => response.json())
@@ -837,21 +854,91 @@ export default function Thanks(props) {
           placeholder="店舗名、名前が検索できます"
           placeholderTextColor="#b3b3b3"
         />
-        <DropDownPicker
-          style={styles.DropDown}
-          dropDownContainerStyle={styles.dropDownContainer}
-          open={open}
-          value={filter}
-          items={filterList}
-          setOpen={setOpen}
-          setValue={setFilter}
-          placeholder="フィルター"
-          multipleText="フィルター"
-          multiple={true}
-          TickIconComponent={()=><MaterialCommunityIcons name={"check-circle"} color={chk} size={20} />}
-          disableBorderRadius={false}
-        />
-        <View style={{flexDirection:'row',width:'100%'}}>
+        <View style={{flexDirection:'row',marginVertical:5,zIndex:999}}>
+          <TouchableOpacity
+            onPress={()=>setShow(true)}
+            style={styles.Datebtn}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.Datebtn_txt}>{Moment(date).format("YYYY-MM-DD")}</Text>
+          </TouchableOpacity>
+          {(show && Platform.OS === 'android') && (
+            <DateTimePicker
+              value={date}
+              mode={'date'}
+              display="default"
+              locale={'ja'}
+              onChange={(event, selectedDate) => {
+                const currentDate = selectedDate || date;
+                setDate(currentDate);
+                setShow(false);
+                onRefresh(currentDate)
+              }}
+              maximumDate={new Date()}
+            />
+          )}
+          {Platform.OS === 'ios'&& (
+            <Modal
+              isVisible={show}
+              swipeDirection={null}
+              backdropOpacity={0.5}
+              animationInTiming={300}
+              animationOutTiming={500}
+              animationIn={'slideInDown'}
+              animationOut={'slideOutUp'}
+              propagateSwipe={true}
+              style={{alignItems: 'center'}}
+              onBackdropPress={()=>{
+                setShow(false);
+                onRefresh(date)
+              }}
+            >
+              <View style={styles.iosdate}>
+                <TouchableOpacity
+                  style={{
+                    position: 'absolute',
+                    top:8,
+                    right:10,
+                    zIndex:999
+                  }}
+                  onPress={()=>{
+                    setShow(false);
+                    onRefresh(date)
+                  }}
+                >
+                  <Feather name='x-circle' color='#ccc' size={35} />
+                </TouchableOpacity>
+                <DateTimePicker
+                  value={date}
+                  mode={'date'}
+                  display="spinner"
+                  locale={'ja'}
+                  onChange={(event, selectedDate) => {
+                    const currentDate = selectedDate || date;
+                    setDate(currentDate);
+                  }}
+                  textColor="#fff"
+                  maximumDate={new Date()}
+                />
+              </View>
+            </Modal>
+          )}
+          <DropDownPicker
+            style={styles.DropDown}
+            dropDownContainerStyle={styles.dropDownContainer}
+            open={open}
+            value={filter}
+            items={filterList}
+            setOpen={setOpen}
+            setValue={setFilter}
+            placeholder="フィルター"
+            multipleText="フィルター"
+            multiple={true}
+            TickIconComponent={()=><MaterialCommunityIcons name={"check-circle"} color={chk} size={20} />}
+            disableBorderRadius={false}
+          />
+        </View>
+        <View style={{flexDirection:'row',width:'100%',zIndex:100}}>
           <TouchableOpacity
             onPress={()=>{setForm(0)}}
             style={form==0?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
@@ -1064,21 +1151,43 @@ const styles = StyleSheet.create({
     fontWeight:'500',
     marginLeft:3
   },
-  DropDown: {
-    width: 130,
+  Datebtn:{
+    width: '48%',
+    marginRight:'2%',
     fontSize: 16,
     minHeight: 35,
-    marginVertical:5,
-    marginLeft:'auto',
+    justifyContent: 'center',
+    backgroundColor:'#ededed',
+    borderColor:'#bfbfbf',
+    borderWidth:1,
+    borderRadius:8
+  },
+  Datebtn_txt:{
+    marginLeft:10
+  },
+  iosdate: {
+    width:300,
+    height:260,
+    backgroundColor:'#333',
+    alignItems:'center',
+    justifyContent:'center',
+    borderRadius:5
+  },
+  DropDown: {
+    width: '48%',
+    marginLeft:'2%',
+    fontSize: 16,
+    minHeight: 35,
     backgroundColor:'#ededed',
     borderColor:'#bfbfbf'
   },
   dropDownContainer: {
     width: 250,
     position:'absolute',
-    right:0,
-    top:45,
-    borderColor:'#999'
+    right:'50%',
+    top:40,
+    borderColor:'#999',
+    zIndex:999,
   },
   active_tab: {
     width:"50%",
