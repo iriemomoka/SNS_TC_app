@@ -356,8 +356,13 @@ export default function TimeLine(props) {
         setChallenge_comment(json["challenge"]["challenge"][0]["challenge_comment"]);
 
         if (json["challenge"]["challenge_tl"]) {
+          console.log(json["challenge"]["challenge_tl"])
           const c_tl = json["challenge"]["challenge_tl"][0];
-          setChallenge_tl({nice_all: c_tl["nice_all"],comment_all: c_tl["comment_all"]});
+          const fav  = c_tl["nice_list"].includes(route.params.account);
+          const item = { ...c_tl, fav:fav};
+          
+          setChallenge_tl(item);
+          setChecked(!checked);
         }
         
       } else {
@@ -917,16 +922,35 @@ export default function TimeLine(props) {
               <Text style={[styles.result_text,{color:challenge.challenge_result>0?rsl:"#c7c7c7"}]}>完了</Text>
             </TouchableOpacity>
           </View>
-          <View style={{flexDirection:'row',marginBottom:3,marginTop:10}}>
-            <Text style={styles.label}>今日のチャレンジへのいいね</Text>
-            <Text style={styles.thank}>{String(challenge_tl.nice_all)}</Text>
-            <Text style={styles.label}>件</Text>
-          </View>
-          <View style={{flexDirection:'row',marginVertical:3}}>
-            <Text style={styles.label}>今日のチャレンジへのコメント</Text>
-            <Text style={styles.thank}>{String(challenge_tl.comment_all)}</Text>
-            <Text style={styles.label}>件</Text>
-          </View>
+          <TouchableOpacity
+            style={{}}
+            onPress={()=>{
+              navigation.navigate(
+                'Post',{
+                  name: 'Post' ,
+                  params: route.params,
+                  websocket:route.websocket,
+                  websocket2: route.websocket2,
+                  profile:route.profile,
+                  previous:'TimeLine',
+                  post: challenge_tl,
+                  flg:1,
+                }
+              );
+            }}
+            activeOpacity={1}
+          >
+            <View style={{flexDirection:'row',marginBottom:3,marginTop:10}}>
+              <Text style={styles.label}>今日のチャレンジへのいいね</Text>
+              <Text style={styles.thank}>{String(challenge_tl.nice_all)}</Text>
+              <Text style={styles.label}>件</Text>
+            </View>
+            <View style={{flexDirection:'row',marginVertical:3}}>
+              <Text style={styles.label}>今日のチャレンジへのコメント</Text>
+              <Text style={styles.thank}>{String(challenge_tl.comment_all)}</Text>
+              <Text style={styles.label}>件</Text>
+            </View>
+          </TouchableOpacity>
           <View style={{flexDirection:'row',marginVertical:3}}>
             <Text style={styles.label}>今日送ったありがとう件数</Text>
             <Text style={styles.thank}>{String(thank_send)}</Text>

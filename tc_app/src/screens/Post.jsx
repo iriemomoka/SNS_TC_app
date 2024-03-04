@@ -495,7 +495,7 @@ export default function Post(props) {
                         />
                       )
                     }
-                    <View>
+                    <View style={{flex:1}}>
                       <Text style={styles.name}>
                         {item.name_1}{item.name_2}
                       </Text>
