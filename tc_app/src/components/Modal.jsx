@@ -25,6 +25,8 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import ColorPicker from 'react-native-color-picker-ios-android'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import Loading from '../components/Loading';
+
 // DB接続
 import { db,db_select } from './Databace';
 
@@ -2758,6 +2760,8 @@ export function MyModal5(props){
   
   const { isVisible,route,cus,navigation,options,tantou,property,station_list,address,c_d } = props;
   
+  const [isLoading, setLoading] = useState(false);
+
   const [pattern,setPattern] = useState('');
   const [text,setText] = useState('');
   
@@ -3130,7 +3134,9 @@ export function MyModal5(props){
   
   
   function onSubmit(){
-    
+
+    setLoading(true);
+
     var err = '';
     
     if (options.includes('11') && pattern == 1) {
@@ -3153,8 +3159,31 @@ export function MyModal5(props){
       
       if (err) {
         Alert.alert('下記エラーが出ています',err);
+        setLoading(false);
         return;
-      } else {
+      }
+    
+    }
+    
+    fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+    {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: JSON.stringify({
+        ID : route.params.account,
+        pass : route.params.password,
+        shop_id:route.params.shop_id,
+        act:'linker',
+        customer_id:route.customer,
+        tantou:tantou,
+        user_id:staff_value,
+      })
+    })
+      .then((response) => response.json())
+      .then((json) => {
         
         if (contact_tel && contact_tel != '電話で会話した') {
           
@@ -3182,40 +3211,60 @@ export function MyModal5(props){
             if (json) {
               console.log('追客登録成功')
             }
+            Alert.alert('設定しました');
+            setClose(false);
+            setLoading(false);
+            navigation.reset({
+              index: 0,
+              routes: [{
+                name: 'CommunicationHistory' ,
+                params: route.params,
+                websocket:route.websocket,
+                websocket2:route.websocket2,
+                profile: route.profile,
+                reload: 1
+              }],
+            });
           })
           .catch((error) => {
             console.log(error)
-            Alert.alert('失敗');
+            Alert.alert('設定に失敗しました{"\n"}PCから設定してください');
+            setClose(false);
+            setLoading(false);
+            navigation.reset({
+              index: 0,
+              routes: [{
+                name: 'CommunicationHistory' ,
+                params: route.params,
+                websocket:route.websocket,
+                websocket2:route.websocket2,
+                profile: route.profile,
+                reload: 1
+              }],
+            });
           })
           
+        } else {
+          Alert.alert('設定しました');
+          setClose(false);
+          setLoading(false);
+          navigation.reset({
+            index: 0,
+            routes: [{
+              name: 'CommunicationHistory' ,
+              params: route.params,
+              websocket:route.websocket,
+              websocket2:route.websocket2,
+              profile: route.profile,
+              reload: 1
+            }],
+          });
         }
-        
-      }
-    
-    }
-    
-    fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-    {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: JSON.stringify({
-        ID : route.params.account,
-        pass : route.params.password,
-        shop_id:route.params.shop_id,
-        act:'linker',
-        customer_id:route.customer,
-        tantou:tantou,
-        user_id:staff_value,
-      })
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        Alert.alert('設定しました');
+
       })
       .catch((error) => {
+        setClose(false);
+        setLoading(false);
         Alert.alert('設定に失敗しました{"\n"}PCから設定してください');
         
         navigation.reset({
@@ -3231,18 +3280,6 @@ export function MyModal5(props){
         });
       })
     
-    setClose(false);
-    navigation.reset({
-      index: 0,
-      routes: [{
-        name: 'CommunicationHistory' ,
-        params: route.params,
-        websocket:route.websocket,
-        websocket2:route.websocket2,
-        profile: route.profile,
-        reload: 1
-      }],
-    });
   }
   
   function follow_check(item) {
@@ -3335,6 +3372,7 @@ export function MyModal5(props){
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
     >
+      <Loading isLoading={isLoading} />
       <MyModal5_condition 
         isVisible={condition}
         onSwipeComplete={() => { setCondition(false) }}
