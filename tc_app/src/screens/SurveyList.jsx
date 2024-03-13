@@ -173,6 +173,7 @@ export default function SurveyList(props) {
                         evaluation_note: item.evaluation_note,
                         target_staff_id: item.target_staff_id,
                         full_name: item.name_1 + " " + item.name_2,
+                        staff_photo1: item.staff_photo1,
                       },
                     ],
                   });

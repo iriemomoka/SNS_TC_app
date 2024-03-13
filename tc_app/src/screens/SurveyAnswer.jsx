@@ -18,6 +18,7 @@ import {
   RefreshControl,
   AppState,
   Keyboard,
+  Image,
   ScrollView,
 } from "react-native";
 import * as Notifications from "expo-notifications";
@@ -258,15 +259,29 @@ export default function SurveyAnswer(props) {
     } else {
       return (
         <>
+          <View style={styles.staffProfile}>
+            {route.staff_photo1 ? (
+              <Image
+                style={styles.icon}
+                source={{ uri: domain + "img/staff_img/" + route.staff_photo1 }}
+              />
+            ) : (
+              <Image
+                style={styles.icon}
+                source={require("../../assets/photo4.png")}
+              />
+            )}
+            <Text style={styles.targetStaff}>
+              【
+              {route.params.account == route.target_staff_id
+                ? "自己評価"
+                : route.full_name}
+              】
+            </Text>
+          </View>
           {questions.map((q, index) => (
             <View key={`question-${index}`}>
-              <Text style={styles.questionTitle}>
-                【
-                {route.params.account == route.target_staff_id
-                  ? "自己評価"
-                  : route.full_name}
-                】{q.question_note}
-              </Text>
+              <Text style={styles.questionTitle}>{q.question_note}</Text>
               {q.question_kinds === "記述式" ? (
                 <TextInput
                   style={styles.textarea}
@@ -410,5 +425,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 32,
     color: "#ffffff",
+  },
+  staffProfile: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  icon: {
+    width: 50,
+    height: 50,
+    borderRadius: 100,
+    marginRight: 10,
+  },
+  targetStaff: {
+    fontSize: 18,
+    color: "#384955",
+    fontWeight: "bold",
   },
 });
