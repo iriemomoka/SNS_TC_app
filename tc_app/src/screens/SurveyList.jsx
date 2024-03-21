@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import * as Notifications from "expo-notifications";
 import { Feather } from "@expo/vector-icons";
+import Moment from "moment";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import SideMenu from "react-native-side-menu-updated";
 import * as SQLite from "expo-sqlite";
@@ -102,6 +103,40 @@ export default function SurveyList(props) {
       .then((response) => response.json())
       .then((json) => {
         setSurveys(json);
+
+        const today = Moment(new Date()).format("YYYY-MM-DD");
+        let limit_flg = 0;
+
+        json.map((value) => {
+          if (value.answer_count < value.question_count) {
+            let evaluation_end_day = value.evaluation_end_time.substring(0, 10);
+
+            // 回答期限
+            let date1 = new Date(evaluation_end_day);
+            // 今日の日付
+            let date2 = new Date(today);
+
+            // 回答期限までの日数
+            let msDiff = date1.getTime() - date2.getTime();
+            let limit = Math.ceil(msDiff / (1000 * 60 * 60 * 24));
+
+            if (limit < 2) {
+              limit_flg = 1;
+            }
+          }
+        });
+
+        // 回答期限が明日になっているアンケートがあればプッシュ通知
+        if (limit_flg) {
+          Notifications.scheduleNotificationAsync({
+            content: {
+              body: "明日が回答期限のアンケートがあります。期限までに回答して下さい。",
+            },
+            trigger: {
+              seconds: 1,
+            },
+          });
+        }
       })
       .catch((error) => {
         console.log(error);
@@ -201,7 +236,7 @@ export default function SurveyList(props) {
               </TouchableOpacity>
             );
           }}
-          keyExtractor={(item) => `${item.evaluation_no}`}
+          keyExtractor={(item, index) => `${index}`}
         />
       );
     }
