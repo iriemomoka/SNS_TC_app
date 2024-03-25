@@ -49,6 +49,8 @@ export default function SurveyList(props) {
   const [reload, setReload] = useState("");
   const [surveys, setSurveys] = useState([]);
 
+  const listRef = useRef([]);
+
   useLayoutEffect(() => {
     if (AppState.currentState === "active") {
       Notifications.setBadgeCountAsync(0);
@@ -143,6 +145,22 @@ export default function SurveyList(props) {
       });
   }, [route]);
 
+  // 更新
+  // const [refreshing, setRefreshing] = useState(false);
+
+  // async function Display() {
+
+  //   await onRefresh();
+
+  //   setLoading(false);
+  // }
+
+  // const onRefresh = useCallback(async() => {
+  // }, []);
+
+  // const endRefresh = useCallback(async() => {
+  // });
+
   const surveyList = useMemo(() => {
     if (!surveys) {
       return (
@@ -165,19 +183,15 @@ export default function SurveyList(props) {
       return (
         <FlatList
           bounces={true}
-          // ref={listRef}
+          ref={listRef}
           // onEndReached={endRefresh}
           // refreshControl={
-          //   date != "最新データ取得中" ? (
-          //     <RefreshControl
-          //       refreshing={refreshing}
-          //       onRefresh={async () => {
-          //         await onRefresh(true);
-          //       }}
-          //     />
-          //   ) : (
-          //     <></>
-          //   )
+          //   <RefreshControl
+          //     refreshing={refreshing}
+          //     onRefresh={async () => {
+          //       await onRefresh(true);
+          //     }}
+          //   />
           // }
           initialNumToRender={10}
           data={surveys}
