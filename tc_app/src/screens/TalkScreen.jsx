@@ -193,19 +193,43 @@ export default function TalkScreen(props) {
           />
       ),
       headerRight: () => (
-        
-        <TouchableOpacity
-          style={{width:60,height:60,justifyContent:'center',alignItems:'center'}}
-          onPress={() => {
-            setSideMenu(!sidemenu);
-          }}
-        >
-          <Feather
-            name="menu"
-            color="white"
-            size={35}
-          />
-        </TouchableOpacity>
+        <View style={{flexDirection:"row"}}>
+          {(customer.main&&(customer.main.tel1||customer.main.tel2||customer.main.tel3))&&(
+            <TouchableOpacity
+            style={{width:50,height:60,justifyContent:'center',alignItems:'center'}}
+              onPress={() => {
+                var TEL = "";
+                if (customer.main.tel1) {
+                  TEL = customer.main.tel1;
+                } else if (customer.main.tel2) {
+                  TEL = customer.main.tel2;
+                } else if (customer.main.tel3) {
+                  TEL = customer.main.tel3;
+                }
+                const phoneNumber = `tel:${TEL}`;
+                Linking.openURL(phoneNumber);
+              }}
+            >
+              <MaterialCommunityIcons
+                name="phone"
+                color="white"
+                size={35}
+              />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={{width:50,height:60,justifyContent:'center',alignItems:'center'}}
+            onPress={() => {
+              setSideMenu(!sidemenu);
+            }}
+          >
+            <Feather
+              name="menu"
+              color="white"
+              size={35}
+            />
+          </TouchableOpacity>
+        </View>
       ),
       
     });
@@ -217,7 +241,7 @@ export default function TalkScreen(props) {
 
     return () => backHandler.remove();
     
-  }, [msgtext,isLoading,reload])
+  }, [msgtext,isLoading,reload,customer])
   
   useEffect(() => {
     
@@ -1411,115 +1435,97 @@ export default function TalkScreen(props) {
   }
   
   const headerRight = useMemo(() => {
-    if (customer.main) {
-      return (
-        <View style={{backgroundColor:'#fff',flex:1,paddingTop:25}}>
-          {customer.main.tel1&&(
-            <TouchableOpacity
-              style={styles.menulist}
-              onPress={() => {
-                const phoneNumber = `tel:${customer.main.tel1}`;
-                Linking.openURL(phoneNumber);
-              }}
-            >
-              <MaterialCommunityIcons
-                name="phone"
-                color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
-                size={30}
-              />
-              <Text style={styles.menutext}>電話をかける</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.menulist}
-            onPress={() => {
-              navigation.reset({
-                index: 0,
-                routes: [
-                  {
-                    name: "CustomerEdit",
-                    params: route.params,
-                    websocket: route.websocket,
-                    websocket2: route.websocket2,
-                    profile: route.profile,
-                    customer: route.customer,
-                    customer_data: customer,
-                    cus_name:route.cus_name,
-                    previous:'TalkScreen'
-                  },
-                ],
-              });
-            }}
-          >
-            <MaterialCommunityIcons
-              name="account-cog"
-              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
-              size={30}
-            />
-            <Text style={styles.menutext}>お客様編集</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.menulist}
-            onPress={() => {
-              navigation.reset({
-                index: 0,
-                routes: [
-                  {
-                    name: "ContractRegister",
-                    params: route.params,
-                    websocket: route.websocket,
-                    websocket2: route.websocket2,
-                    profile: route.profile,
-                    hojin:false,
-                    customer: route.customer,
-                    cus_name:route.cus_name,
-                    contract: customer["contract"],
-                    previous:'TalkScreen'
-                  },
-                ],
-              });
-            }}
-          >
-            <MaterialCommunityIcons
-              name="file-table"
-              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
-              size={30}
-            />
-            <Text style={styles.menutext}>契約進行表</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.menulist}
-            onPress={() => {
-              navigation.reset({
-                index: 0,
-                routes: [
-                  {
-                    name: "ContractRegister",
-                    params: route.params,
-                    websocket: route.websocket,
-                    websocket2: route.websocket2,
-                    profile: route.profile,
-                    hojin:true,
-                    customer: route.customer,
-                    cus_name:route.cus_name,
-                    contract: customer["cjs_contract"],
-                    previous:'TalkScreen'
-                  },
-                ],
-              });
-            }}
-          >
-            <MaterialCommunityIcons
-              name="file-account"
-              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
-              size={30}
-            />
-            <Text style={styles.menutext}>契約進行表(法人)</Text>
-          </TouchableOpacity>
-        </View>
-      )
-    }
-  },[customer])
+    return (
+      <View style={{backgroundColor:'#fff',flex:1,paddingTop:25}}>
+        <TouchableOpacity
+          style={styles.menulist}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "CustomerEdit",
+                  params: route.params,
+                  websocket: route.websocket,
+                  websocket2: route.websocket2,
+                  profile: route.profile,
+                  customer: route.customer,
+                  customer_data: customer,
+                  cus_name:route.cus_name,
+                  previous:'TalkScreen'
+                },
+              ],
+            });
+          }}
+        >
+          <MaterialCommunityIcons
+            name="account-cog"
+            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            size={30}
+          />
+          <Text style={styles.menutext}>お客様編集</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menulist}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "ContractRegister",
+                  params: route.params,
+                  websocket: route.websocket,
+                  websocket2: route.websocket2,
+                  profile: route.profile,
+                  hojin:false,
+                  customer: route.customer,
+                  cus_name:route.cus_name,
+                  contract: customer["contract"],
+                  previous:'TalkScreen'
+                },
+              ],
+            });
+          }}
+        >
+          <MaterialCommunityIcons
+            name="file-table"
+            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            size={30}
+          />
+          <Text style={styles.menutext}>契約進行表</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menulist}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "ContractRegister",
+                  params: route.params,
+                  websocket: route.websocket,
+                  websocket2: route.websocket2,
+                  profile: route.profile,
+                  hojin:true,
+                  customer: route.customer,
+                  cus_name:route.cus_name,
+                  contract: customer["cjs_contract"],
+                  previous:'TalkScreen'
+                },
+              ],
+            });
+          }}
+        >
+          <MaterialCommunityIcons
+            name="file-account"
+            color={global.fc_flg?"#fd2c77":"#1d449a"}
+            size={30}
+          />
+          <Text style={styles.menutext}>契約進行表(法人)</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  },[])
 
   return (
     <SideMenu
