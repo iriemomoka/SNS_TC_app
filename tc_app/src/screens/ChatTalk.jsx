@@ -1259,6 +1259,8 @@ export default function ChatTalk(props) {
       })
       
     }
+
+    setLoading(false);
 	};
 	
   // カメラロールから画像またはビデオを選択
@@ -1289,7 +1291,7 @@ export default function ChatTalk(props) {
     
     setLoading(true);
 
-    if (result.type != "cancel") {
+    if (!result.canceled) {
       
       let filename = result.uri.split('/').pop();
 
@@ -1361,6 +1363,7 @@ export default function ChatTalk(props) {
 
     }
 
+    setLoading(false);
   };
 
   const groupList = useMemo(() => {
