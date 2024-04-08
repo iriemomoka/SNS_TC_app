@@ -21,8 +21,8 @@ LogBox.ignoreAllLogs(true)
 
 const screenWidth = Dimensions.get('window').width;
 
-let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-// let domain = 'https://www.total-cloud.net/';
+// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+let domain = 'https://www.total-cloud.net/';
 
 // // 本番
 // const adUnitId = Platform.OS === 'ios'
@@ -646,6 +646,7 @@ export default function Ranking(props) {
     "12345",
     "99999",
     "feides",
+		"99998",
   ]
 
   //********************************************************

@@ -50,8 +50,8 @@ const storage = new Storage({
 
 const db = SQLite.openDatabase("db");
 
-let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-// let domain = 'https://www.total-cloud.net/';
+// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+let domain = 'https://www.total-cloud.net/';
 
 Notifications.setBadgeCountAsync(0);
 
@@ -967,29 +967,31 @@ export default function Company(props) {
           />
           <Text style={styles.menutext}>売上順位</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.menulist}
-          onPress={() => {
-            navigation.reset({
-              index: 0,
-              routes: [{
-                name: 'Thanks' ,
-                params: route.params,
-                websocket:route.websocket,
-                websocket2: route.websocket2,
-                profile:route.profile,
-                previous:'Company',
-              }],
-            });
-          }}
-        >
-          <MaterialCommunityIcons
-            name="heart"
-            color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
-            size={35}
-          />
-          <Text style={styles.menutext}>ありがとう</Text>
-        </TouchableOpacity>
+        {global.testShop_flg&&(
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [{
+                  name: 'Thanks' ,
+                  params: route.params,
+                  websocket:route.websocket,
+                  websocket2: route.websocket2,
+                  profile:route.profile,
+                  previous:'Company',
+                }],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="heart"
+              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
+              size={35}
+            />
+            <Text style={styles.menutext}>ありがとう</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={styles.menulist}
           onPress={() => logout()}

@@ -37,6 +37,8 @@ global.sp_id = '';    // ログインID
 
 global.fc_flg = '';   // fcフラグ
 
+global.testShop_flg = '';   // テスト店舗フラグ
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -45,8 +47,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
-let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-// let domain = 'https://www.total-cloud.net/';
+// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+let domain = 'https://www.total-cloud.net/';
 
 export default function LogInScreen(props) {
   
@@ -276,6 +278,8 @@ export default function LogInScreen(props) {
           setFC_flg(true)
           global.fc_flg = 1;
         }
+
+        CheckTestShop(rocalDB[0].shop_id);
         
         // websocket通信
         const WS_URL  = 'ws://54.168.20.149:8080/ws/'+rocalDB[0].shop_id+'/'
@@ -590,6 +594,8 @@ export default function LogInScreen(props) {
         
       await Insert_staff_db(staff.account,staff.password,staff_data);
       
+      CheckTestShop(staff.shop_id);
+
       // プロフィール情報をサーバーから取得
       const profile = json.profile;
       const profile_data = [
@@ -841,6 +847,25 @@ export default function LogInScreen(props) {
       
     }
     
+  }
+
+  function CheckTestShop(shop_id) {
+    
+    const testShopIdArray = [
+      "00001",
+      "00002",
+      "12345",
+      "99999",
+      "feides",
+      "99998",
+    ]
+
+    if(testShopIdArray.includes(shop_id)){
+      global.testShop_flg = 1;
+    } else {
+      global.testShop_flg = '';
+    }
+
   }
 
   const bgc = !global.fc_flg?['#00A0F3', '#00C4F7', '#00E2E3']:['#FF4F4F', '#FCB2AA'];

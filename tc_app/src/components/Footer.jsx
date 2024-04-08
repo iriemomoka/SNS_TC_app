@@ -14,14 +14,16 @@ export default function Footer(props){
 
   const active_btn = !global.fc_flg?"#F9F871":"#FDFDBD"
   const bgc = !global.fc_flg?"#6C9BCF":"#FF8F8F";
+  const footerWidth1 = global.testShop_flg?Width*0.25:Width*0.333;
+  const footerWidth2 = global.testShop_flg?Width*0.25*0.9:Width*0.333*0.9;
 
   const context = useContext(Context1);
 
   return (
     <View style={[styles.hooter,{backgroundColor:bgc}]}>
-      <View style={styles.block}>
+      <View style={[styles.block,{width:footerWidth1}]}>
         <TouchableOpacity
-          style={styles.btn}
+          style={[styles.btn,{width:footerWidth2}]}
           onPress={onPress0}
           activeOpacity={1}
         > 
@@ -33,9 +35,9 @@ export default function Footer(props){
           <Text style={[styles.back_text,active[0]==true&&{color:active_btn}]}>お客様一覧</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.block}>
+      <View style={[styles.block,{width:footerWidth1}]}>
         <TouchableOpacity
-          style={styles.btn}
+          style={[styles.btn,{width:footerWidth2}]}
           onPress={onPress1}
           activeOpacity={1}
         > 
@@ -52,9 +54,9 @@ export default function Footer(props){
           <Text style={[styles.back_text,active[1]==true&&{color:active_btn}]}>社内チャット</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.block}>
+      <View style={[styles.block,{width:footerWidth1}]}>
         <TouchableOpacity
-          style={styles.btn}
+          style={[styles.btn,{width:footerWidth2}]}
           onPress={onPress2}
           activeOpacity={1}
         > 
@@ -66,20 +68,22 @@ export default function Footer(props){
           <Text style={[styles.back_text,active[2]==true&&{color:active_btn}]}>スケジュール</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.block}>
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={onPress3}
-          activeOpacity={1}
-        > 
-          <MaterialCommunityIcons
-            name="timeline-text"
-            color={active[3]==true?active_btn:"#fff"}
-            size={30}
-          />
-          <Text style={[styles.back_text,active[3]==true&&{color:active_btn}]}>タイムライン</Text>
-        </TouchableOpacity>
-      </View>
+      {global.testShop_flg&&(
+        <View style={[styles.block,{width:footerWidth1}]}>
+          <TouchableOpacity
+          style={[styles.btn,{width:footerWidth2}]}
+            onPress={onPress3}
+            activeOpacity={1}
+          > 
+            <MaterialCommunityIcons
+              name="timeline-text"
+              color={active[3]==true?active_btn:"#fff"}
+              size={30}
+            />
+            <Text style={[styles.back_text,active[3]==true&&{color:active_btn}]}>タイムライン</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -94,12 +98,10 @@ const styles = StyleSheet.create({
     zIndex:999
   },
   block: {
-    width:Width*0.25,
     height: 75,
   },
   btn: {
     height: 50,
-    width: Width*0.25*0.9,
     alignItems:'center',
     justifyContent: 'center',
     marginTop:5

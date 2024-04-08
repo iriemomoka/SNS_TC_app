@@ -8,8 +8,8 @@ import Loading from '../components/Loading';
 
 LogBox.ignoreAllLogs()
 
-let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-// let domain = 'https://www.total-cloud.net/';
+// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+let domain = 'https://www.total-cloud.net/';
 
 export default function BellScreen(props) {
   

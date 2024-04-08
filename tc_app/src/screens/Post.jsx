@@ -49,8 +49,8 @@ const storage = new Storage({
 
 const db = SQLite.openDatabase("db");
 
-let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-// let domain = 'https://www.total-cloud.net/';
+// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+let domain = 'https://www.total-cloud.net/';
 
 Notifications.setBadgeCountAsync(0);
 
@@ -658,8 +658,8 @@ export default function Post(props) {
       if (postFav) {
         if (postNiceall > 0) {
           var nice_list = newdata["nice_list"].split(",");
-          newdata["nice_all"] = postNiceall - 1;
-          setPostNiceall(postNiceall - 1);
+          newdata["nice_all"] = (nice_list.length) - 1;
+          setPostNiceall((nice_list.length) - 1);
         } else {
           var nice_list = [];
           newdata["nice_all"] = 0;
@@ -671,8 +671,8 @@ export default function Post(props) {
       } else {
         if (postNiceall > 0) {
           var nice_list = newdata["nice_list"].split(",");
-          newdata["nice_all"] = postNiceall + 1;
-          setPostNiceall(postNiceall + 1);
+          newdata["nice_all"] = (nice_list.length) + 1;
+          setPostNiceall((nice_list.length) + 1);
         } else {
           var nice_list = [];
           newdata["nice_all"] = 1;

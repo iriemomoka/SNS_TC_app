@@ -53,8 +53,8 @@ const storage = new Storage({
 
 const db = SQLite.openDatabase("db");
 
-let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-// let domain = 'https://www.total-cloud.net/';
+// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+let domain = 'https://www.total-cloud.net/';
 
 Notifications.setBadgeCountAsync(0);
 
@@ -352,11 +352,12 @@ export default function TimeLine(props) {
       if (json["challenge"]["challenge"]) {
         setChallenge(json["challenge"]["challenge"][0]);
     
-        setStar(json["challenge"]["challenge"][0]["challenge_result"]);
-        setChallenge_comment(json["challenge"]["challenge"][0]["challenge_comment"]);
+        if (!edit) {
+          setStar(json["challenge"]["challenge"][0]["challenge_result"]);
+          setChallenge_comment(json["challenge"]["challenge"][0]["challenge_comment"]);
+        }
 
         if (json["challenge"]["challenge_tl"]) {
-          console.log(json["challenge"]["challenge_tl"])
           const c_tl = json["challenge"]["challenge_tl"][0];
           const fav  = c_tl["nice_list"].includes(route.params.account);
           const item = { ...c_tl, fav:fav};
@@ -435,7 +436,7 @@ export default function TimeLine(props) {
   };
 
   const resumeFetchWithDelay = async() => {
-    await onRefresh(false);
+    await onRefresh();
   };
 
   const getTL = useCallback((page = 0) => {
@@ -979,7 +980,7 @@ export default function TimeLine(props) {
         <>
           {ChallengeView}
           <View style={{marginTop:150}}>
-            <TouchableOpacity style={styles.buttonReload} onPress={()=>onRefresh(true)}>
+            <TouchableOpacity style={styles.buttonReload} onPress={()=>onRefresh()}>
               <Text style={styles.buttonReloadLabel}>読　込</Text>
             </TouchableOpacity>
           </View>

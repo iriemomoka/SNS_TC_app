@@ -18,8 +18,8 @@ import { GetDB,db_select,db_write } from '../components/Databace';
 
 LogBox.ignoreAllLogs()
 
-let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-// let domain = 'https://www.total-cloud.net/';
+// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+let domain = 'https://www.total-cloud.net/';
 
 const Height = Dimensions.get("window").height;
 const Width = Dimensions.get("window").width;

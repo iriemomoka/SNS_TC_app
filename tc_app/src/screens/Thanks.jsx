@@ -51,8 +51,8 @@ const storage = new Storage({
 
 const db = SQLite.openDatabase("db");
 
-let domain = 'http://family.chinser.co.jp/irie/tc_app/';
-// let domain = 'https://www.total-cloud.net/';
+// let domain = 'http://family.chinser.co.jp/irie/tc_app/';
+let domain = 'https://www.total-cloud.net/';
 
 Notifications.setBadgeCountAsync(0);
 
