@@ -408,7 +408,15 @@ export default function TalkScreen(props) {
     var sql = `select * from communication_mst where ( customer_id = '${route.customer}' ) order by time desc;`;
     var talk_ = await db_select(sql);
     if (talk_ != false) {
-      setTalk(talk_);
+      var newTalk = [];
+      for(var t=0;t<talk_.length;t++) {
+        var val = talk_[t];
+        if (val["file_path"]) {
+          val["file_path"] = val["file_path"].split(',')
+        }
+        newTalk.push(val)
+      }
+      setTalk(newTalk);
     }
 
     if (!flg) setLoading(false);
@@ -518,8 +526,19 @@ export default function TalkScreen(props) {
       var sql = `select * from communication_mst where ( customer_id = '${route.customer}' ) order by time desc;`;
       var talk_ = await db_select(sql);
 
-      if (talk_ == false) talk_ = [];
-      setTalk(talk_);
+      var newTalk = [];
+
+      if (talk_ != false) {
+        for(var t=0;t<talk_.length;t++) {
+          var val = talk_[t];
+          if (val["file_path"]) {
+            val["file_path"] = val["file_path"].split(',')
+          }
+          newTalk.push(val)
+        }
+      }
+      
+      setTalk(newTalk);
       
       const errTitle = 'ネットワークの接続に失敗しました';
       const errMsg = '直近の'+talk_.length+'件のメッセージのみ表示します\n※送受信やおすすめ物件、画像の表示などはできません'
@@ -546,6 +565,7 @@ export default function TalkScreen(props) {
           ID : route.params.account,
           pass : route.params.password,
           act:'get_talk',
+          img_flg:1,
           customer_id:route.customer,
           fc_flg: global.fc_flg
         })
@@ -630,16 +650,21 @@ export default function TalkScreen(props) {
     
     if (talk != null && talk.length > 0) {
       const msg = talk.map(com => {
-        
+
         if (com.del_flg){
           return
+        }
+
+        var img_flg = false;
+        if (com.file_path != null && (com.file_path.length) > 0) {
+          img_flg = true;
         }
         
         if (com.speaker === 'お客様') {
           const data = {
             _id:  com.communication_id,
             text: com.note+(com.line_note && com.title !== 'スタンプ'?com.line_note:''),
-            image:com.file_path?com.file_path:com.title === 'スタンプ'?'https://stickershop.line-scdn.net/stickershop/v1/sticker/'+com.line_note+'/iphone/sticker@2x.png':''
+            image:img_flg?com.file_path:com.title === 'スタンプ'?'https://stickershop.line-scdn.net/stickershop/v1/sticker/'+com.line_note+'/iphone/sticker@2x.png':''
             ,
             createdAt: com.time,
             user: {
@@ -657,7 +682,7 @@ export default function TalkScreen(props) {
           const data = {
             _id:  com.communication_id,
             text: com.note+(com.line_note?com.line_note:''),
-            image:com.file_path?com.file_path:'',
+            image:img_flg?com.file_path:'',
             createdAt: com.time,
             user: {
               _id: 1,
@@ -749,7 +774,7 @@ export default function TalkScreen(props) {
           com.title,
           com.note,
           com.line_note,
-          com.file_path,
+          (com.file_path).length>0?(com.file_path).join():"",
           com.status,
           com.html_flg,
           com.receive_mail,
@@ -1626,6 +1651,19 @@ export default function TalkScreen(props) {
             )
           }
         }}
+        renderMessageImage={(props)=>{
+          if ((props.currentMessage.image).length==0) {
+              return null;
+          }
+          const images = (props.currentMessage.image).map((img,index)=>{
+            return (
+              <TouchableOpacity style={{}} onPress={() => {Linking.openURL(img)}}>
+                <Text style={styles.file_url}>添付{index+1}</Text>
+              </TouchableOpacity>
+            )
+          })
+          return images;
+        }}
         user={{_id: 1,text:msgtext}}
         textInputStyle={styles.textInput}
         textStyle={{color: "black"}}
@@ -1917,4 +1955,11 @@ const styles = StyleSheet.create({
     fontSize:16,
     marginLeft:10
   },
+  file_url :{
+    fontSize:12,
+    color:'blue',
+    marginLeft:10,
+    marginTop:5,
+    textDecorationLine: 'underline'
+  }
 });
