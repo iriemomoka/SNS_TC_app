@@ -75,6 +75,11 @@ export default function Thanks(props) {
     "thank_yesterday": "0",
   });
 
+  const [thank_count, setThank_count] = useState(null);
+  const [message_length, setMessage_length] = useState(null);
+  const [challenge_length, setChallenge_length] = useState(null);
+  const [comment_length, setComment_length] = useState(null);
+
   const [thanks_all, setThanks_all] = useState([]); // 全件格納用
   const [thanks, setThanks] = useState([]); // 表示用
 
@@ -335,6 +340,20 @@ export default function Thanks(props) {
         setThanks_all([]);
         setThanks([]);
       }
+
+      if (json["thank_ranking"]["thank_count"]) {
+        setThank_count(json["thank_ranking"]["thank_count"][0]);
+      }
+      if (json["thank_ranking"]["message_length"]) {
+        setMessage_length(json["thank_ranking"]["message_length"][0]);
+      }
+      if (json["thank_ranking"]["challenge_length"]) {
+        setChallenge_length(json["thank_ranking"]["challenge_length"][0]);
+      }
+      if (json["thank_ranking"]["comment_length"]) {
+        setComment_length(json["thank_ranking"]["comment_length"][0]);
+      }
+
     }
 
     setLoading(false);
@@ -816,6 +835,7 @@ export default function Thanks(props) {
   const bgc = !global.fc_flg?"#E6F4F1":"#FFF6F5";
   const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
   const chk = !global.fc_flg?"#81aee6":"#e6c4f5";
+  const icn = !global.fc_flg?"#6C9BCF":"#FF8F8F";
 
   return (
     <KeyboardAvoidingView
@@ -844,6 +864,118 @@ export default function Thanks(props) {
             <Text style={styles.label1}>今月</Text>
             <Text style={styles.thk_num}>{thank_my.thank_month}</Text>
           </View>
+        </View>
+        <View style={styles.ranking}>
+          {thank_count!=null&&(
+            <View style={[styles.ranking_box,{backgroundColor:spc}]}>
+              <Text style={styles.ranking_title}>ありがとうを送った数</Text>
+              <View style={{flexDirection:'row',alignItems:'center'}}>
+                <View style={{marginRight:10,alignItems:'center'}}>
+                  <MaterialCommunityIcons
+                    name="crown"
+                    color={"#e6b422"}
+                    size={25}
+                  />
+                  <MaterialCommunityIcons
+                    name={"account-heart-outline"}
+                    color={icn}
+                    size={35}
+                  />
+                </View>
+                <View>
+                  <Text style={styles.ranking_shop}>{thank_count.shop_name}</Text>
+                  <Text style={styles.ranking_staff}>{thank_count.name_1} {thank_count.name_2} さん</Text>
+                  <View style={styles.ranking_result_box}>
+                    <Text style={styles.ranking_result}>{thank_count.thank_count}</Text>
+                    <Text style={styles.ranking_unit}>人</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+          {message_length!=null&&(
+            <View style={[styles.ranking_box,{backgroundColor:spc,marginLeft:'2%'}]}>
+              <Text style={styles.ranking_title}>ありがとうの文字数</Text>
+              <View style={{flexDirection:'row',alignItems:'center'}}>
+                <View style={{marginRight:10,alignItems:'center'}}>
+                  <MaterialCommunityIcons
+                    name="crown"
+                    color={"#e6b422"}
+                    size={25}
+                  />
+                  <MaterialCommunityIcons
+                    name={"table-heart"}
+                    color={icn}
+                    size={32}
+                  />
+                </View>
+                <View>
+                  <Text style={styles.ranking_shop}>{message_length.shop_name}</Text>
+                  <Text style={styles.ranking_staff}>{message_length.name_1} {message_length.name_2} さん</Text>
+                  <View style={styles.ranking_result_box}>
+                    <Text style={styles.ranking_result}>{message_length.message_length}</Text>
+                    <Text style={styles.ranking_unit}>文字</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+        <View style={[styles.ranking,{marginBottom:10}]}>
+          {challenge_length!=null&&(
+            <View style={[styles.ranking_box,{backgroundColor:spc}]}>
+              <Text style={styles.ranking_title}>今日のチャレンジ文字数</Text>
+              <View style={{flexDirection:'row',alignItems:'center'}}>
+                <View style={{marginRight:10,alignItems:'center'}}>
+                  <MaterialCommunityIcons
+                    name="crown"
+                    color={"#e6b422"}
+                    size={25}
+                  />
+                  <MaterialCommunityIcons
+                    name={"text-account"}
+                    color={icn}
+                    size={32}
+                  />
+                </View>
+                <View>
+                  <Text style={styles.ranking_shop}>{challenge_length.shop_name}</Text>
+                  <Text style={styles.ranking_staff}>{challenge_length.name_1} {challenge_length.name_2} さん</Text>
+                  <View style={styles.ranking_result_box}>
+                    <Text style={styles.ranking_result}>{challenge_length.challenge_length}</Text>
+                    <Text style={styles.ranking_unit}>文字</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+          {comment_length!=null&&(
+            <View style={[styles.ranking_box,{backgroundColor:spc,marginLeft:'2%'}]}>
+              <Text style={styles.ranking_title}>前日のチャレンジ結果文字数</Text>
+              <View style={{flexDirection:'row',alignItems:'center'}}>
+                <View style={{marginRight:10,alignItems:'center'}}>
+                  <MaterialCommunityIcons
+                    name="crown"
+                    color={"#e6b422"}
+                    size={25}
+                  />
+                  <MaterialCommunityIcons
+                    name={"weather-partly-rainy"}
+                    color={icn}
+                    size={32}
+                  />
+                </View>
+                <View>
+                  <Text style={styles.ranking_shop}>{comment_length.shop_name}</Text>
+                  <Text style={styles.ranking_staff}>{comment_length.name_1} {comment_length.name_2} さん</Text>
+                  <View style={styles.ranking_result_box}>
+                    <Text style={styles.ranking_result}>{comment_length.comment_length}</Text>
+                    <Text style={styles.ranking_unit}>文字</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
         </View>
         <TextInput
           style={styles.searchInput}
@@ -1118,6 +1250,46 @@ const styles = StyleSheet.create({
     color:'#fff',
     fontWeight:'700',
     textAlign:'center'
+  },
+  ranking: {
+    flexDirection:'row',
+    marginBottom:7
+  },
+  ranking_box: {
+    width:"49%",
+    height:100,
+    borderRadius:10,
+    padding:10
+  },
+  ranking_title: {
+    fontSize:10,
+    fontWeight:'bold',
+    textDecorationLine: 'underline',
+    marginBottom:3
+  },
+  ranking_shop: {
+    fontSize:9,
+    color:'#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 5
+  },
+  ranking_staff: {
+    fontSize:13,
+    fontWeight:'bold',
+    color:'#000',
+  },
+  ranking_result_box: {
+    flexDirection:'row',
+    alignItems:'flex-end',
+  },
+  ranking_result: {
+    fontSize:27,
+  },
+  ranking_unit: {
+    fontSize:10,
+    marginBottom:5,
+    marginLeft:3,
   },
   searchInput: {
     fontSize: 16,

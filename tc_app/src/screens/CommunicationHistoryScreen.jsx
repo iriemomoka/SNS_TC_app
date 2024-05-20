@@ -462,8 +462,6 @@ export default function CommunicationHistoryScreen(props) {
     
     await searchCustomer(staff_,true);
 
-    await Insert_fixed_db("");
-
     await getBELL();
 
     loadflg&&setLoading(false);
@@ -571,6 +569,40 @@ export default function CommunicationHistoryScreen(props) {
       });
 
       await Insert_fixed_db(fixed_mst);
+
+      // ローカルDB用定型文
+      const comment_mst_data = Object.entries(json.comment_array).map(
+        ([key, value]) => {
+          return { key, value };
+        }
+      );
+
+      // 登録用に一つ一つ配列化
+      const comment_mst = [];
+
+      comment_mst_data.map((f) => {
+        if (!f.value.length) {
+          comment_mst.push({
+            comment_id: "",
+            category: f.key,
+            title: "",
+            note: "",
+            html_flg:""
+          });
+        } else {
+          f.value.map((v) => {
+            comment_mst.push({
+              comment_id: v.comment_id,
+              category: f.key,
+              title: v.title,
+              note: v.note.substr(v.note.indexOf("<[@]>") + 5),
+              html_flg: v.html_flg
+            });
+          });
+        }
+      });
+
+      await Insert_comment_db(comment_mst);
 
       function addZero(num, length) {
         var minus = "";
@@ -694,7 +726,7 @@ export default function CommunicationHistoryScreen(props) {
     await onRefresh(false);
   };
 
-  const getCOM = useCallback(async() => {
+  const getCOM = useCallback(async(name = "") => {
     
     var sql = `select customer_id from customer_mst;`;
     var customer_mst = await db_select(sql);
@@ -716,6 +748,7 @@ export default function CommunicationHistoryScreen(props) {
           fc_flg: global.fc_flg,
           page:0,
           customer_id_list:customer_id_list.join(),
+          name:name
         }),
         signal
       })
@@ -968,7 +1001,7 @@ export default function CommunicationHistoryScreen(props) {
       // ローカルDBの定型文情報
       var DBfix = [];
       if (fixed_mst != false) {
-        DBstf = fixed_mst.map((f) => {
+        DBfix = fixed_mst.map((f) => {
           return f.fixed_id
         })
       }
@@ -996,10 +1029,56 @@ export default function CommunicationHistoryScreen(props) {
 
   }
 
+  // 一言コメントデータベース登録
+  async function Insert_comment_db(comment) {
+
+    if (comment) {
+
+      const comment_mst = await GetDB('comment_mst');
+
+      // ローカルDBの一言コメント情報
+      var DBcomment = [];
+      if (comment_mst != false) {
+        DBcomment = comment_mst.map((c) => {
+          return c.comment_id
+        })
+      }
+
+      // 最新の一言コメント情報
+      var APIcomment = [];
+
+      for (var c=0;c<comment.length;c++) {
+        var comment_ = comment[c];
+        var comment_insert = `insert or replace into comment_mst values (?,?,?,?,?);`;
+        var comment_data = [comment_.comment_id, comment_.category, comment_.title, comment_.note,comment_.html_flg];
+        await db_write(comment_insert,comment_data);
+        APIcomment.push(comment_.comment_id);
+      }
+
+      // 削除する一言コメント情報
+      const DELcomment = DBcomment.filter(com => !APIcomment.includes(com));
+      
+      for (var d=0;d<DELcomment.length;d++) {
+        var comment_id = DELcomment[d];
+        var comment_delete = `delete from comment_mst where ( comment_id = ? );`;
+        await db_write(comment_delete,[comment_id]);
+      }
+    }
+    
+  }
+
   async function onSubmit() {
 
     Keyboard.dismiss();
     setLoading(true);
+
+    if (name) {
+      const json = await getCOM(name);
+      if (json != false) {
+        await Insert_customer_db(json.search);
+      }
+    }
+
     await searchCustomer(staff_value);
     setLoading(false);
     
@@ -1334,7 +1413,7 @@ export default function CommunicationHistoryScreen(props) {
   },[bell_count])
 
   const comList = useMemo(() => {
-    if (memos.length == 0) {
+    if (memos.length == 0 && name == "") {
       return (
         <View style={{marginTop:150}}>
           <TouchableOpacity style={styles.buttonReload} onPress={()=>onRefresh(true)}>
@@ -1424,7 +1503,7 @@ export default function CommunicationHistoryScreen(props) {
         />
       )
     }
-  },[memos,date])
+  },[memos,date,name])
 
   return (
     <SideMenu

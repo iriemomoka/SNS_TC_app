@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  Platform, StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity, TextInput, Linking, LogBox, BackHandler, AppState, Dimensions
+  Platform, StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity, TextInput, Linking, LogBox, BackHandler, AppState, Dimensions, Image
 } from 'react-native';
 import { GiftedChat, Actions, Send, InputToolbar, Bubble, Time, Composer, Message  } from 'react-native-gifted-chat';
 import Feather from 'react-native-vector-icons/Feather';
@@ -55,10 +55,14 @@ export default function TalkScreen(props) {
   const [modal5, setModal5] = useState(false);
   const [modal6, setModal6] = useState(false);
   
+  const [modal3_flg, setModal3_flg] = useState("property");
+  const [modal4_flg, setModal4_flg] = useState("fixed");
+
   const [reservation,setReservation] = useState([]);
   const [mail, setMail] = useState([]);
   const [msgtext,setMsgtext] = useState('');
   const [subject,setSubject] = useState('');
+  const [focus, setFocus] = useState(false);
 
   // 返信用
   const [note_ret,setNoto_ret] = useState('');
@@ -76,6 +80,7 @@ export default function TalkScreen(props) {
   const [station,setStation] = useState([]);
   const [address,setAddress] = useState([]);
   const [fixed, setFixed] = useState([]);
+  const [comment, setComment] = useState([]);
   
   const [inputCursorPosition, setInputCursorPosition] = useState(null);
 
@@ -249,6 +254,7 @@ export default function TalkScreen(props) {
     GetDB('station_mst').then(station_mst=>station_mst!=false&&setStation(station_mst));
     GetDB('address_mst').then(address_mst=>address_mst!=false&&setAddress(address_mst));
     GetDB('fixed_mst').then(fixed_mst=>fixed_mst!=false&&setFixed(fixed_mst));
+    GetDB('comment_mst').then(comment_mst=>comment_mst!=false&&setComment(comment_mst));
 
     // 通知をタップしたらお客様一覧 → トーク画面 (ログイン済)
     const notificationInteractionSubscription =
@@ -510,6 +516,19 @@ export default function TalkScreen(props) {
       }
 
       setLoading(false);
+
+      // 入居申込書のURL開く
+      if (route.erc_send) {
+        const erc_url = route.erc_send.url;
+        if (route.erc_send.flg == "mail") {
+          setNoto_ret(erc_url);
+          setMenu(true);
+          setModal1(true);
+        } else if (route.erc_send.flg == "line") {
+          setMsgtext(erc_url);
+          setFocus(true);
+        }
+      }
 
       const endTime = Date.now(); // 終了時間
       const time = (endTime - startTime)/1000;
@@ -927,15 +946,15 @@ export default function TalkScreen(props) {
       newMessage[0].createdAt = add[0];
       newMessage[0].user.status = add[1];
       
-      if(add[3][8]) {
-        var file_name = add[3][8].name;
+      if(add[3][7]) {
+        var file_name = add[3][7].name;
         var match = /\.(\w+)$/.exec(file_name);
         var type = match ? `image/${match[1]}` : `image`;
       }
       
       let formData = new FormData();
-      if(add[3][8]) {
-        formData.append('file', { uri: add[3][8].uri, name: file_name, type });
+      if(add[3][7]) {
+        formData.append('file', { uri: add[3][7].uri, name: file_name, type });
       }
       formData.append('ID',route.params.account);
       formData.append('pass',route.params.password);
@@ -952,8 +971,11 @@ export default function TalkScreen(props) {
       formData.append('send',add[3][1]);
       formData.append('note',add[2]);
       formData.append('formdata_flg',1);
-      formData.append('del_file',add[3][9]?1:'');
       formData.append('fc_flg',global.fc_flg);
+      formData.append('reservation_date2',add[3][8]?add[3][8]:'');
+      formData.append('reservation_date3',add[3][9]?add[3][9]:'');
+      formData.append('reservation_stop_flg',add[3][10]);
+      formData.append('reading_return_flg',add[3][11]);
       
       fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
       {
@@ -1348,17 +1370,32 @@ export default function TalkScreen(props) {
       setModal2(true);
     } else if (name === 4) {
       setModal3(true);
+      setModal3_flg("property");
     } else if (name === 5) {
       setModal4(true);
+      setModal4_flg("fixed");
+    } else if (name === 6) {
+      setModal4(true);
+      setModal4_flg("comment");
+    } else if (name === 7) {
+      setModal3(true);
+      setModal3_flg("inquiry");
     }
   }
 
   const [filteredFixed, setFilteredFixed] = useState([]);
+  const [filteredComment, setFilteredComment] = useState([]);
 
   // リストからHTMLの定型文をフィルタリング
   const filterFixedByCategory = () => {
     const filtered = fixed.filter((obj) => obj.html_flg != '1');
     setFilteredFixed(filtered);
+  }
+
+  // リストからHTMLの一言コメントをフィルタリング
+  const filteredCommentByCategory = () => {
+    const filtered = comment.filter((obj) => obj.html_flg != '1');
+    setFilteredComment(filtered);
   }
 
   useEffect(() => {
@@ -1370,7 +1407,15 @@ export default function TalkScreen(props) {
         setFilteredFixed(fixed);
       }
     }
-  }, [modal4,fixed]);
+    if (comment.length != 0) {
+      if (modal4) {
+        // チャット画面の入力欄に直接定型文を挿入する時はHTMLの定型文は表示しない
+        filteredCommentByCategory();
+      } else {
+        setFilteredComment(comment);
+      }
+    }
+  }, [modal4,fixed,comment]);
   
   const [menu_height,setMenu_height] = useState(false);
   const getHeight = (e) => {
@@ -1460,97 +1505,129 @@ export default function TalkScreen(props) {
   }
   
   const headerRight = useMemo(() => {
-    return (
-      <View style={{backgroundColor:'#fff',flex:1,paddingTop:25}}>
-        <TouchableOpacity
-          style={styles.menulist}
-          onPress={() => {
-            navigation.reset({
-              index: 0,
-              routes: [
-                {
-                  name: "CustomerEdit",
-                  params: route.params,
-                  websocket: route.websocket,
-                  websocket2: route.websocket2,
-                  profile: route.profile,
-                  customer: route.customer,
-                  customer_data: customer,
-                  cus_name:route.cus_name,
-                  previous:'TalkScreen'
-                },
-              ],
-            });
-          }}
-        >
-          <MaterialCommunityIcons
-            name="account-cog"
-            color={global.fc_flg?"#fd2c77":"#1d449a"}
-            size={30}
-          />
-          <Text style={styles.menutext}>お客様編集</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.menulist}
-          onPress={() => {
-            navigation.reset({
-              index: 0,
-              routes: [
-                {
-                  name: "ContractRegister",
-                  params: route.params,
-                  websocket: route.websocket,
-                  websocket2: route.websocket2,
-                  profile: route.profile,
-                  hojin:false,
-                  customer: route.customer,
-                  cus_name:route.cus_name,
-                  contract: customer["contract"],
-                  previous:'TalkScreen'
-                },
-              ],
-            });
-          }}
-        >
-          <MaterialCommunityIcons
-            name="file-table"
-            color={global.fc_flg?"#fd2c77":"#1d449a"}
-            size={30}
-          />
-          <Text style={styles.menutext}>契約進行表</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.menulist}
-          onPress={() => {
-            navigation.reset({
-              index: 0,
-              routes: [
-                {
-                  name: "ContractRegister",
-                  params: route.params,
-                  websocket: route.websocket,
-                  websocket2: route.websocket2,
-                  profile: route.profile,
-                  hojin:true,
-                  customer: route.customer,
-                  cus_name:route.cus_name,
-                  contract: customer["cjs_contract"],
-                  previous:'TalkScreen'
-                },
-              ],
-            });
-          }}
-        >
-          <MaterialCommunityIcons
-            name="file-account"
-            color={global.fc_flg?"#fd2c77":"#1d449a"}
-            size={30}
-          />
-          <Text style={styles.menutext}>契約進行表(法人)</Text>
-        </TouchableOpacity>
-      </View>
-    )
-  },[])
+    if (customer && options) {
+      return (
+        <View style={{backgroundColor:'#fff',flex:1,paddingTop:25}}>
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: "CustomerEdit",
+                    params: route.params,
+                    websocket: route.websocket,
+                    websocket2: route.websocket2,
+                    profile: route.profile,
+                    customer: route.customer,
+                    customer_data: customer,
+                    cus_name:route.cus_name,
+                    contract: customer["cjs_contract"],
+                    previous:'TalkScreen'
+                  },
+                ],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="account-cog"
+              color={global.fc_flg?"#fd2c77":"#1d449a"}
+              size={30}
+            />
+            <Text style={styles.menutext}>お客様編集</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: "ContractRegister",
+                    params: route.params,
+                    websocket: route.websocket,
+                    websocket2: route.websocket2,
+                    profile: route.profile,
+                    hojin:false,
+                    customer: route.customer,
+                    cus_name:route.cus_name,
+                    contract: customer["contract"],
+                    previous:'TalkScreen'
+                  },
+                ],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="file-table"
+              color={global.fc_flg?"#fd2c77":"#1d449a"}
+              size={30}
+            />
+            <Text style={styles.menutext}>契約進行表</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: "ContractRegister",
+                    params: route.params,
+                    websocket: route.websocket,
+                    websocket2: route.websocket2,
+                    profile: route.profile,
+                    hojin:true,
+                    customer: route.customer,
+                    cus_name:route.cus_name,
+                    contract: customer["cjs_contract"],
+                    previous:'TalkScreen'
+                  },
+                ],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="file-account"
+              color={global.fc_flg?"#fd2c77":"#1d449a"}
+              size={30}
+            />
+            <Text style={styles.menutext}>契約進行表(法人)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: "ErcMoveIn",
+                    params: route.params,
+                    websocket: route.websocket,
+                    websocket2: route.websocket2,
+                    profile: route.profile,
+                    customer: route.customer,
+                    cus_name:route.cus_name,
+                    options:options,
+                    line_flg:customer.line,
+                    previous:'TalkScreen'
+                  },
+                ],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="home-edit"
+              color={global.fc_flg?"#fd2c77":"#1d449a"}
+              size={30}
+            />
+            <Text style={styles.menutext}>入居申込書</Text>
+          </TouchableOpacity>
+        </View>
+      )
+    }
+  },[customer,options])
 
   return (
     <SideMenu
@@ -1652,17 +1729,26 @@ export default function TalkScreen(props) {
           }
         }}
         renderMessageImage={(props)=>{
-          if ((props.currentMessage.image).length==0) {
-              return null;
-          }
-          const images = (props.currentMessage.image).map((img,index)=>{
+          if (Array.isArray(props.currentMessage.image)) {
+            var tmpStyle = {};
+            if (props.currentMessage.text == "") {
+              tmpStyle = {marginBottom:8,marginRight:10};
+            }
+            const images = (props.currentMessage.image).map((img,index)=>{
+              return (
+                <TouchableOpacity style={tmpStyle} onPress={() => {Linking.openURL(img)}}>
+                  <Text style={styles.file_url}>添付{index+1}</Text>
+                </TouchableOpacity>
+              )
+            })
+            return images;
+          } else if (props.currentMessage.user.title == "スタンプ" && props.currentMessage.image) {
             return (
-              <TouchableOpacity style={{}} onPress={() => {Linking.openURL(img)}}>
-                <Text style={styles.file_url}>添付{index+1}</Text>
-              </TouchableOpacity>
+              <Image style={styles.image} source={{ uri: props.currentMessage.image }}/>
             )
-          })
-          return images;
+          } else {
+            return null;
+          }
         }}
         user={{_id: 1,text:msgtext}}
         textInputStyle={styles.textInput}
@@ -1676,6 +1762,7 @@ export default function TalkScreen(props) {
         // 入力欄クリックした時のイベント
         textInputProps = {{
           onFocus: () => setMenu(false),
+          autoFocus:focus
         }}
         // プラスボタン
         renderActions={(props) => {
@@ -1777,10 +1864,12 @@ export default function TalkScreen(props) {
                 route={route}
                 onSend={onSend}
                 property={property}
+                inquiry={inquiry}
                 station_list={station}
                 address={address}
                 c_d={conditions_date}
                 fixed={fixed}
+                comment={comment}
                 hensu={customer.main?[
                   // 定型文で使うもの
                   customer.main.name,
@@ -1834,6 +1923,14 @@ export default function TalkScreen(props) {
                 <Feather name='file-text' color='#404040' size={28} />
                 <Text style={styles.iconText}>定型文</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.menuBox}onPress={()=>menuPress(6)}>
+                <MaterialCommunityIcons name='comment-processing-outline' color='#404040' size={28} />
+                <Text style={styles.iconText}>一言コメント</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuBox}onPress={()=>menuPress(7)}>
+                <MaterialCommunityIcons name='home-import-outline' color='#404040' size={28} />
+                <Text style={styles.iconText}>問合せ物件</Text>
+              </TouchableOpacity>
               
               <MyModal3 {...props}
                 isVisible={modal3}
@@ -1841,6 +1938,8 @@ export default function TalkScreen(props) {
                 onClose={()=>{ setModal3(false) }}
                 route={route}
                 property={property}
+                inquiry={inquiry}
+                flg={modal3_flg}
                 station_list={station}
                 address={address}
                 c_d={conditions_date}
@@ -1853,11 +1952,16 @@ export default function TalkScreen(props) {
                 isVisible={modal4}
                 onSwipeComplete={() => { setModal4(false) }}
                 onPress={()=>{ setModal4(false) }}
+                flg={modal4_flg}
                 fixed={filteredFixed}
+                comment={filteredComment}
                 msgtext={msgtext}
                 subject={subject}
                 setMsgtext={setMsgtext}
                 setSubject={setSubject}
+                inputCursorPosition={inputCursorPosition}
+                mail_format={'0'}
+                setModal4={setModal4}
                 hensu={customer.main?[
                   customer.main.name,
                   staff.corporations_name,
@@ -1961,5 +2065,12 @@ const styles = StyleSheet.create({
     marginLeft:10,
     marginTop:5,
     textDecorationLine: 'underline'
+  },
+  image: {
+    width: 150,
+    height: 130,
+    borderRadius: 13,
+    margin: 3,
+    resizeMode: 'cover',
   }
 });

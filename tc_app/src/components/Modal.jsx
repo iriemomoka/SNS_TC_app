@@ -1,6 +1,6 @@
 import React,{ useState, useEffect, useLayoutEffect, useRef } from 'react';
 import {
-  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, TouchableWithoutFeedback, Linking, Keyboard,
+  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, TouchableWithoutFeedback, Linking, Keyboard, Dimensions
 } from 'react-native';
 import Modal from "react-native-modal";
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -24,6 +24,15 @@ import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import ColorPicker from 'react-native-color-picker-ios-android'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Popover, { Rect } from 'react-native-popover-view';
+import Storage from 'react-native-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// ローカルストレージ読み込み
+const storage = new Storage({
+  storageBackend: AsyncStorage,
+  defaultExpires: null,
+});
 
 import Loading from '../components/Loading';
 
@@ -82,7 +91,7 @@ export function MyModal0(props){
 
 export function MyModal1(props) {
   
-  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,note_ret,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_set,options,options2,send_mail } = props;
+  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,note_ret,onSend,property,inquiry,station_list,address,c_d,fixed,comment,hensu,mail_online,mail_set,options,options2,send_mail } = props;
 
   const [res,setRes] = useState(props.reservation);
   const editorRef = useRef();
@@ -149,11 +158,18 @@ export function MyModal1(props) {
   ];
 
   const [filteredFixed, setFilteredFixed] = useState([]);
+  const [filteredComment, setFilteredComment] = useState([]);
 
   // リストからHTMLの定型文をフィルタリング
   const filterFixedByCategory = () => {
     const filtered = fixed.filter((obj) => obj.html_flg != '1');
     setFilteredFixed(filtered);
+  }
+
+  // リストからHTMLの一言コメントをフィルタリング
+  const filteredCommentByCategory = () => {
+    const filtered = comment.filter((obj) => obj.html_flg != '1');
+    setFilteredComment(filtered);
   }
 
   useEffect(() => {
@@ -163,7 +179,13 @@ export function MyModal1(props) {
     } else {
       setFilteredFixed(fixed);
     }
-  }, [mail_format, fixed]);
+    if (mail_format === '0') {
+      // 形式がテキストの時はHTMLの定型文は表示しない
+      filteredCommentByCategory();
+    } else {
+      setFilteredComment(comment);
+    }
+  }, [mail_format, fixed, comment]);
 
   // 内容詳細の編集
   const noteEdit = (text) => {
@@ -327,44 +349,36 @@ export function MyModal1(props) {
     setMail_subject(subject);
   }, [subject])
   
-  const [isEnabled, setIsEnabled] = useState(false);
-  const [checked, setCheck] = useState(false);
+  const [checked, setCheck] = useState(false); // メール予約
   
-  const [date, setDate] = useState(new Date());
+  const [reservation_stop_flg, setReservation_stop_flg] = useState(false); // メール予約
+  const [reading_return_flg, setReading_return_flg] = useState(false); // メール予約
+  
+  const [date1, setDate1] = useState(null);
+  const [date2, setDate2] = useState(null);
+  const [date3, setDate3] = useState(null);
+
+  const [date_view, setDate_view] = useState(1);
+  const [date_flg, setDate_flg] = useState(1);
   const [mode, setMode] = useState('date');
   const [show, setShow] = useState(false);
 
-  const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    setShow(Platform.OS === 'ios');
-    setDate(currentDate);
-  };
-
-  const showMode = (currentMode) => {
-    setShow(true);
-    setMode(currentMode);
-  };
-
-  const showDatepicker = () => {
-    showMode('date');
-  };
-
-  const showTimepicker = () => {
-    showMode('time');
-  };
-
   // オススメ物件
-  const [Property, setProperty] = useState(false);
+  const [Modal3, setModal3] = useState(false);
+  const [Modal3_flg, setModal3_flg] = useState("property");
 
-  const openProperty = () => {
-    setProperty(!Property);
+  const openModal3 = (flg) => {
+    setModal3(!Modal3);
+    setModal3_flg(flg);
   };
   
-  // 定型文
-  const [Fixed, setFixed] = useState(false);
+  // 定型文or一言コメント
+  const [Modal4, setModal4] = useState(false);
+  const [Modal4_flg, setModal4_flg] = useState("fixed");
 
-  const openFixed = () => {
-    setFixed(!Fixed);
+  const openModal4 = (flg) => {
+    setModal4(!Modal4);
+    setModal4_flg(flg);
   };
   const [c_permission, c_requestPermission] = Camera.useCameraPermissions();
 
@@ -614,96 +628,184 @@ export function MyModal1(props) {
     }
     
     const formatDate = (current_datetime) => {
-      let formatted_date = 
-        current_datetime.getFullYear() + "-" + 
-        (current_datetime.getMonth() + 1) + "-" + 
-        current_datetime.getDate() + " " + 
-        current_datetime.getHours() + ":" + 
-        current_datetime.getMinutes() + ":" + "0";
+      if (current_datetime == null) return null;
+      let formatted_date = Moment(current_datetime).format("YYYY-MM-DD HH:mm:00");
       return formatted_date;
     }
     
     setCon_flg(true);
-    props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,checked,checked?formatDate(date):'',res_id,1,true,filedata,del_file],mail_format],'mail');
+
+    const resultSend = [
+      cus_value, // 宛先
+      shop_value, // 送信元
+      mail_subject, // 件名
+      checked, // 予約フラグ
+      checked?formatDate(date1):'', // 予約時間１
+      res_id, // 予約ID
+      1, // 下書きフラグ
+      filedata, // 添付ファイル
+      checked?formatDate(date2):'', // 予約時間２
+      checked?formatDate(date3):'', // 予約時間３
+      reservation_stop_flg?1:"", // 予約取り消しフラグ
+      reading_return_flg?1:"", // 閲覧時に自動送信
+    ];
+
+    props.onSend(
+      [
+        formatDate(new Date()),
+        'メール送信',
+        note,
+        resultSend,
+        mail_format
+      ],
+      'mail'
+    );
+
     props.setModal1(false);
     setNote('');
     setCus_Value(cus_mail[0]);
     setShop_Value(shop_mail[0]);
     setMail_subject('');
-    setIsEnabled(false);
     setCheck(false);
     setFilename('');
     setFiledata(null);
     setInputCursorPosition(null);
     setMail_Format('0');
+    setDate1(null);
+    setDate2(null);
+    setDate3(null);
+    setReservation_stop_flg(false);
+    setReading_return_flg(false);
+    setDate_view(1);
+  }
+
+  function compare2now(adate) {
+    // 現在の日付＆時刻を取得
+    var today = new Date();
+
+    if (adate.getTime() < today.getTime()) {
+      return -1;
+    } else {
+      return 1;
+    }
   }
 
   const onSubmit = () => {
+
+    /* ----- エラーチェック ----- */
+
+    var err = "";
     
     if (!cus_value) {
-      Alert.alert('メールアドレスがありません');
+      err += '・メールアドレスがありません\n';
+    }
+
+    if (!note) {
+      err += '・送信内容が記入されていません。\n';
+    }
+
+    // 予約時間チェック
+    if (checked && !reading_return_flg) {
+
+      if (date1 == null) {
+        err += '・メール予約時間1を指定してください。\n';
+      } else if (compare2now(date1) == -1) {
+        err += '・メール予約時間1が過去の日付になっています。\n';
+      }
+
+      if (date2 != null) {
+        if (compare2now(date2) == -1) {
+          err += '・メール予約時間2が過去の日付になっています。\n';
+        }
+      }
+
+      if (date3 != null) {
+        if (compare2now(date3) == -1) {
+          err += '・メール予約時間3が過去の日付になっています。\n';
+        }
+      }
+
+    }
+
+    if (err) {
+      Alert.alert('エラー',err);
       return
     }
+
+    /* ----- エラーチェック ----- */
     
     setDraft("");
     setCon_flg(true);
     
     const formatDate = (current_datetime) => {
-      let formatted_date = 
-        current_datetime.getFullYear() + "-" + 
-        (current_datetime.getMonth() + 1) + "-" + 
-        current_datetime.getDate() + " " + 
-        current_datetime.getHours() + ":" + 
-        current_datetime.getMinutes() + ":" + "0";
+      if (current_datetime == null) return null;
+      let formatted_date = Moment(current_datetime).format("YYYY-MM-DD HH:mm:00");
       return formatted_date;
     }
+
+    const SendData = () => {
+
+      const resultSend = [
+        cus_value, // 宛先
+        shop_value, // 送信元
+        mail_subject, // 件名
+        checked, // 予約フラグ
+        checked?formatDate(date1):'', // 予約時間１
+        res_id, // 予約ID
+        '', // 下書きフラグ
+        filedata, // 添付ファイル
+        checked?formatDate(date2):'', // 予約時間２
+        checked?formatDate(date3):'', // 予約時間３
+        reservation_stop_flg?1:"", // 予約取り消しフラグ
+        reading_return_flg?1:"", // 閲覧時に自動送信
+      ];
+
+      props.onSend(
+        [
+          formatDate(new Date()), // 送信日
+          'メール送信', // ステータス
+          note, // 本文
+          resultSend, // メール内容
+          mail_format // メール形式
+        ],
+        'mail'
+      );
+
+      props.setModal1(false);
+      setNote('');
+      setCus_Value(cus_mail[0]);
+      setShop_Value(shop_mail[0]);
+      setMail_subject('');
+      setCheck(false);
+      setFilename('');
+      setFiledata(null);
+      setInputCursorPosition(null);
+      setMail_Format('0');
+      setDate1(null);
+      setDate2(null);
+      setDate3(null);
+      setReservation_stop_flg(false);
+      setReading_return_flg(false);
+      setDate_view(1);
+    }
     
-    // 本文入力チェック
-    if (note){
-      if(!mail_subject){
-        Alert.alert(
-          "件名が入っていませんがよろしいですか？",
-          "",
-          [
-            {
-              text: "はい",
-              onPress: () => {
-                props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata],mail_format],'mail');
-                props.setModal1(false);
-                setNote('');
-                setCus_Value(cus_mail[0]);
-                setShop_Value(shop_mail[0]);
-                setMail_subject('');
-                setIsEnabled(false);
-                setCheck(false);
-                setFilename('');
-                setFiledata(null);
-                setInputCursorPosition(null);
-                setMail_Format('0');
-              }
-            },
-            {
-              text: "いいえ",
-              onPress: () => {return}
-            },
-          ]
-        );
-      } else {
-        props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata],mail_format],'mail');
-        props.setModal1(false);
-        setNote('');
-        setCus_Value(cus_mail[0]);
-        setShop_Value(shop_mail[0]);
-        setMail_subject('');
-        setIsEnabled(false);
-        setCheck(false);
-        setFilename('');
-        setFiledata(null);
-        setInputCursorPosition(null);
-        setMail_Format('0');
-      }
+    if(!mail_subject){
+      Alert.alert(
+        "件名が入っていませんがよろしいですか？",
+        "",
+        [
+          {
+            text: "はい",
+            onPress: () => {SendData()}
+          },
+          {
+            text: "いいえ",
+            onPress: () => {return}
+          },
+        ]
+      );
     } else {
-      Alert.alert('送信内容が記入されていません');
+      SendData();
     }
     
   }
@@ -746,7 +848,6 @@ export function MyModal1(props) {
             setCus_Value(cus_mail[0]);
             setShop_Value(shop_mail[0]);
             setMail_subject('');
-            setIsEnabled(false);
             setCheck(false);
             setFilename('');
             setFiledata(null);
@@ -762,16 +863,6 @@ export function MyModal1(props) {
   
   const onClose = () => {
     props.setModal1(false);
-    // setNote('');
-    // setCus_Value(cus_mail[0]);
-    // setShop_Value(shop_mail[0]);
-    // setMail_subject('');
-    // setIsEnabled(false);
-    // setCheck(false);
-    // setFilename('');
-    // setFiledata(null);
-    // setInputCursorPosition(null);
-    // setMail_Format('0');
   }
   
   const img_Delete = () => {
@@ -804,22 +895,22 @@ export function MyModal1(props) {
       setMail_subject(val.title);
       setDraft(val.draft_flg);
       
-      if (val.time) {
-        setIsEnabled(true);
-        setCheck(true);
-        
-        const res_time = new Date(
-          val.time.substr(0,4),
-          val.time.substr(5,2),
-          val.time.substr(8,2),
-          val.time.substr(11,2),
-          val.time.substr(14,2),
-          "00"
-        )
-        res_time.setMonth(res_time.getMonth() - 1);
-        setDate(res_time);
-      }else{
-        setDate(new Date());
+      if(!val.draft_flg) {
+        if (val.time) {
+          
+          setCheck(true);
+          
+          const res_time = new Date(
+            val.time.substr(0,4),
+            val.time.substr(5,2),
+            val.time.substr(8,2),
+            val.time.substr(11,2),
+            val.time.substr(14,2),
+            "00"
+          )
+          res_time.setMonth(res_time.getMonth() - 1);
+          setDate1(res_time);
+        }
       }
       
       setRes_id(val.reservation_id);
@@ -874,69 +965,6 @@ export function MyModal1(props) {
     }
   }
 
-  function mail_reservation() {
-    
-    if (Platform.OS === 'ios') {
-      return (
-        <View>
-          <View style={styles.input}>
-            <Text style={styles.label}>メール予約</Text>
-            <Switch
-              trackColor={{ false: "#767577", true: "#40ff00" }}
-              thumbColor={isEnabled ? "#ffffff" : "#f4f3f4"}
-              ios_backgroundColor="#3e3e3e"
-              onValueChange={() => setIsEnabled(!isEnabled)}
-              value={isEnabled}
-            />
-          </View>
-          <View style={[isEnabled === true ? '':{display: 'none'},styles.input]}>
-            <Text style={styles.label}>予約時間</Text>
-            <DateTimePicker
-              value={date}
-              mode={'datetime'}
-              is24Hour={true}
-              display="default"
-              locale={'ja'}
-              onChange={onChange}
-            />
-          </View>
-        </View>
-      );
-    } else if (Platform.OS === 'android') {
-      return (
-        <View>
-          <View style={styles.input}>
-            <CheckBox
-              title='メール予約する'
-              checked={checked}
-              onPress={() => setCheck(!checked)}
-            />
-          </View>
-          <View style={[checked === true ? '':{display: 'none'},styles.input]}>
-            <View style={{flexDirection: 'row'}}>
-              <View>
-                <Button onPress={showDatepicker} title={Moment(date).format("YYYY-MM-DD")} />
-              </View>
-              <View style={{marginLeft:10}}>
-                <Button onPress={showTimepicker} title={Moment(date).format("HH:mm")} />
-              </View>
-              {show && (
-                <DateTimePicker
-                  testID="dateTimePicker"
-                  value={date}
-                  mode={mode}
-                  is24Hour={true}
-                  display="default"
-                  onChange={onChange}
-                />
-              )}
-            </View>
-          </View>
-        </View>
-      );
-    }
-  }
-
   const [fontsize,setFontsize] = useState(3);
 
   const fontSize = (size) => {
@@ -971,6 +999,37 @@ export function MyModal1(props) {
     };
   }, []);
 
+  // 挿入メニューの横スクロールの通知を一回だけ表示する
+  useEffect(() => {
+    storage.load({
+      key : 'MENU-FLG'
+    })
+    .then(data => {
+      if (!data) {
+        setShowPopover(true);
+      }
+    })
+    .catch(err => {
+      setShowPopover(true);
+      storage.save({
+        key: 'MENU-FLG',
+        data: false,
+      });
+    })
+  }, []);
+
+  const closePopover = () => {
+    setShowPopover(false);
+    storage.save({
+      key: 'MENU-FLG',
+      data: true,
+    });
+  }
+
+  const [showPopover, setShowPopover] = useState(false);
+
+  const screenWidth = Dimensions.get('window').width;
+
   return (
     <Modal
       isVisible={isVisible}
@@ -985,11 +1044,13 @@ export function MyModal1(props) {
       }}
     >
       <MyModal3 
-        isVisible={Property}
-        onSwipeComplete={() => { setProperty(false) }}
-        onClose={() => { setProperty(false) }}
+        isVisible={Modal3}
+        onSwipeComplete={() => { setModal3(false) }}
+        onClose={() => { setModal3(false) }}
+        flg={Modal3_flg}
         route={route}
         property={property}
+        inquiry={inquiry}
         station_list={station_list}
         address={address}
         c_d={c_d}
@@ -1000,38 +1061,65 @@ export function MyModal1(props) {
         inputCursorPosition={inputCursorPosition}
       />
       <MyModal4 
-        isVisible={Fixed}
-        onSwipeComplete={() => { setFixed(false) }}
-        onPress={() => { setFixed(false) }}
+        isVisible={Modal4}
+        onSwipeComplete={() => { setModal4(false) }}
+        onPress={() => { setModal4(false) }}
+        flg={Modal4_flg}
         fixed={filteredFixed}
+        comment={filteredComment}
         hensu={hensu}
         setMail_subject={setMail_subject}
+        subject={mail_subject}
         setNote={setNote}
-        setFixed={setFixed}
+        msgtext={note}
+        setModal4={setModal4}
         mail_format={mail_format}
         editorRef={editorRef}
+        inputCursorPosition={inputCursorPosition}
       />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <View style={styles.sydemenu}>
+        <ScrollView style={styles.sydemenu} horizontal showsHorizontalScrollIndicator={false}>
           <TouchableOpacity
             style={[styles.menucircle,{marginLeft:0}]}
-            onPress={openProperty}
+            onPress={()=>openModal3("property")}
           >
-            <Feather name='home' color='#1f2d53' size={28} />
+            <Text style={styles.menucircleText}>おすすめ{"\n"}物件</Text>
+            <Feather name='home' color='#1f2d53' size={20} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.menucircle}
-            onPress={openFixed}
+            onPress={()=>openModal4("fixed")}
           >
-            <Feather name='file-text' color='#1f2d53' size={28} />
+            <Text style={styles.menucircleText}>定型文</Text>
+            <Feather name='file-text' color='#1f2d53' size={20} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menucircle}
+            onPress={()=>openModal4("comment")}
+          >
+            <Text style={styles.menucircleText}>一言{"\n"}コメント</Text>
+            <MaterialCommunityIcons name='comment-processing-outline' color='#404040' size={20} />
           </TouchableOpacity>
           <TouchableOpacity
             style={option?styles.menucircle:{display:"none"}}
             onPress={() => {openOnline_call(route.customer)}}
           >
-            <Feather name='video' color='#1f2d53' size={28} />
+            <Text style={styles.menucircleText}>オンライン{"\n"}通話</Text>
+            <Feather name='video' color='#1f2d53' size={20} />
           </TouchableOpacity>
-        </View>
+          <TouchableOpacity
+            style={styles.menucircle}
+            onPress={()=>openModal3("inquiry")}
+          >
+            <Text style={styles.menucircleText}>問合せ物件</Text>
+            <MaterialCommunityIcons name='home-import-outline' color='#404040' size={20} />
+          </TouchableOpacity>
+        </ScrollView>
+        <Popover from={new Rect(screenWidth/2,110)} isVisible={showPopover} onRequestClose={() => closePopover()}>
+          <View style={{width:240,height:60,justifyContent:'center'}}>
+            <Text style={{textAlign:'center'}}>挿入できる項目を横スクロールで{"\n"}参照できるようになりました</Text>
+          </View>
+        </Popover>
         <View style={[{height:"90%",marginTop:20},styles.modalInner]}>
           <TouchableOpacity
             style={styles.close}
@@ -1126,7 +1214,224 @@ export function MyModal1(props) {
                   <Text>{filename}</Text>
                 </View>
                 <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
-                <View zIndex={99}>{mail_reservation()}</View>
+                <View>
+                  <CheckBox
+                    title='メール予約する'
+                    checked={checked}
+                    onPress={() => setCheck(!checked)}
+                  />
+                  {checked&&(
+                    <>
+                      <CheckBox
+                        title='お客様からメールがあった場合は送信しない'
+                        checked={reservation_stop_flg}
+                        onPress={() => setReservation_stop_flg(!reservation_stop_flg)}
+                        containerStyle={styles.checkbox}
+                      />
+                      <View style={{flexDirection:'row',alignItems:'center'}}>
+                        <Text style={{fontSize:12,marginRight:5}}>予約指定1：</Text>
+                        <TouchableOpacity
+                          style={[styles.inputInner,{width:"30%",flexDirection:'row'},reading_return_flg&&{backgroundColor:"#bfbfbf"}]}
+                          onPress={()=>{
+                            setShow(true);
+                            setMode("date");
+                            setDate_flg(1);
+                          }}
+                          disabled={reading_return_flg}
+                        >
+                          <Text style={{alignSelf:'center'}}>{date1?Moment(date1).format("YYYY-MM-DD"):""}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.inputInner,{width:"30%",flexDirection:'row',marginLeft:"2%"},reading_return_flg&&{backgroundColor:"#bfbfbf"}]}
+                          onPress={()=>{
+                            setShow(true);
+                            setMode("time");
+                            setDate_flg(1);
+                          }}
+                          disabled={reading_return_flg}
+                        >
+                          <Text style={{alignSelf:'center'}}>{date1?Moment(date1).format("HH:mm"):""}</Text>
+                        </TouchableOpacity>
+                        {date1&&(
+                          <TouchableOpacity
+                            style={{alignSelf:'center',marginLeft:5}}
+                            onPress={()=>setDate1(null)}
+                          >
+                            <Feather name='x-circle' color='#ccc' size={35} />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                      {date_view>1&&(
+                        <View style={{flexDirection:'row',alignItems:'center',marginTop:5}}>
+                          <Text style={{fontSize:12,marginRight:5}}>予約指定2：</Text>
+                          <TouchableOpacity
+                            style={[styles.inputInner,{width:"30%",flexDirection:'row'},reading_return_flg&&{backgroundColor:"#bfbfbf"}]}
+                            onPress={()=>{
+                              setShow(true);
+                              setMode("date");
+                              setDate_flg(2);
+                            }}
+                            disabled={reading_return_flg}
+                          >
+                            <Text style={{alignSelf:'center'}}>{date2?Moment(date2).format("YYYY-MM-DD"):""}</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.inputInner,{width:"30%",flexDirection:'row',marginLeft:"2%"},reading_return_flg&&{backgroundColor:"#bfbfbf"}]}
+                            onPress={()=>{
+                              setShow(true);
+                              setMode("time");
+                              setDate_flg(2);
+                            }}
+                            disabled={reading_return_flg}
+                          >
+                            <Text style={{alignSelf:'center'}}>{date2?Moment(date2).format("HH:mm"):""}</Text>
+                          </TouchableOpacity>
+                          {date2&&(
+                            <TouchableOpacity
+                              style={{alignSelf:'center',marginLeft:5}}
+                              onPress={()=>setDate2(null)}
+                            >
+                              <Feather name='x-circle' color='#ccc' size={35} />
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      )}
+                      {date_view>2&&(
+                        <View style={{flexDirection:'row',alignItems:'center',marginTop:5}}>
+                          <Text style={{fontSize:12,marginRight:5}}>予約指定3：</Text>
+                          <TouchableOpacity
+                            style={[styles.inputInner,{width:"30%",flexDirection:'row'},reading_return_flg&&{backgroundColor:"#bfbfbf"}]}
+                            onPress={()=>{
+                              setShow(true);
+                              setMode("date");
+                              setDate_flg(3);
+                            }}
+                            disabled={reading_return_flg}
+                          >
+                            <Text style={{alignSelf:'center'}}>{date3?Moment(date3).format("YYYY-MM-DD"):""}</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.inputInner,{width:"30%",flexDirection:'row',marginLeft:"2%"},reading_return_flg&&{backgroundColor:"#bfbfbf"}]}
+                            onPress={()=>{
+                              setShow(true);
+                              setMode("time");
+                              setDate_flg(3);
+                            }}
+                            disabled={reading_return_flg}
+                          >
+                            <Text style={{alignSelf:'center'}}>{date3?Moment(date3).format("HH:mm"):""}</Text>
+                          </TouchableOpacity>
+                          {date3&&(
+                            <TouchableOpacity
+                              style={{alignSelf:'center',marginLeft:5}}
+                              onPress={()=>setDate3(null)}
+                            >
+                              <Feather name='x-circle' color='#ccc' size={35} />
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      )}
+                      {date_view<3&&(
+                        <TouchableOpacity
+                          onPress={()=>{
+                            if (date_view == 1) {
+                              setDate_view(2);
+                            } else if (date_view == 2) {
+                              setDate_view(3);
+                            }
+                          }}
+                          style={styles.file}
+                        >
+                          <Text>予約追加</Text>
+                        </TouchableOpacity>
+                      )}
+                      {(show && Platform.OS === 'android') && (
+                        <DateTimePicker
+                          value={
+                            date_flg==1?(date1?date1:new Date()):
+                            date_flg==2?(date2?date2:new Date()):
+                            date_flg==3?(date3?date3:new Date()):
+                            new Date()
+                          }
+                          mode={mode}
+                          display="default"
+                          locale={'ja'}
+                          onChange={(event, selectedDate) => {
+                            if (date_flg == 1) {
+                              setDate1(selectedDate);
+                            } else if (date_flg == 2) {
+                              setDate2(selectedDate);
+                            } else if (date_flg == 3) {
+                              setDate3(selectedDate);
+                            }
+                            setShow(false);
+                          }}
+                        />
+                      )}
+                      {Platform.OS === 'ios'&& (
+                        <Modal
+                          isVisible={show}
+                          swipeDirection={null}
+                          backdropOpacity={0.5}
+                          animationInTiming={300}
+                          animationOutTiming={500}
+                          animationIn={'slideInDown'}
+                          animationOut={'slideOutUp'}
+                          propagateSwipe={true}
+                          style={{alignItems: 'center'}}
+                          onBackdropPress={()=>setShow(false)}
+                        >
+                          <View style={styles.iosdate}>
+                            <TouchableOpacity
+                              style={{
+                                position: 'absolute',
+                                top:8,
+                                right:10,
+                                zIndex:999
+                              }}
+                              onPress={()=>setShow(false)}
+                            >
+                              <Feather name='x-circle' color='#ccc' size={35} />
+                            </TouchableOpacity>
+                            <DateTimePicker
+                              value={
+                                date_flg==1?(date1?date1:new Date()):
+                                date_flg==2?(date2?date2:new Date()):
+                                date_flg==3?(date3?date3:new Date()):
+                                new Date()
+                              }
+                              mode={mode}
+                              is24Hour={true}
+                              display="spinner"
+                              locale={'ja'}
+                              onChange={(event, selectedDate) => {
+                                if (date_flg == 1) {
+                                  setDate1(selectedDate);
+                                } else if (date_flg == 2) {
+                                  setDate2(selectedDate);
+                                } else if (date_flg == 3) {
+                                  setDate3(selectedDate);
+                                }
+                              }}
+                              textColor="#fff"
+                            />
+                          </View>
+                        </Modal>
+                      )}
+                      <CheckBox
+                        title='お客様が閲覧した時'
+                        checked={reading_return_flg}
+                        onPress={() => {
+                          setReading_return_flg(!reading_return_flg);
+                          setDate1(null);
+                          setDate2(null);
+                          setDate3(null);
+                        }}
+                        containerStyle={styles.checkbox}
+                      />
+                    </>
+                  )}
+                </View>
                 <View style={styles.input}>
                   {mail_format !== '1' ? (
                     <>
@@ -1227,7 +1532,7 @@ export function MyModal1(props) {
                 <Text style={{fontSize:12}}>下書き保存</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={onSubmit} style={styles.submit}>
-                <Text style={styles.submitText}>{isEnabled||checked?"予　約":"送　信"}</Text>
+                <Text style={styles.submitText}>{checked?"予　約":"送　信"}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1432,7 +1737,7 @@ export function MyModal2(props){
 
 export function MyModal3(props){
   
-  const { route,isVisible,onSwipeComplete,onClose,msgtext,property,station_list,address,c_d,mail_format,editorRef,inputCursorPosition } = props;
+  const { route,isVisible,onSwipeComplete,onClose,msgtext,property,inquiry,station_list,address,c_d,mail_format,editorRef,inputCursorPosition,flg } = props;
   
   const [isRecommended, setRecommended] = useState(false);
 
@@ -2010,7 +2315,8 @@ export function MyModal3(props){
       }
     }
   },[insertMsg])
-  
+
+  const ListData = flg=="property"?(search_results?search_results:property):inquiry;
   
   return (
     <Modal
@@ -2025,20 +2331,29 @@ export function MyModal3(props){
       propagateSwipe={true}
       onBackdropPress={onClose}
     >
-      <View style={[{height:400},styles.template]}>
+      <View style={styles.template}>
         <TouchableOpacity
           style={styles.close}
           onPress={onClose}
         >
           <Feather name='x-circle' color='gray' size={35} />
         </TouchableOpacity>
-        <Text style={styles.templateText}>
-        指定されている条件でおすすめ物件が表示されます。{"\n"}
-        [挿入]ボタンをクリックすると文中に挿入されます。
-        </Text>
-        <TouchableOpacity style={styles.searchBtn} onPress={recommended}>
-          <Text>オススメ物件を探す</Text>
-        </TouchableOpacity>
+        {flg=="property"?(
+          <>
+            <Text style={styles.templateText}>
+            指定されている条件でおすすめ物件が表示されます。{"\n"}
+            [挿入]ボタンをクリックすると文中に挿入されます。
+            </Text>
+            <TouchableOpacity style={styles.searchBtn} onPress={recommended}>
+              <Text>オススメ物件を探す</Text>
+            </TouchableOpacity>
+          </>
+        ):(
+          <Text style={[styles.templateText,{marginBottom:10}]}>
+          問合せ物件が表示されます。{"\n"}
+          [挿入]ボタンをクリックすると文中に挿入されます。
+          </Text>
+        )}
         <Modal
           isVisible={isRecommended}
           backdropOpacity={0.5}
@@ -2440,50 +2755,56 @@ export function MyModal3(props){
             </View>
           </View>
         </Modal>
-        <FlatList 
-          horizontal
-          data={search_results?search_results:property}
-          renderItem={({ item }) =>
-            (
-              <TouchableOpacity
-                activeOpacity={1}
-                style={styles.property}
-              >
-                <View style={styles.propertyInner}>
-                  <Text style={styles.propertyTitle}>{item.article_name}{"\n"}
-                  <Text style={{fontSize:12}}>{item.floor}階</Text></Text>
-                  <View style={styles.propertyInfo}>
-                    <Text>沿線：</Text><Text>{item.line_name1}</Text>
-                  </View>
-                  <View style={styles.propertyInfo}>
-                    <Text>駅名：</Text><Text>{item.station_name1}駅</Text>
-                  </View>
-                  <View style={styles.propertyInfo}>
-                    <Image
-                      style={styles.propertyPhoto}
-                      source={{
-                        uri: item.img_gaikan,
-                      }}
-                    />
-                    <View>
-                      <Text><Text style={{color:'red'}}>{item.rent/10000}</Text>万({item.general}円)</Text>
-                      <Text>徒歩{item.station_time1}分</Text>
-                      <Text>{item.layout}/{item.category}</Text>
-                      <Text>{item.exclusive}㎡</Text>
+        {ListData&&ListData.length>0?(
+          <FlatList 
+            horizontal
+            data={flg=="property"?(search_results?search_results:property):inquiry}
+            renderItem={({ item }) =>
+              (
+                <TouchableOpacity
+                  activeOpacity={1}
+                  style={styles.property}
+                >
+                  <View style={styles.propertyInner}>
+                    <Text style={styles.propertyTitle}>{item.article_name}{"\n"}
+                    <Text style={{fontSize:12}}>{item.floor}階</Text></Text>
+                    <View style={styles.propertyInfo}>
+                      <Text>沿線：</Text><Text>{item.line_name1}</Text>
                     </View>
+                    <View style={styles.propertyInfo}>
+                      <Text>駅名：</Text><Text>{item.station_name1}駅</Text>
+                    </View>
+                    <View style={styles.propertyInfo}>
+                      <Image
+                        style={styles.propertyPhoto}
+                        source={{
+                          uri: item.img_gaikan,
+                        }}
+                      />
+                      <View>
+                        <Text><Text style={{color:'red'}}>{item.rent/10000}</Text>万({item.general}円)</Text>
+                        <Text>徒歩{item.station_time1}分</Text>
+                        <Text>{item.layout}/{item.category}</Text>
+                        <Text>{item.exclusive}㎡</Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.propertyInner}
+                      onPress={() => proInsert(item)}
+                    >
+                      <Image source={require('../../assets/btn_app.png')} />
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity
-                    style={styles.propertyInner}
-                    onPress={() => proInsert(item)}
-                  >
-                    <Image source={require('../../assets/btn_app.png')} />
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            )
-          }
-          keyExtractor={(item) => `${item.article_id}`}
-        />
+                </TouchableOpacity>
+              )
+            }
+            keyExtractor={(item) => `${item.article_id}`}
+          />
+        ):(
+          <View style={{height:150,justifyContent:'center',alignItems:'center'}}>
+            <Text>表示できる物件がありません</Text>
+          </View>
+        )}
       </View>
     </Modal>
   );
@@ -2491,28 +2812,49 @@ export function MyModal3(props){
 
 export function MyModal4(props){
   
-  const { isVisible,onSwipeComplete,onPress,fixed,msgtext,subject,hensu,mail_format,editorRef } = props;
+  const { isVisible,onSwipeComplete,onPress,fixed,comment,msgtext,subject,hensu,mail_format,editorRef,flg,inputCursorPosition } = props;
   
-  const [fixed_category, setFixed_Category] = useState([]);
+  const [category, setCategory] = useState([]);
 
   useEffect(() => {
+
     // カテゴリーの重複を検出したものを重複しないでリスト
-    const f_c = fixed.map((c) => c.category);
-    setFixed_Category(Array.from(new Set(f_c)));
-  }, [fixed]);
-  
+    var cate = [];
+    if (flg == "fixed") {
+      cate = fixed.map((c) => c.category);
+    } else {
+      cate = comment.map((c) => c.category);
+    }
+
+    setCategory(Array.from(new Set(cate)));
+
+  }, [fixed,comment,flg]);
+
   // カテゴリ内をリスト化
   function list(category) {
     
-    const l = fixed.map((f) => {
-      if (category == f.category) {
-        return (
-          <TouchableOpacity onPress={() => tmp_send(f)} key={f.fixed_id}>
-            <Text style={styles.CollapseBodyText}>　⇒ {f.title}</Text>
-          </TouchableOpacity>
-        )
-      }
-    })
+    var l = [];
+    if (flg == "fixed") {
+      l = fixed.map((f) => {
+        if (category == f.category) {
+          return (
+            <TouchableOpacity onPress={() => tmp_send(f)} key={f.fixed_id}>
+              <Text style={styles.CollapseBodyText}>　⇒ {f.title}</Text>
+            </TouchableOpacity>
+          )
+        }
+      })
+    } else {
+      l = comment.map((f) => {
+        if (category == f.category) {
+          return (
+            <TouchableOpacity onPress={() => tmp_send(f)} key={f.comment_id}>
+              <Text style={styles.CollapseBodyText}>　⇒ {f.title}</Text>
+            </TouchableOpacity>
+          )
+        }
+      })
+    }
     
     return l;
   }
@@ -2544,69 +2886,76 @@ export function MyModal4(props){
   }
   
   // 書き換え
-  function tmp_send(fixed_data){
+  function tmp_send(data){
     
-    let title = fixed_data.mail_title;
-    
-    title = title.split("%お客様名%");
-    title = title.join(hensu[0]);
-    title = title.split("%会社名%");
-    title = title.join(hensu[1]);
-    title = title.split("%店舗名%");
-    title = title.join(hensu[2]);
-    title = title.split("%担当名%");
-    title = title.join(hensu[3]);
-    title = title.split("%入力者名%");
-    title = title.join(hensu[4]);
-    title = title.split("%お問い合わせ媒体%");
-    title = title.join(hensu[5]);
-    
-    title = title.split("%お問い合わせ物件%");
-    if (hensu[6]) {
-      let bukken = '';
-      for (let i = 0; i < hensu[6].length; i++) {
-        bukken += hensu[6][i];
-        bukken += '\n';
-      }
-      title = title.join(bukken);
-    }else{
-      title = title.join('');
-    }
-    
-    title = title.split("%電話番号%");
-    title = title.join(hensu[7]);
-    title = title.split("%FAX番号%");
-    title = title.join(hensu[8]);
-    title = title.split("%物件名%");
-    title = title.join(hensu[9]);
-    title = title.split("%問合わせ日付%");
-
     let date = '';
     if (hensu[10]) {
       let month = new Date(hensu[10].substr(0,10)).getMonth()+1;
       let day   = new Date(hensu[10].substr(0,10)).getDate();
       date  = month+'月'+day+'日';
     }
-    title = title.join(date);
-    
-    title = title.split("%お問い合わせ物件（携帯）%");
-    if (hensu[6]) {
-      let bukken = '';
-      for (let i = 0; i < hensu[6].length; i++) {
-        bukken += hensu[6][i];
-        bukken += '\n';
+
+    let title = "";
+
+    if (flg == "fixed") {
+      
+      title = data.mail_title;
+      
+      title = title.split("%お客様名%");
+      title = title.join(hensu[0]);
+      title = title.split("%会社名%");
+      title = title.join(hensu[1]);
+      title = title.split("%店舗名%");
+      title = title.join(hensu[2]);
+      title = title.split("%担当名%");
+      title = title.join(hensu[3]);
+      title = title.split("%入力者名%");
+      title = title.join(hensu[4]);
+      title = title.split("%お問い合わせ媒体%");
+      title = title.join(hensu[5]);
+      
+      title = title.split("%お問い合わせ物件%");
+      if (hensu[6]) {
+        let bukken = '';
+        for (let i = 0; i < hensu[6].length; i++) {
+          bukken += hensu[6][i];
+          bukken += '\n';
+        }
+        title = title.join(bukken);
+      }else{
+        title = title.join('');
       }
-      title = title.join(bukken);
-    }else{
+      
+      title = title.split("%電話番号%");
+      title = title.join(hensu[7]);
+      title = title.split("%FAX番号%");
+      title = title.join(hensu[8]);
+      title = title.split("%物件名%");
+      title = title.join(hensu[9]);
+      title = title.split("%問合わせ日付%");
+
+      title = title.join(date);
+      
+      title = title.split("%お問い合わせ物件（携帯）%");
+      if (hensu[6]) {
+        let bukken = '';
+        for (let i = 0; i < hensu[6].length; i++) {
+          bukken += hensu[6][i];
+          bukken += '\n';
+        }
+        title = title.join(bukken);
+      }else{
+        title = title.join('');
+      }
+      
+      title = title.split("%自動追客物件%");
       title = title.join('');
+      title = title.split("%LINE友達追加%");
+      title = title.join('');
+
     }
-    
-    title = title.split("%自動追客物件%");
-    title = title.join('');
-    title = title.split("%LINE友達追加%");
-    title = title.join('');
-    
-    let note = fixed_data.note;
+
+    let note = data.note;
     
     note = note.split("%お客様名%");
     note = note.join(hensu[0]);
@@ -2661,51 +3010,96 @@ export function MyModal4(props){
     if (mail_format == '1') {
       note = convertToHTML(note);
     }
-    
-    if(msgtext || subject || props.setNote || props.setMail_subject) {
-      Alert.alert(
-        "入力されている【件名】と【本文】が削除されますがよろしいですか？",
-        "",
-        [
-          {
-            text: "はい",
-            onPress: () => {
-              if(props.setMsgtext && props.setSubject) {
-                props.setMsgtext(note);
-                props.setSubject(title);
-              } else if (props.setNote && props.setMail_subject) {
-                props.setNote(note);
-                props.setMail_subject(title);
-                if (mail_format == '1') {
-                  editorRef.current.setContentHTML(note);
+
+    if (flg == "fixed") {
+      if(msgtext || subject || props.setNote || props.setMail_subject) {
+        Alert.alert(
+          "入力されている【件名】と【本文】が削除されますがよろしいですか？",
+          "",
+          [
+            {
+              text: "はい",
+              onPress: () => {
+                if(props.setMsgtext && props.setSubject) {
+                  props.setMsgtext(note);
+                  props.setSubject(title);
+                } else if (props.setNote && props.setMail_subject) {
+                  props.setNote(note);
+                  props.setMail_subject(title);
+                  if (mail_format == '1') {
+                    editorRef.current.setContentHTML(note);
+                  }
+                }
+                
+                if (props.setModal4) {
+                  props.setModal4(false);
                 }
               }
-              
-              if (props.setFixed) {
-                props.setFixed(false);
-              }
-            }
-          },
-          {
-            text: "いいえ",
-          },
-        ]
-      );
-    } else {
-      if(props.setMsgtext && props.setSubject) {
-        props.setMsgtext(note);
-        props.setSubject(title);
-      } else if (props.setNote && props.setMail_subject) {
-        props.setNote(note);
-        props.setMail_subject(title);
+            },
+            {
+              text: "いいえ",
+            },
+          ]
+        );
+      } else {
+        if(props.setMsgtext && props.setSubject) {
+          props.setMsgtext(note);
+          props.setSubject(title);
+        } else if (props.setNote && props.setMail_subject) {
+          props.setNote(note);
+          props.setMail_subject(title);
+        }
+        
+        if (props.setModal4) {
+          props.setModal4(false);
+        }
       }
-      
-      if (props.setFixed) {
-        props.setFixed(false);
+    } else {
+
+      let proMsg;
+
+      if (mail_format == '1') {
+        // HTMLエディタのカーソル位置に挿入        
+        if (inputCursorPosition != null) {
+          var index = msgtext.indexOf(inputCursorPosition);
+          if (index != -1) {
+            note = '\n' + '<div>' + note + '</div>';
+            proMsg = msgtext.slice(0, index + inputCursorPosition.length) + note + msgtext.slice(index + inputCursorPosition.length);
+          } else {
+            proMsg = msgtext + note;
+          }
+        } else {
+          proMsg = note + msgtext;
+        }
+      } else if (mail_format == '0') {
+        // TextInputのカーソル位置に挿入
+        if (inputCursorPosition != null) {
+          proMsg = msgtext.slice(0, inputCursorPosition.start) + note + msgtext.slice(inputCursorPosition.end);
+        } else {
+          proMsg = msgtext + note;
+        }
+      } else {
+        // トーク画面
+        proMsg = msgtext + note;
+      }
+
+      if(props.setMsgtext && props.setSubject) {
+        props.setMsgtext(proMsg);
+      } else if (props.setNote && props.setMail_subject) {
+        props.setNote(proMsg);
+        if (mail_format == '1') {
+          editorRef.current.setContentHTML(proMsg);
+        }
+      }
+
+      if (props.setModal4) {
+        props.setModal4(false);
       }
     }
     
   }
+
+  const title_tmp = flg == "fixed" ? "定型文": "一言コメント";
   
   return (
     <Modal
@@ -2728,12 +3122,11 @@ export function MyModal4(props){
           <Feather name='x-circle' color='gray' size={35} />
         </TouchableOpacity>
         <Text style={styles.templateText}>
-          定型文をクリックすると送信内容に反映されます。{"\n"}
-          先にテキストを入力している状態で、定型文を選択すると内容が上書きされます。{"\n"}
-          ご注意ください。
+          {title_tmp}をクリックすると送信内容に反映されます。{"\n"}
+          {flg == "fixed"&&'先にテキストを入力している状態で、定型文を選択すると内容が上書きされます。\nご注意ください。'}
         </Text>
           <FlatList 
-            data={fixed_category}
+            data={category}
             renderItem={({ item }) =>
               (
                 <Collapse>
@@ -5167,14 +5560,14 @@ const styles = StyleSheet.create({
   sydemenu: {
     position:'absolute',
     zIndex:900,
+    width:250,
     top:-10,
     flexDirection: 'row',
-    justifyContent: 'center',
     alignSelf:'center',
   },
   menucircle: {
-    width:65,
-    height:65,
+    width:70,
+    height:70,
     backgroundColor:'#edf2ff',
     borderWidth:3,
     borderColor:'#1f2d53',
@@ -5182,6 +5575,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft:20,
+  },
+  menucircleText: {
+    fontSize:9,
+    fontWeight:'800',
+    color:'#404040',
+    textAlign:'center',
+    marginBottom:3
   },
   cus_label: {
     color: '#7d7d7d',
@@ -5223,5 +5623,16 @@ const styles = StyleSheet.create({
   editor: {
     borderColor: '#1f2d53',
     borderWidth: 1,
+  },
+  checkbox: {
+    margin: 0,
+    marginLeft:0,
+    marginRight: 0,
+    padding: 0,
+    borderWidth: 0,
+    borderRadius: 0,
+    height:30,
+    backgroundColor:'transparent',
+    marginTop:10,
   },
 })

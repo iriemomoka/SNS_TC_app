@@ -880,7 +880,7 @@ export default function Post(props) {
 
   return (
     <GestureHandlerRootView style={{flex:1}}>
-      <PanGestureHandler onActivated={onPanGestureEvent}>
+      <PanGestureHandler onActivated={onPanGestureEvent} activeOffsetX={[-10, 10]} >
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

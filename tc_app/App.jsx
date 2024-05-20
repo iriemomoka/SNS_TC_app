@@ -18,6 +18,7 @@ import Staffs from './src/screens/Staffs';
 import ChatTalk from './src/screens/ChatTalk';
 import ContractRegister from './src/screens/ContractRegister';
 import CustomerEdit from './src/screens/CustomerEdit';
+import ErcMoveIn from './src/screens/ErcMoveIn';
 import TimeLine from './src/screens/TimeLine';
 import Post from './src/screens/Post';
 import Thanks from './src/screens/Thanks';
@@ -108,6 +109,10 @@ export default function App() {
             <Stack.Screen
               name="CustomerEdit"
               component={CustomerEdit}
+            />
+            <Stack.Screen
+              name="ErcMoveIn"
+              component={ErcMoveIn}
             />
             <Stack.Screen
               name="TimeLine"
