@@ -628,7 +628,7 @@ export function MyModal1(props) {
     }
     
     const formatDate = (current_datetime) => {
-      if (current_datetime == null) return null;
+      if (current_datetime == null) return "";
       let formatted_date = Moment(current_datetime).format("YYYY-MM-DD HH:mm:00");
       return formatted_date;
     }
@@ -738,7 +738,7 @@ export function MyModal1(props) {
     setCon_flg(true);
     
     const formatDate = (current_datetime) => {
-      if (current_datetime == null) return null;
+      if (current_datetime == null) return "";
       let formatted_date = Moment(current_datetime).format("YYYY-MM-DD HH:mm:00");
       return formatted_date;
     }
@@ -5634,5 +5634,13 @@ const styles = StyleSheet.create({
     height:30,
     backgroundColor:'transparent',
     marginTop:10,
+  },
+  iosdate: {
+    width:300,
+    height:260,
+    backgroundColor:'#333',
+    alignItems:'center',
+    justifyContent:'center',
+    borderRadius:5
   },
 })
