@@ -108,7 +108,7 @@ export function MyModal1(props) {
 
   useEffect(() => {
     if (note_ret != "") {
-      setNote(note_ret);
+      setNote(note?note+"\n"+note_ret:note_ret);
     }
   }, [note_ret])
   
@@ -1080,7 +1080,14 @@ export function MyModal1(props) {
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <ScrollView style={styles.sydemenu} horizontal showsHorizontalScrollIndicator={false}>
           <TouchableOpacity
-            style={[styles.menucircle,{marginLeft:0}]}
+            style={option?[styles.menucircle,{marginLeft:0}]:{display:"none"}}
+            onPress={() => {openOnline_call(route.customer)}}
+          >
+            <Text style={styles.menucircleText}>オンライン{"\n"}通話</Text>
+            <Feather name='video' color='#1f2d53' size={20} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.menucircle,!option&&{marginLeft:0}]}
             onPress={()=>openModal3("property")}
           >
             <Text style={styles.menucircleText}>おすすめ{"\n"}物件</Text>
@@ -1099,13 +1106,6 @@ export function MyModal1(props) {
           >
             <Text style={styles.menucircleText}>一言{"\n"}コメント</Text>
             <MaterialCommunityIcons name='comment-processing-outline' color='#404040' size={20} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={option?styles.menucircle:{display:"none"}}
-            onPress={() => {openOnline_call(route.customer)}}
-          >
-            <Text style={styles.menucircleText}>オンライン{"\n"}通話</Text>
-            <Feather name='video' color='#1f2d53' size={20} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.menucircle}

@@ -1306,7 +1306,18 @@ export default function TalkScreen(props) {
 	  
 	  if (!await CameraPermissionsCheck()) return;
 	  if (!await AudioPermissionsCheck()) return;
-	  
+    
+    var url_add = "recording_login_key=tc12"+id+"46ud";
+    var row     = domain+"video/?"+url_add;
+
+    // LINE紐づけされてたら
+    if (customer.line) {
+      setMsgtext(msgtext?msgtext+row:row);
+    } else { // されてなかったらメール作成
+      setModal1(true);
+      setNoto_ret(row);
+    }
+
 	  Alert.alert(
       "通話画面を開きますか？",
       "",
@@ -1347,10 +1358,6 @@ export default function TalkScreen(props) {
         },
       ]
     );
-    
-    var url_add = "recording_login_key=tc12"+id+"46ud";
-    var row     = domain+"video/?"+url_add;
-    setMsgtext(msgtext?msgtext+row:row);
     
 	}
   
@@ -1827,7 +1834,7 @@ export default function TalkScreen(props) {
                 <Feather name='edit' color='#404040' size={25} />
                 <Text style={styles.iconText}>行動内容</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={customer.line&&video_option?styles.menuBox:{display:"none"}} onPress={() =>online_call(route.customer)}>
+              <TouchableOpacity style={video_option?styles.menuBox:{display:"none"}} onPress={() =>online_call(route.customer)}>
                 <Feather name='video' color='#404040' size={28} />
                 <Text style={styles.iconText}>オンライン{"\n"}通話</Text>
               </TouchableOpacity>
