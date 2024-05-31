@@ -778,6 +778,7 @@ export default function Company(props) {
       "staff_all",
       "chat_room",
       "chat_message",
+      "comment_mst",
     ]
     
     for (var d=0;d<dbList.length;d++) {

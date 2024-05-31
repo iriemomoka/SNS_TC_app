@@ -629,6 +629,41 @@ exports.CreateDB = function(props){
         }
       );
 
+      // 一言コメント
+      tx.executeSql(
+        `select * from comment_mst;`,  
+        [],
+        () => {},
+        () => {
+          // 一言コメント追加
+          tx.executeSql(
+            `CREATE TABLE "comment_mst" (
+              "comment_id"	TEXT UNIQUE,
+              "category"	TEXT,
+              "title"	TEXT,
+              "note"	TEXT,
+              "html_flg"	TEXT,
+              PRIMARY KEY("comment_id")
+            );`,
+            [],
+            () => {
+              console.log("一言コメント追加");
+
+              // 一言コメントインデックス作成
+              tx.executeSql(
+                `CREATE INDEX "index_comment_mst" ON "comment_mst" (
+                  "category"
+                );`,
+                [],
+                () => {console.log("一言コメントインデックス作成");},
+                () => {console.log("一言コメントインデックス作成失敗");}
+              );
+            },
+            () => {console.log("一言コメント追加失敗");}
+          );
+        }
+      );
+      
     });
     
     resolve();

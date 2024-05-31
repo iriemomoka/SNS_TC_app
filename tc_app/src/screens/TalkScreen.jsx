@@ -1395,13 +1395,13 @@ export default function TalkScreen(props) {
 
   // リストからHTMLの定型文をフィルタリング
   const filterFixedByCategory = () => {
-    const filtered = fixed.filter((obj) => obj.html_flg != '1');
+    const filtered = fixed.filter((obj) => obj.html_flg != '1' && obj.category != 'HTML用');
     setFilteredFixed(filtered);
   }
 
   // リストからHTMLの一言コメントをフィルタリング
   const filteredCommentByCategory = () => {
-    const filtered = comment.filter((obj) => obj.html_flg != '1');
+    const filtered = comment.filter((obj) => obj.html_flg != '1' && obj.category != 'HTML用');
     setFilteredComment(filtered);
   }
 
