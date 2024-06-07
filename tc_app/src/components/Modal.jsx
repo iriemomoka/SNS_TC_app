@@ -351,7 +351,7 @@ export function MyModal1(props) {
   
   const [checked, setCheck] = useState(false); // メール予約
   
-  const [reservation_stop_flg, setReservation_stop_flg] = useState(false); // メール予約
+  const [reservation_stop_flg, setReservation_stop_flg] = useState(true); // メール予約
   const [reading_return_flg, setReading_return_flg] = useState(false); // メール予約
   
   const [date1, setDate1] = useState(null);
@@ -551,13 +551,14 @@ export function MyModal1(props) {
 
     if (result) {
 
-      if(result.size > 7000000) {
+      const file = result.assets[0];
+
+      if(file.size > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
       }else{
-        setFilename(result.name);
-        setFiledata(result);
+        setFilename(file.name);
+        setFiledata(file);
       }
-      
     }
   };
   
@@ -3604,24 +3605,26 @@ export function MyModal5(props){
             if (json) {
               console.log('追客登録成功')
             }
-            Alert.alert('設定しました');
+            Alert.alert(
+              ``,
+              "設定しました",
+              [
+                {
+                  text: "OK",
+                  onPress: () => {
+                    props.setReload('1');
+                    props.setReload2('1');
+                  }
+                }
+              ]
+            );
             setClose(false);
             setLoading(false);
-            navigation.reset({
-              index: 0,
-              routes: [{
-                name: 'CommunicationHistory' ,
-                params: route.params,
-                websocket:route.websocket,
-                websocket2:route.websocket2,
-                profile: route.profile,
-                reload: 1
-              }],
-            });
+            props.setModal6(false);
           })
           .catch((error) => {
             console.log(error)
-            Alert.alert('設定に失敗しました{"\n"}PCから設定してください');
+            Alert.alert('設定に失敗しました\nPCから設定してください');
             setClose(false);
             setLoading(false);
             navigation.reset({
@@ -3638,27 +3641,30 @@ export function MyModal5(props){
           })
           
         } else {
-          Alert.alert('設定しました');
+          Alert.alert(
+            ``,
+            "設定しました",
+            [
+              {
+                text: "OK",
+                onPress: () => {
+                  props.setReload('1');
+                  props.setReload2('1');
+                }
+              }
+            ]
+          );
           setClose(false);
           setLoading(false);
-          navigation.reset({
-            index: 0,
-            routes: [{
-              name: 'CommunicationHistory' ,
-              params: route.params,
-              websocket:route.websocket,
-              websocket2:route.websocket2,
-              profile: route.profile,
-              reload: 1
-            }],
-          });
+          props.setModal6(false);
         }
 
       })
       .catch((error) => {
+        console.log(error)
         setClose(false);
         setLoading(false);
-        Alert.alert('設定に失敗しました{"\n"}PCから設定してください');
+        Alert.alert('設定に失敗しました\nPCから設定してください');
         
         navigation.reset({
           index: 0,
@@ -5242,6 +5248,9 @@ export function MyModal6(props){
         tantou={tantou}
         station_list={station_list}
         address={address}
+        setReload={props.setReload}
+        setReload2={props.setReload2}
+        setModal6={setClose}
       />
       <View style={styles.template}>
         <TouchableOpacity

@@ -1,4 +1,4 @@
-import React, { useState,useEffect,useMemo } from "react";
+import React, { useState,useEffect,useMemo,useCallback } from "react";
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, BackHandler, AppState, KeyboardAvoidingView, ScrollView, FlatList,  Image, Linking, Platform, Button
 } from "react-native";
@@ -8,8 +8,10 @@ import { Feather } from '@expo/vector-icons';
 import Moment from 'moment';
 import Modal from "react-native-modal";
 import { CheckBox } from 'react-native-elements';
-import DropDownPicker, { Item } from "react-native-dropdown-picker";
 import { Dropdown } from 'react-native-element-dropdown';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 
 import Loading from '../components/Loading';
 import { db,db_write,GetDB } from '../components/Databace';
@@ -77,7 +79,7 @@ export default function ContractRegister(props) {
       {label:"(殺虫手配)",value:"disinfection_",date:"",time:"",checked:false,user_id:""},
       {label:"鍵・書類渡し(鍵受領書発行)",value:"key_pass_",date:"",time:"",checked:false,user_id:""},
       {label:"入居日",value:"move_in_",date:"",time:"",checked:false,user_id:""},
-      {label:"契約書返還",value:"agreement_",date:"",time:"",checked:false,user_id:""},
+      {label:"契約書返却",value:"agreement_",date:"",time:"",checked:false,user_id:""},
       {label:"入居後のフォロー",value:"follow_",date:"",time:"",checked:false,user_id:""},
     ]
   ]);
@@ -134,11 +136,78 @@ export default function ContractRegister(props) {
     ]
   ]);
 
+  const [contract_sms, setContract_sms] = useState(null);
+  
+  // 1:鍵渡し 2:契約書返却
+  const [sms_send_flg, setSms_send_flg] = useState("1");
+  const [sms_send, setSms_send] = useState(false);
+
   const [date, setDate] = useState(new Date());
   const [date_index, setDate_index] = useState(0);
   const [show, setShow] = useState(false);
   const [mode, setMode] = useState('date');
   const [reroad, setReroad] = useState(true); // リスト更新用
+
+  const [customer_only, setCustomer_only] = useState(null);
+  const [cus_not_flg, setCus_not_flg] = useState(false);
+
+  const [sms_send_tel, setSms_send_tel] = useState(null);
+
+  const [key_sms, setKey_sms] = useState([
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+  ]);
+
+  const [agreement_sms, setAgreement_sms] = useState([
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+    {"document_room_no":"","document_key_maker":"","document_name":"","document_quantity":"","document_note":""},
+  ]);
+
+  const [key_btn, setKey_btn] = useState(false);
+  const [agreement_btn, setAgreement_btn] = useState(false);
+
+  const [filename,setFilename] = useState('');
+  const [filedata,setFiledata] = useState(null);
+
+  var cusTelMailList = useMemo(()=>{
+
+    if (!customer_only) return [];
+
+    var items = [];
+    
+	  for(var i_buf=1;i_buf<=3;i_buf++){
+      // 電話番号が入ってない場合、次のループへ
+      if(!customer_only["tel"+i_buf]) continue;
+      var data = {
+        label: customer_only["tel"+i_buf],
+        value: customer_only["tel"+i_buf],
+      }
+      items.push(data);
+    }
+
+	  for(var i_buf=1;i_buf<=3;i_buf++){
+      // メールが入ってない場合、次のループへ
+      if(!customer_only["mail"+i_buf]) continue;
+      var data = {
+        label: customer_only["mail"+i_buf],
+        value: customer_only["mail"+i_buf],
+      }
+      items.push(data);
+    }
+
+    setSms_send_tel(items[0].value);
+
+    return items;
+
+  },[customer_only]);
 
   useEffect(() => {
     
@@ -204,6 +273,15 @@ export default function ContractRegister(props) {
   useEffect(() => {
 
     console.log('-----------------------------------------')
+
+    setContract_sms(route.contract_sms);
+    setCustomer_only(route.customer_data.main);
+
+    const c_o = route.customer_data.main;
+
+    if (!c_o.tel1 && !c_o.tel2 && !c_o.tel3 && !c_o.mail1 && !c_o.mail2 && !c_o.mail3) {
+      setCus_not_flg(true);
+    }
 
     if (route.contract != null) {
       var Keiyaku_ = !route.hojin?Keiyaku1:Keiyaku2;
@@ -451,6 +529,23 @@ export default function ContractRegister(props) {
     return newDate;
   }
 
+	const pickDocument = async () => {
+    var result = await DocumentPicker.getDocumentAsync({});
+
+    if (result) {
+
+      const file = result.assets[0];
+
+      if(file.size > 3000000) {
+        Alert.alert('','手書き受領証のサイズは【3メガ】までにしてください。');
+      }else{
+        setFilename(file.name);
+        setFiledata(file);
+      }
+      
+    }
+  };
+
   function onSubmit() {
 
     var err = "";
@@ -541,6 +636,339 @@ export default function ContractRegister(props) {
 
   }
 
+  function formatDate(dateString) {
+    
+    const [datePart, timePart] = dateString.split(' ');
+    const [year, month, day] = datePart.split('-');
+    const [hours, minutes] = timePart.split(':');
+
+    const formattedDate = `${year}年${month}月${day}日 ${hours}時${minutes}分`;
+
+    return formattedDate;
+  }
+
+  async function contract_sms_file(download_name,file_name) {
+
+    const pdfURL = domain + "receipt_sign/upload/handwritten/" + file_name;
+
+    const dl_dir = FileSystem.documentDirectory + download_name + '.pdf';
+
+    await FileSystem.downloadAsync(pdfURL,dl_dir);
+
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(dl_dir);
+    } else {
+      Alert.alert('エラー', 'このデバイスではファイルの共有がサポートされていません。');
+    }
+
+  }
+
+  async function get_contract_sms_pdf(send_category) {
+
+    const pdfData = await getFetch("1",send_category);
+
+    if (pdfData == false) {
+      Alert.alert('エラー','PDFの取得に失敗しました。\nインターネット接続を確認してください。');
+      return;
+    }
+
+    const pdfUri = `${FileSystem.documentDirectory}contract_sms.pdf`;
+
+    await FileSystem.writeAsStringAsync(pdfUri, pdfData, { encoding: FileSystem.EncodingType.Base64 });
+
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(pdfUri);
+    } else {
+      Alert.alert('エラー', 'このデバイスではファイルの共有がサポートされていません。');
+    }
+    
+  }
+
+  async function pop_up_sms_send(send_category) {
+
+    const Data = await getFetch("",send_category);
+
+    if (Data == false) {
+      Alert.alert('エラー','PDFの取得に失敗しました。\nインターネット接続を確認してください。');
+      return;
+    }
+
+    if (Data != null) {
+      if (send_category == "1") {
+        var key_sms_arr = key_sms;
+        for (var i_buf=1;i_buf<=6;i_buf++) {
+          if (!Data[i_buf]) continue;
+          key_sms_arr[i_buf-1]["document_room_no"]   = Data[i_buf]["document_room_no"];
+          key_sms_arr[i_buf-1]["document_key_maker"] = Data[i_buf]["document_key_maker"];
+          key_sms_arr[i_buf-1]["document_name"]      = Data[i_buf]["document_name"];
+          key_sms_arr[i_buf-1]["document_quantity"]  = Data[i_buf]["document_quantity"];
+          key_sms_arr[i_buf-1]["document_note"]      = Data[i_buf]["document_note"];
+        }
+        setKey_sms(key_sms_arr);
+      } else if (send_category == "2") {
+        var agreement_sms_arr = agreement_sms;
+        for (var i_buf=1;i_buf<=6;i_buf++) {
+          if (!Data[i_buf]) continue;
+          agreement_sms_arr[i_buf-1]["document_name"]     = Data[i_buf]["document_name"];
+          agreement_sms_arr[i_buf-1]["document_quantity"] = Data[i_buf]["document_quantity"];
+          agreement_sms_arr[i_buf-1]["document_note"]     = Data[i_buf]["document_note"];
+        }
+        setAgreement_sms(agreement_sms_arr);
+      }
+    }
+
+    setSms_send_flg(send_category);
+    setSms_send(true);
+  }
+
+  const getFetch = useCallback((get_pdf,send_category) => {
+    
+    return new Promise((resolve, reject)=>{
+      fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: JSON.stringify({
+          ID : route.params.account,
+          pass : route.params.password,
+          act:'get_contract_sms',
+          customer_id:route.customer,
+          send_category: send_category,
+          get_pdf:get_pdf
+        })
+      })
+      .then((response) => response.json())
+      .then((json) => {
+        resolve(json);
+      })
+      .catch((error) => {
+        console.log(error);
+        resolve(false);
+      });
+    })
+
+  });
+
+	async function save_sms_data(send_date_flg){
+
+    setSms_send(false);
+    setLoading(true);
+
+    let formData = new FormData();
+    formData.append('act','save_sms_data');
+    formData.append('ID',route.params.account);
+    formData.append('pass',route.params.password);
+    formData.append('val[id]',route.customer);
+    formData.append('val[category_key]',sms_send_flg);
+    formData.append('val[sms_send_tel]',sms_send_tel);
+    formData.append('val[shop_id]',route.params.shop_id);
+    formData.append('val[send_date_flg]',send_date_flg);
+    formData.append('val[app_flg]',1);
+
+    for (var i_buf=1;i_buf<=6;i_buf++) {
+      if (sms_send_flg == "1") {
+        formData.append(`val[${i_buf}][document_room_no]`,key_sms[i_buf-1]["document_room_no"]);
+        formData.append(`val[${i_buf}][document_key_maker]`,key_sms[i_buf-1]["document_key_maker"]);
+        formData.append(`val[${i_buf}][document_name]`,key_sms[i_buf-1]["document_name"]);
+        formData.append(`val[${i_buf}][document_quantity]`,key_sms[i_buf-1]["document_quantity"]);
+        formData.append(`val[${i_buf}][document_note]`,key_sms[i_buf-1]["document_note"]);
+      } else if (sms_send_flg == "2") {
+        formData.append(`val[${i_buf}][document_room_no]`,agreement_sms[i_buf-1]["document_room_no"]);
+        formData.append(`val[${i_buf}][document_key_maker]`,agreement_sms[i_buf-1]["document_key_maker"]);
+        formData.append(`val[${i_buf}][document_name]`,agreement_sms[i_buf-1]["document_name"]);
+        formData.append(`val[${i_buf}][document_quantity]`,agreement_sms[i_buf-1]["document_quantity"]);
+        formData.append(`val[${i_buf}][document_note]`,agreement_sms[i_buf-1]["document_note"]);
+      }
+    }
+
+    const result = await sendFetch(formData,"1");
+
+    if (!result) {
+      Alert.alert('エラー','保存に失敗しました。');
+      setLoading(false);
+      return;
+    } else {
+      if (!send_date_flg) {
+        Alert.alert('','保存しました。');
+        setLoading(false);
+        return;
+      }
+    }
+
+    // 送信処理
+    let formData2 = new FormData();
+    formData2.append('act','send_sms_contract');
+    formData2.append('ID',route.params.account);
+    formData2.append('pass',route.params.password);
+    formData2.append('shop_id',route.params.shop_id);
+    formData2.append('customer_id',route.customer);
+    formData2.append('category_key',sms_send_flg);
+    formData2.append('tel',sms_send_tel);
+    formData2.append('app_flg',1);
+
+    const result2 = await sendFetch(formData2,"2");
+
+    if (!result2) {
+      Alert.alert('エラー','送信に失敗しました。');
+      setLoading(false);
+      return;
+    }
+
+    await set_Contract_sms();
+
+    setFilename('');
+    setFiledata(null);
+
+    Alert.alert('','送信しました。');
+    setLoading(false);
+    setReroad(!reroad);
+
+    return;
+  }
+
+  async function send_file_data() {
+    
+    if (!filedata) {
+      Alert.alert('エラー','手書き受領証を添付してください。');
+      return;
+    }
+
+    setSms_send(false);
+    setLoading(true);
+    
+    let formData = new FormData();
+    formData.append('act','save_sms_file_data');
+    formData.append('ID',route.params.account);
+    formData.append('pass',route.params.password);
+    formData.append('val[id]',route.customer);
+    formData.append('val[category_key]',sms_send_flg);
+    formData.append('val[shop_id]',route.params.shop_id);
+    formData.append('val[app_flg]',1);
+
+    let filename = filedata.uri.split('/').pop();
+
+    let match = /\.(\w+)$/.exec(filename);
+    let type = match ? `image/${match[1]}` : `image`;
+    formData.append('handwritten_file', { uri: filedata.uri, name: filename, type });
+
+    const result = await sendFetch(formData,"1");
+
+    if (!result) {
+      Alert.alert('エラー','手書き受領証登録に失敗しました。');
+      setLoading(false);
+      return;
+    }
+
+    await set_Contract_sms();
+
+    // 送信情報のテキストに送信情報を入れる
+    var keiyaku = Keiyaku1;
+    if (sms_send_flg == "1") {
+      keiyaku[2].forEach(item => {
+        if (item.value === "key_pass_") {
+          item.date    = Moment(new Date()).format("YYYY-MM-DD");
+          item.time    = Moment(new Date()).format("HH:mm:ss");
+          item.checked = true;
+        }
+      });
+    } else if (sms_send_flg == "2") {
+      keiyaku[2].forEach(item => {
+        if (item.value === "agreement_") {
+          item.date    = Moment(new Date()).format("YYYY-MM-DD");
+          item.time    = Moment(new Date()).format("HH:mm:ss");
+          item.checked = true;
+        }
+      });
+    }
+
+    if (sms_send_flg == "1") {
+      setKey_btn(true);
+    } else if (sms_send_flg == "2") {
+      setAgreement_btn(true);
+    }
+    
+    setFilename('');
+    setFiledata(null);
+
+    setKeiyaku1(keiyaku);
+
+    Alert.alert('','送信しました。');
+    setLoading(false);
+    setReroad(!reroad);
+
+    return;
+
+  }
+
+  const set_Contract_sms = () => {
+
+    const now = Moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+
+    var data = {};
+
+    if (contract_sms != null) {
+      if (contract_sms[sms_send_flg]) {
+        data = contract_sms;
+        data[sms_send_flg]["send_date"] = now;
+      } else {
+        data = contract_sms;
+        var data_sub = {
+          [sms_send_flg]:{
+            "customer_id": "1766798",
+            "send_category": sms_send_flg,
+            "send_date": now,
+            "send_tel": sms_send_tel,
+            "shop_id": route.params.shop_id,
+            "staff_id": route.params.account,
+          }
+        }
+        Object.assign(data, data_sub);
+      }
+    } else {
+      data = {
+        [sms_send_flg]:{
+          "customer_id": "1766798",
+          "send_category": sms_send_flg,
+          "send_date": now,
+          "send_tel": sms_send_tel,
+          "shop_id": route.params.shop_id,
+          "staff_id": route.params.account,
+        }
+      }
+    }
+
+    setContract_sms(data);
+
+  }
+
+  const sendFetch = useCallback((formData,flg) => {
+
+    const url = flg == "1"?domain+'php/ajax/update.php':domain+'php/ajax/mail_sms.php';
+    
+    return new Promise((resolve, reject)=>{
+      fetch(url,
+      {
+        method: 'POST',
+        body: formData,
+        header: {
+          'content-type': 'multipart/form-data',
+        },
+      })
+      .then((response) => response.json())
+      .then(async(json) => {
+        resolve(json);
+      })
+      .catch((error) => {
+        console.log(error);
+        resolve(false);
+      })
+    })
+
+  });
+
   const ContractList = useMemo(() => {
 
     var Keiyaku_ = !hojin?Keiyaku1[form]:Keiyaku2[form];
@@ -551,6 +979,75 @@ export default function ContractRegister(props) {
         initialNumToRender={10}
         data={Keiyaku_}
         renderItem={({ item,index }) => {
+
+          var key_pass = null;
+          var agreement = null;
+
+          if (route.options.includes('30')) {
+            // 鍵・書類渡し
+            if (item.value == "key_pass_") {
+
+              key_pass = {
+                "flg": "0",
+                "txt": "",
+                "file": ""
+              }
+              if (contract_sms != null && contract_sms["1"]) {
+
+                // 0:未送信(未受領) 1:手書き受領証 2:受領済
+                if (contract_sms["1"]["receipt_date"] && item.checked) {
+                  if (contract_sms["1"]["file_name"]) {
+                    key_pass["flg"] = "1";
+                    key_pass["file"] = contract_sms["1"]["file_name"];
+                  } else {
+                    key_pass["flg"] = "2";
+                  }
+                }
+
+                if (contract_sms["1"]["send_date"]) {
+                  key_pass["txt"] = formatDate(contract_sms["1"]["send_date"]);
+                  if (contract_sms["1"]["send_tel"]) {
+                    key_pass["txt"] += `【${contract_sms["1"]["send_tel"]}】に送信`;
+                  } else {
+                    key_pass["txt"] += ` 手書き受領証登録`;
+                  }
+                }
+              }
+            }
+            
+            // 契約書返却送信チェック
+            if (item.value == "agreement_") {
+
+              agreement = {
+                "flg": "0",
+                "txt": "",
+                "file": ""
+              }
+
+              if (contract_sms != null && contract_sms["2"]) {
+
+                // 0:未送信(未受領) 1:手書き受領証 2:受領済
+                if (contract_sms["2"]["receipt_date"] && item.checked) {
+                  if (contract_sms["2"]["file_name"]) {
+                    agreement["flg"] = "1";
+                    agreement["file"] = contract_sms["2"]["file_name"];
+                  } else {
+                    agreement["flg"] = "2";
+                  }
+                }
+
+                if (contract_sms["2"]["send_date"]) {
+                  agreement["txt"] = formatDate(contract_sms["2"]["send_date"]);
+                  if (contract_sms["2"]["send_tel"]) {
+                    agreement["txt"] += `【${contract_sms["2"]["send_tel"]}】に送信`;
+                  } else {
+                    agreement["txt"] += ` 手書き受領証登録`;
+                  }
+                }
+              }
+            }
+          }
+
           return (
               <View style={[styles.contractList,index==(Keiyaku_.length-1)&&{borderBottomWidth:0}]} index={index} {...props}>
               <Text style={styles.contract}>{item.label}</Text>
@@ -629,6 +1126,50 @@ export default function ContractRegister(props) {
                   size={28}
                   />
               </View>
+              {(key_pass!=null && item.value == "key_pass_")&&(
+                <View style={{marginTop:5}} >
+                  <TouchableOpacity
+                    style={[styles.Datebtn,{backgroundColor:'#e3e3e3'}]}
+                    onPress={()=>{
+                      if (key_pass.flg == "1") {
+                        contract_sms_file("鍵受領証",key_pass.file);
+                      } else if (key_pass.flg == "2") {
+                        get_contract_sms_pdf('1');
+                      } else {
+                        pop_up_sms_send("1");
+                      }
+                    }}
+                    disabled={key_btn}
+                  >
+                    <Text>{key_pass.flg=="0"?"確認依頼送信":'受領証'}</Text>
+                  </TouchableOpacity>
+                  {key_pass.txt&&(
+                    <Text style={{fontSize:12,marginTop:3}}>{key_pass.txt}</Text>
+                  )}
+                </View>
+              )}
+              {(agreement!=null && item.value == "agreement_")&&(
+                <View style={{marginTop:5}} >
+                  <TouchableOpacity
+                    style={[styles.Datebtn,{backgroundColor:'#e3e3e3'}]}
+                    onPress={()=>{
+                      if (agreement.flg == "1") {
+                        contract_sms_file("契約書受領証",agreement.file);
+                      } else if (agreement.flg == "2") {
+                        get_contract_sms_pdf('2')
+                      } else {
+                        pop_up_sms_send("2");
+                      }
+                    }}
+                    disabled={agreement_btn}
+                  >
+                    <Text>{agreement.flg=="0"?"確認依頼送信":'受領証'}</Text>
+                  </TouchableOpacity>
+                  {agreement.txt&&(
+                    <Text style={{fontSize:12,marginTop:3}}>{agreement.txt}</Text>
+                  )}
+                </View>
+              )}
             </View>
           );
         }}
@@ -637,7 +1178,7 @@ export default function ContractRegister(props) {
       />
     )
     
-  },[form,Keiyaku1,Keiyaku2,reroad,staffs])
+  },[form,Keiyaku1,Keiyaku2,reroad,staffs,contract_sms,key_btn,agreement_btn])
 
   return (
     <>
@@ -724,6 +1265,199 @@ export default function ContractRegister(props) {
                   }}
                   textColor="#fff"
                 />
+              </View>
+            </Modal>
+          )}
+          {customer_only!=null&&(
+            <Modal
+              isVisible={sms_send}
+              swipeDirection={null}
+              backdropOpacity={0.5}
+              animationInTiming={300}
+              animationOutTiming={500}
+              animationIn={'slideInDown'}
+              animationOut={'slideOutUp'}
+              propagateSwipe={true}
+              style={{alignItems: 'center'}}
+              onBackdropPress={()=>setSms_send(false)}
+            >
+              <View style={cus_not_flg?styles.sms_modal_no:styles.sms_modal}>
+                <TouchableOpacity
+                  style={{position: 'absolute',top:8,right:10,zIndex:999}}
+                  onPress={()=>setSms_send(false)}
+                >
+                  <Feather name='x-circle' color='#ccc' size={35} />
+                </TouchableOpacity>
+                {cus_not_flg?(
+                    <Text style={{textAlign:'center'}}>電話番号・メールが入っていないため{"\n"}使用できません。</Text>
+                  ):(
+                    <>
+                    <View style={{flexDirection:'row',alignItems:'center'}}>
+                      <Text>送信先：</Text>
+                      <Dropdown
+                        style={[styles.DropDown,{width:200}]}
+                        containerStyle={[styles.dropDownContainer,{width:200}]}
+                        placeholderStyle={{fontSize:14}}
+                        selectedTextStyle={{fontSize:12}}
+                        itemTextStyle={{fontSize:14}}
+                        renderItem={(item)=>(
+                          <View style={styles.dropItem}>
+                            <Text style={styles.dropItemText}>{item.label}</Text>
+                          </View>
+                        )}
+                        value={sms_send_tel}
+                        data={cusTelMailList}
+                        onChange={(item) => setSms_send_tel(item.value)}
+                        labelField="label"
+                        valueField="value"
+                      />
+                    </View>
+                    <ScrollView horizontal>
+                      <View style={styles.table_wrapper}>
+                        {sms_send_flg=="1"?(
+                          <View style={styles.tr}>
+                            <View style={[styles.th,{borderLeftWidth:1,width:'5%'}]}>
+                              <Text>No</Text>
+                            </View>
+                            <View style={[styles.th,{width:'10%'}]}>
+                              <Text>号室</Text>
+                            </View>
+                            <View style={[styles.th,{width:'20%'}]}>
+                              <Text>メーカー</Text>
+                            </View>
+                            <View style={[styles.th,{width:'20%'}]}>
+                              <Text>鍵番号</Text>
+                            </View>
+                            <View style={[styles.th,{width:'10%'}]}>
+                              <Text>本数</Text>
+                            </View>
+                            <View style={[styles.th,{width:'35%'}]}>
+                              <Text>備考</Text>
+                            </View>
+                          </View>
+                        ):(
+                          <View style={styles.tr}>
+                            <View style={[styles.th,{borderLeftWidth:1,width:'5%'}]}>
+                              <Text>No</Text>
+                            </View>
+                            <View style={[styles.th,{width:'40%'}]}>
+                              <Text>書類名</Text>
+                            </View>
+                            <View style={[styles.th,{width:'10%'}]}>
+                              <Text>数量</Text>
+                            </View>
+                            <View style={[styles.th,{width:'45%'}]}>
+                              <Text>備考</Text>
+                            </View>
+                          </View>
+                        )}
+                        {sms_send_flg=="1"?(
+                          key_sms.map((s,index) => {
+                            return (
+                              <View style={styles.tr} key={index}>
+                                <View style={[styles.td,{borderLeftWidth:1,width:'5%'}]}>
+                                  <Text>{index+1}</Text>
+                                </View>
+                                <View style={[styles.td,{width:'10%'}]}>
+                                  <TextInput
+                                    style={styles.td_input}
+                                    value={key_sms[index]["document_room_no"]}
+                                    onChangeText={(text) => setKey_sms(state => state.map((item, i) => i === index ? { ...item, document_room_no: text } : item))}
+                                  />
+                                </View>
+                                <View style={[styles.td,{width:'20%'}]}>
+                                  <TextInput
+                                    style={styles.td_input}
+                                    value={key_sms[index]["document_key_maker"]}
+                                    onChangeText={(text) => setKey_sms(state => state.map((item, i) => i === index ? { ...item, document_key_maker: text } : item))}
+                                  />
+                                </View>
+                                <View style={[styles.td,{width:'20%'}]}>
+                                  <TextInput
+                                    style={styles.td_input}
+                                    value={key_sms[index]["document_name"]}
+                                    onChangeText={(text) => setKey_sms(state => state.map((item, i) => i === index ? { ...item, document_name: text } : item))}
+                                  />
+                                </View>
+                                <View style={[styles.td,{width:'10%'}]}>
+                                  <TextInput
+                                    style={styles.td_input}
+                                    value={key_sms[index]["document_quantity"]}
+                                    onChangeText={(text) => setKey_sms(state => state.map((item, i) => i === index ? { ...item, document_quantity: text } : item))}
+                                  />
+                                </View>
+                                <View style={[styles.td,{width:'35%'}]}>
+                                  <TextInput
+                                    style={styles.td_input}
+                                    value={key_sms[index]["document_note"]}
+                                    onChangeText={(text) => setKey_sms(state => state.map((item, i) => i === index ? { ...item, document_note: text } : item))}
+                                  />
+                                </View>
+                              </View>
+                            )
+                          })):(
+                          agreement_sms.map((a,index) => {
+                            return (
+                              <View style={styles.tr} key={index}>
+                                <View style={[styles.td,{borderLeftWidth:1,width:'5%'}]}>
+                                  <Text>{index+1}</Text>
+                                </View>
+                                <View style={[styles.td,{width:'40%'}]}>
+                                  <TextInput
+                                    style={styles.td_input}
+                                    value={agreement_sms[index]["document_name"]}
+                                    onChangeText={(text) => setAgreement_sms(state => state.map((item, i) => i === index ? { ...item, document_name: text } : item))}
+                                  />
+                                </View>
+                                <View style={[styles.td,{width:'10%'}]}>
+                                  <TextInput
+                                    style={styles.td_input}
+                                    value={agreement_sms[index]["document_quantity"]}
+                                    onChangeText={(text) => setAgreement_sms(state => state.map((item, i) => i === index ? { ...item, document_quantity: text } : item))}
+                                  />
+                                </View>
+                                <View style={[styles.td,{width:'45%'}]}>
+                                  <TextInput
+                                    style={styles.td_input}
+                                    value={agreement_sms[index]["document_note"]}
+                                    onChangeText={(text) => setAgreement_sms(state => state.map((item, i) => i === index ? { ...item, document_note: text } : item))}
+                                  />
+                                </View>
+                              </View>
+                            )
+                          }))
+                        }
+                      </View>
+                    </ScrollView>
+                    <View style={{flexDirection: 'row',alignSelf: 'center',marginTop:20}}>
+                      <TouchableOpacity onPress={()=>{save_sms_data("1")}} style={styles.Datebtn}>
+                        <Text>送　信</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={()=>{save_sms_data("")}} style={styles.Datebtn}>
+                        <Text>保　存</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.tegaki}>
+                      <Text style={{fontSize:12}}>手書きでの受領書を保存する場合はこちらから</Text>
+                      <View style={{flexDirection:'row',alignItems:'center',marginTop:10}}>
+                        <TouchableOpacity
+                          onPress={pickDocument}
+                          style={[styles.Datebtn,{backgroundColor:'#e3e3e3'}]}
+                        >
+                          <Text>ファイル添付</Text>
+                        </TouchableOpacity>
+                        <Text style={{fontSize:12}}>{filename}</Text>
+                      </View>
+                      <View style={{alignItems: 'center',marginTop:10}}>
+                        <TouchableOpacity onPress={()=>{send_file_data()}} style={[styles.Datebtn,{width:150}]}>
+                          <Text>手書き受領証登録</Text>
+                        </TouchableOpacity>
+                        <Text style={{fontSize:12,marginTop:5,color:'#666'}}>※手書き受領証を登録すると、完了状態になります。</Text>
+                      </View>
+                    </View>
+                    </>
+                  )
+                }
               </View>
             </Modal>
           )}
@@ -913,4 +1647,55 @@ const styles = StyleSheet.create({
     fontWeight:'600',
     color:'#666'
   },
+  sms_modal_no: {
+    backgroundColor:'#fff',
+    borderRadius:5,
+    paddingH:20,
+    justifyContent:'center',
+    alignItems:'center'
+  },
+  sms_modal: {
+    width:'100%',
+    backgroundColor:'#fff',
+    borderRadius:5,
+    padding:15,
+  },
+  table_wrapper: {
+    width:700,
+    marginTop:10
+  },
+  tr: {
+    backgroundColor:'#fff',
+    flexDirection: 'row',
+  },
+  th: {
+    borderWidth:1,
+    borderLeftWidth:0,
+    borderColor:'#333',
+    height:35,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  td: {
+    borderWidth:1,
+    borderLeftWidth:0,
+    borderTopWidth:0,
+    borderColor:'#333',
+    height:35,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  td_input: {
+    width:'90%',
+    height:'85%',
+    borderWidth:0.5,
+    borderColor:'#666',
+    borderRadius:5,
+    paddingLeft:5
+  },
+  tegaki: {
+    paddingVertical:10,
+    borderTopWidth:1,
+    marginTop:20
+  }
 });

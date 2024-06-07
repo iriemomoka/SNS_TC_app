@@ -45,6 +45,7 @@ export default function TalkScreen(props) {
   const [options, setOptions] = useState(false);
   const [video_option, setVideo_option] = useState(false);
   const [overlap, setOverlap] = useState(false);
+  const [contract_sms, setContract_sms] = useState(null);
   
   const [menu, setMenu] = useState(false);
   const [modal0, setModal0] = useState(false);
@@ -87,6 +88,7 @@ export default function TalkScreen(props) {
   const [sidemenu, setSideMenu] = useState(false);
 
   const [reload, setReload] = useState("");
+  const [reload2, setReload2] = useState("");
 
   navigation.setOptions({
     headerStyle: !global.fc_flg?{ backgroundColor: '#6C9BCF', height: 110}:{ backgroundColor: '#FF8F8F', height: 110},
@@ -372,6 +374,14 @@ export default function TalkScreen(props) {
     };
     
   }, [])
+
+  useEffect(() => {
+    if(reload2) {
+      setModal5(false);
+      setModal6(false);
+      onRefresh(true);
+    }
+  }, [reload2])
   
   async function Display() {
 
@@ -502,6 +512,7 @@ export default function TalkScreen(props) {
       setInquiry(json['inquiry']);
       setOptions(json['staff'].option_list.split(","));
       setOverlap(json['overlap']);
+      setContract_sms(json['contract_sms']);
 
       // 店舗オプション（ビデオ通話）
       if ((json['staff'].option_list.split(",")).includes('14')) {
@@ -510,9 +521,15 @@ export default function TalkScreen(props) {
 
       // 重複チェック
       if (json['overlap']) {
-        if(json['overlap'].overlap == '1' || json['overlap'].overlap == '2' || json['overlap'].overlap == '3') {
+        if((json['overlap'].overlap == '1' || json['overlap'].overlap == '2' || json['overlap'].overlap == '3')) {
           setModal6(true);
         }
+      }
+
+      // 反響・来店ともに担当者無し→反響担当者
+      if (!json['customer_data'].reverberation.user_id && json['customer_data'].main.status == '未対応') {
+        setTantou('反響');
+        setModal5(true);
       }
 
       setLoading(false);
@@ -632,26 +649,6 @@ export default function TalkScreen(props) {
     }
     
   }
-  
-  // 担当者割り振り
-  useEffect(() => {
-    
-    if (customer) {
-      
-      // 反響・来店ともに担当者無し→反響担当者
-      if (!customer.reverberation.user_id && customer.main.status == '未対応') {
-        setTantou('反響');
-        setModal5(true);
-      }
-      // 来店日入っているのに担当がいないとき→来店担当者
-      // else if (!customer.coming.user_id && customer.coming.coming_day1) {
-      //   setTantou('来店');
-      //   setModal5(true);
-      // }
-      
-    }
-    
-  }, [isLoading])
   
   useEffect(() => {
     if(inquiry) {
@@ -784,7 +781,7 @@ export default function TalkScreen(props) {
         }
 
         var sql = `insert or replace into communication_mst values (?,?,?,?,?,?,?,?,?,?,?,?);`;
-
+        
         var data = [
           com.communication_id,
           com.customer_id,
@@ -793,7 +790,7 @@ export default function TalkScreen(props) {
           com.title,
           com.note,
           com.line_note,
-          (com.file_path).length>0?(com.file_path).join():"",
+          com.file_path!=null&&(com.file_path).length>0?(com.file_path).join():"",
           com.status,
           com.html_flg,
           com.receive_mail,
@@ -847,8 +844,12 @@ export default function TalkScreen(props) {
         user_read:0,
       }
     }
-    
-    newMessage[0]._id = String(Number(messages[0]._id)+1);
+
+    if (messages.length > 0) {
+      newMessage[0]._id = String(Number(messages[0]._id)+1);
+    } else {
+      newMessage[0]._id = "1";
+    }
     
     var date = new Date();
 
@@ -1558,8 +1559,11 @@ export default function TalkScreen(props) {
                     profile: route.profile,
                     hojin:false,
                     customer: route.customer,
+                    customer_data: customer,
                     cus_name:route.cus_name,
                     contract: customer["contract"],
+                    contract_sms: contract_sms,
+                    options:options,
                     previous:'TalkScreen'
                   },
                 ],
@@ -1587,8 +1591,11 @@ export default function TalkScreen(props) {
                     profile: route.profile,
                     hojin:true,
                     customer: route.customer,
+                    customer_data: customer,
                     cus_name:route.cus_name,
                     contract: customer["cjs_contract"],
+                    contract_sms: contract_sms,
+                    options:options,
                     previous:'TalkScreen'
                   },
                 ],
@@ -1634,7 +1641,7 @@ export default function TalkScreen(props) {
         </View>
       )
     }
-  },[customer,options])
+  },[customer,options,contract_sms])
 
   return (
     <SideMenu
@@ -1661,6 +1668,8 @@ export default function TalkScreen(props) {
           tantou={tantou}
           station_list={station}
           address={address}
+          setReload={setReload}
+          setReload2={setReload2}
         />
         <MyModal5
           isVisible={modal6?false:modal5}
@@ -1671,6 +1680,9 @@ export default function TalkScreen(props) {
           tantou={tantou}
           station_list={station}
           address={address}
+          setReload={setReload}
+          setReload2={setReload2}
+          setModal6={setModal6}
         />
         </>
       )}
