@@ -1206,6 +1206,8 @@ export default function CommunicationHistoryScreen(props) {
       data: '',
     });
     
+    storage.remove({key:'SCHEDULE-SEARCH'});
+    
     await Delete_staff_db();
     
     if(global.sp_token && global.sp_id){

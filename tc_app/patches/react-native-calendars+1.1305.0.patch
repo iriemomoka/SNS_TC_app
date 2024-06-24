@@ -1,0 +1,32 @@
+diff --git a/node_modules/react-native-calendars/src/timeline/TimelineHours.js b/node_modules/react-native-calendars/src/timeline/TimelineHours.js
+index 5049ebe..0c781aa 100644
+--- a/node_modules/react-native-calendars/src/timeline/TimelineHours.js
++++ b/node_modules/react-native-calendars/src/timeline/TimelineHours.js
+@@ -14,11 +14,17 @@ const TimelineHours = (props) => {
+     const offset = HOUR_BLOCK_HEIGHT;
+     const unavailableHoursBlocks = buildUnavailableHoursBlocks(unavailableHours, { dayStart: start, dayEnd: end });
+     const hours = useMemo(() => {
+-        return range(start, end + 1).map(i => {
++        return range(start , end + 1).map(i => {
+             let timeText;
+             if (i === start) {
++                timeText = '朝';
++            }
++            else if (i === end) {
+                 timeText = '';
+             }
++            else if (i === end-1) {
++                timeText = '夜';
++            }
+             else if (i < 12) {
+                 timeText = !format24h ? `${i} AM` : `${i}:00`;
+             }
+@@ -67,7 +73,7 @@ const TimelineHours = (props) => {
+             <Text key={`timeLabel${time}`} style={[styles.timeLabel, { top: offset * index - 6, width: timelineLeftInset - 16 }]}>
+               {timeText}
+             </Text>
+-            {time === start ? null : (<View key={`line${time}`} testID={`${testID}.${time}.line`} style={[styles.line, { top: offset * index, width: dimensionWidth - EVENT_DIFF, left: timelineLeftInset - 16 }]}/>)}
++            {time === start-1 ? null : (<View key={`line${time}`} testID={`${testID}.${time}.line`} style={[styles.line, { top: offset * index, width: dimensionWidth - EVENT_DIFF, left: timelineLeftInset - 16 }]}/>)}
+             {<View key={`lineHalf${time}`} testID={`${testID}.${time}.lineHalf`} style={[styles.line, { top: offset * (index + 0.5), width: dimensionWidth - EVENT_DIFF, left: timelineLeftInset - 16 }]}/>}
+           </React.Fragment>);
+         })}

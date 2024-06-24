@@ -637,6 +637,8 @@ export default function TimeLine(props) {
       data: '',
     });
     
+    storage.remove({key:'SCHEDULE-SEARCH'});
+    
     await Delete_staff_db();
     
     if(global.sp_token && global.sp_id){

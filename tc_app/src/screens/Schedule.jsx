@@ -12,19 +12,15 @@ import {
   View,
   TouchableOpacity,
   Alert,
-  FlatList,
-  TextInput,
-  Button,
-  ScrollView,
-  RefreshControl,
+  StatusBar,
   BackHandler,
-  AppState,
   Platform,
-  Keyboard,
-  Image,
+  useColorScheme,
   Dimensions,
+  FlatList,
+  ScrollView,
 } from "react-native";
-import DropDownPicker, { Item } from "react-native-dropdown-picker";
+import { Dropdown } from 'react-native-element-dropdown';
 import * as Notifications from "expo-notifications";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -33,6 +29,24 @@ import Moment from 'moment';
 import Modal from "react-native-modal";
 import SideMenu from 'react-native-side-menu-updated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { CalendarList, LocaleConfig,ExpandableCalendar, TimelineList, CalendarProvider } from 'react-native-calendars';
+import dayjs from 'dayjs';
+import ja from 'dayjs/locale/ja';
+import WheelPickerExpo from 'react-native-wheel-picker-expo';
+import { CheckBox } from 'react-native-elements';
+import { useHeaderHeight } from '@react-navigation/elements';
+import Constants from 'expo-constants';
+import RadioButtonRN from 'radio-buttons-react-native';
+import GestureRecognizer from 'react-native-swipe-gestures';
+import Popover, { Rect } from 'react-native-popover-view';
+
+LocaleConfig.locales.jp = {
+  monthNames: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+  monthNamesShort: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+  dayNames: ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日', '日曜日'],
+  dayNamesShort: ['月', '火', '水', '木', '金', '土', '日'],
+};
+LocaleConfig.defaultLocale = 'jp';
 
 import Loading from "../components/Loading";
 import { GetDB,db_select,db_write } from '../components/Databace';
@@ -40,6 +54,7 @@ import Footer from "../components/Footer";
 
 import Storage from 'react-native-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { color } from "react-native-elements/dist/helpers";
 
 // ローカルストレージ読み込み
 const storage = new Storage({
@@ -54,38 +69,72 @@ let domain = 'https://www.total-cloud.net/';
 
 Notifications.setBadgeCountAsync(0);
 
+const Width = Dimensions.get("window").width;
+const Height = Dimensions.get("window").height;
+
 export default function Schedule(props) {
 
   const [isLoading, setLoading] = useState(false);
 
   const { navigation, route } = props;
 
-  const [schedule, setSchedules] = useState([]);
+  const [events, setEvents] = useState([]);
   const [sub, setSub] = useState({
-    "customer_id": "",
-    "customer_select": "",
+    "note": "",
+    "day": "",
     "send_check": "",
-    "start_day": "",
-    "title": "",
+    "customer_select": "",
+    "event_id": "",
+    "name": "",
+    "user_id": "",
   });
-  const [lists, setLists] = useState([]);
+  
+  const [holidays, setHolidays] = useState([]);
+
   const [modal, setModal] = useState(false);
 
-  const [name, setName] = useState("");
+  const [options, setOptions] = useState([]);
 
-  const [open, setOpen] = useState(false);
-  const [staff_value, setStaff_Value] = useState('');
+  const [staff_value, setStaff_Value] = useState("");
   const [staffs, setStaffs] = useState([]);
 
   const [bell_count, setBellcount] = useState(null);
 
+  const [addchat, setAddchat] = useState(false);
   const [menu, setMenu] = useState(false);
   const deviceScreen = Dimensions.get('window');
   
-  const listRef = useRef([]);
+  var headerHeight = useHeaderHeight();
+  const statusBarHeight = Constants.statusBarHeight;
+
+  if (Platform.OS === 'android') {
+    headerHeight = headerHeight - StatusBar.currentHeight;
+  }
   
-  const [date, setDate] = useState(new Date());
+  const [search_flg, setSearch_flg] = useState("2");
+  const [categorty, setCategorty] = useState("賃貸");
+
+  const [date_, setDate_] = useState(new Date());
+  const [date_select, setDate_select] = useState(new Date());
+
+  const [date_y, setDate_y] = useState(new Date().getFullYear());
+  const [date_m, setDate_m] = useState(new Date().getMonth());
   const [show, setShow] = useState(false);
+
+  const [month_events, setMonth_events] = useState([]);
+  const [month_events_date, setMonth_events_date] = useState(Moment(new Date()).format("YYYY-MM-DD"));
+  const [show_month_events, setShow_month_events] = useState(false);
+
+  const [schedule_flg1, setSchedule_flg1] = useState(true); // 問合せ
+  const [schedule_flg2, setSchedule_flg2] = useState(true); // 来店
+  const [schedule_flg3, setSchedule_flg3] = useState(true); // 契約
+  const [schedule_flg4, setSchedule_flg4] = useState(true); // その他フリー
+
+  const search_flg_list = [
+    { label: "一日", value: "1" },
+    { label: "一週間", value: "2" },
+    { label: "一か月", value: "3" },
+  ]
 
   var staffList = useMemo(()=>{
 
@@ -94,36 +143,138 @@ export default function Schedule(props) {
     for (var s=0;s<staffs.length;s++) {
       var item = staffs[s];
       if (item.account != "all") {
-        var label = route.params.account == item.account ? '個人' :item.name_1 + "　" + (item.name_2 ? item.name_2 : "");
+        var label = item.name_1 + "　" + (item.name_2 ? item.name_2 : "");
         var data = {
           label:label,
-          value: label=='個人'?'':item.account,
+          value:item.account,
         }
         items.push(data);
       }
     }
 
-    items.unshift({ label: "全体", value: "1" });
+    items.unshift({ label: "全員", value: "" });
     
     return items;
 
   },[staffs]);
+
+  var categortyList = [
+    {label: "賃貸", value: "賃貸"},
+    {label: "売買", value: "売買"},
+    {label: "全て", value: "全て"},
+  ]
+
+  var yearList = useMemo(()=>{
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = -1; i <= 1; i++) {
+      const year = currentYear + i;
+      years.push({ label: `${year}年`, value: year });
+    }
+    return years;
+  },[]);
   
+  var monthList = useMemo(()=>{
+    const months = [];
+    for (let i = 1; i <= 12; i++) {
+      months.push({ label: `${i}月`, value: i-1 });
+    }
+    return months;
+  },[]);
+
+  const [showPopover, setShowPopover] = useState(false);
+  
+  // スケジュールの操作通知を一回だけ表示する
+  useEffect(() => {
+    storage.load({
+      key : 'SCHEDULE-FLG'
+    })
+    .then(data => {
+      if (!data) {
+        setShowPopover(true);
+      }
+    })
+    .catch(err => {
+      setShowPopover(true);
+      storage.save({
+        key: 'SCHEDULE-FLG',
+        data: false,
+      });
+    })
+  }, []);
+
+  const closePopover = () => {
+    setShowPopover(false);
+    storage.save({
+      key: 'SCHEDULE-FLG',
+      data: true,
+    });
+  }
+  
+  // 検索条件保存
+  useEffect(() => {
+    storage.load({
+      key : 'SCHEDULE-SEARCH'
+    })
+    .then(data => {
+      if (data) {
+        setSearch_flg(data.search_flg);
+        setStaff_Value(data.staff_value);
+        setCategorty(data.categorty);
+        setSchedule_flg1(data.schedule_flg1);
+        setSchedule_flg2(data.schedule_flg2);
+        setSchedule_flg3(data.schedule_flg3);
+        setSchedule_flg4(data.schedule_flg4);
+        onRefresh(null,data);
+      }
+    })
+    .catch(err => {
+      storage.save({
+        key: 'SCHEDULE-SEARCH',
+        data: {
+          search_flg: search_flg,
+          staff_value:staff_value,
+          categorty: categorty,
+          schedule_flg1: schedule_flg1,
+          schedule_flg2: schedule_flg2,
+          schedule_flg3: schedule_flg3,
+          schedule_flg4: schedule_flg4,
+        }
+      });
+      onRefresh(null,null);
+    })
+  }, []);
+
   useLayoutEffect(() => {
 
     navigation.setOptions({
       headerStyle: !global.fc_flg
         ? { backgroundColor: "#6C9BCF", height: 110 }
         : { backgroundColor: "#FF8F8F", height: 110 },
-      headerTitle:() => (<Text style={styles.header_name}>スケジュール</Text>),
+      headerTitle:() => (<Text style={styles.headertitle}>スケジュール</Text>),
       headerRight: () => (
-        <View style={{marginRight:15}}>
+        <View style={{marginRight:5,flexDirection:'row'}}>
+          <TouchableOpacity
+            style={{width:50,height:50,justifyContent:'center',alignItems:'center'}}
+            onPress={() => {
+              setAddchat(!addchat);
+              setMenu(false);
+            }}
+          >
+            <MaterialCommunityIcons
+              name="calendar-search"
+              color="white"
+              size={35}
+            />
+          </TouchableOpacity>
+          <>
           <View style={bell_count?[styles.bell,{backgroundColor:!global.fc_flg?"red":"#574141"}]:{display:'none'}}>
             <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
           </View>
           <TouchableOpacity
-            style={{width:60,height:60,justifyContent:'center',alignItems:'center'}}
+            style={{width:50,height:50,justifyContent:'center',alignItems:'center'}}
             onPress={() => {
+              setAddchat(false);
               setMenu(!menu);
             }}
           >
@@ -133,11 +284,12 @@ export default function Schedule(props) {
               size={35}
             />
           </TouchableOpacity>
+          </>
         </View>
       ),
     });
 
-  },[bell_count]);
+  },[addchat,bell_count]);
 
     
   useEffect(() => {
@@ -271,64 +423,60 @@ export default function Schedule(props) {
     // ローカルDB用スタッフリスト
     await Insert_staff_list_db();
 
-    await onRefresh();
+    const holidaysData = await getHoliday();
+
+    if (holidaysData) {
+      const currentMonthHolidays = Object.entries(holidaysData).map(([date, name]) => ({ date, name }));
+
+      setHolidays(currentMonthHolidays);
+    }
 
     await getBELL();
 
   }
 
-  const onRefresh = useCallback(async() => {
+  const onRefresh = useCallback(async(sendDate,search) => {
+
+    if (!sendDate) sendDate = date_;
+
+    setLoading(true);
 
     const startTime = Date.now(); // 開始時間
 
-    const ymd = Moment(date).format("YYYY-MM-DD");
-    const schedule = await getSchedule();
+    const schedule = await getSchedule(sendDate,search);
 
     const endTime = Date.now(); // 終了時間
     const time = (endTime - startTime)/1000;
-    console.log('onRefreshschedule：'+time + '秒')
-    
-    if (schedule == false) {
-      setSchedules([]);
-      setLoading(false);
-      return;
-    }
+    console.log('onRefreshschedule：'+time + '秒');
 
-    var customer = schedule[0]["customer"];
-
-    var list = {};
-
-    customer :for (const key in customer) {
-      if(!customer[key]) {
-        delete customer[key];
-        continue customer;
+    if (schedule) {
+      if (!schedule["schedule"]) {
+        setEvents([]);
+      } else {
+        setEvents(schedule["schedule"]);
       }
-      var schedule_list = customer[key];
-      schedule_list: for (const key2 in schedule_list) {
-        const ymd2 = schedule_list[key2]["start_day"].split(" ")[0];+1
-        if (ymd == ymd2) {
-          list[key] = schedule_list;
-        }
-      }
+
+      setOptions(schedule["shop_option_list"])
     }
 
-    const newArray = [];
-
-    for (const customerId in list) {
-      const customerData = Object.entries(list[customerId]).map(([key, value]) => ({
-        key,
-        ...value,
-      }));
-      
-      newArray.push({ [customerId]: customerData });
-    }
-    
-    setSchedules(newArray);
     setLoading(false);
+    return;
 
-  }, [date,staff_value]);
+  }, [search_flg,staff_value,categorty,schedule_flg1,schedule_flg2,schedule_flg3,schedule_flg4,date_]);
   
-  const getSchedule = useCallback(() => {
+  const getSchedule = useCallback((sendDate,search) => {
+
+    if (!search) {
+      search = {
+        search_flg: search_flg,
+        staff_value:staff_value,
+        categorty: categorty,
+        schedule_flg1: schedule_flg1,
+        schedule_flg2: schedule_flg2,
+        schedule_flg3: schedule_flg3,
+        schedule_flg4: schedule_flg4,
+      }
+    }
     
     return new Promise((resolve, reject)=>{
       fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
@@ -342,8 +490,15 @@ export default function Schedule(props) {
           pass: route.params.password,
           act: "schedule",
           fc_flg: global.fc_flg,
-          select_day:Moment(date).format("YYYY-MM-DD"),
-          customer_flg:staff_value,
+          search_flg:search.search_flg,
+          user_id:search.staff_value,
+          categorty:search.categorty,
+          select_day:Moment(sendDate).format("YYYY-MM-DD"),
+          schedule_flg1:search.schedule_flg1?"1":"",
+          schedule_flg2:search.schedule_flg2?"1":"",
+          schedule_flg3:search.schedule_flg3?"1":"",
+          schedule_flg4:search.schedule_flg4?"1":"",
+          new: "1",
         }),
       })
       .then((response) => response.json())
@@ -356,7 +511,7 @@ export default function Schedule(props) {
       });
     })
 
-  }, [date,staff_value]);
+  }, [search_flg,staff_value,categorty,schedule_flg1,schedule_flg2,schedule_flg3,schedule_flg4,date_]);
 
   const getBELL = useCallback(() => {
     return new Promise((resolve, reject)=>{
@@ -389,6 +544,21 @@ export default function Schedule(props) {
     })
   });
 
+  const getHoliday = useCallback(() => {
+
+    return new Promise((resolve, reject)=>{
+      fetch('https://holidays-jp.github.io/api/v1/date.json')
+      .then((response) => response.json())
+      .then((json) => {
+        resolve(json);
+      })
+      .catch((error) => {
+        resolve(false)
+      });
+    });
+
+  });
+
   // スタッフリスト取得
   async function Insert_staff_list_db() {
 
@@ -397,7 +567,6 @@ export default function Schedule(props) {
     if (sl != false) {
       
       setStaffs(sl);
-      setStaff_Value('');
       
     } else {
       setStaffs([]);
@@ -405,209 +574,12 @@ export default function Schedule(props) {
 
   }
 
-  const comList = useMemo(() => {
+  async function check_on_off_db(sub) {
 
-    // 【個人ID】設定No8.同じお客様のスケジュールはまとめて表示制御部分
-    var option = false;
-    if (route.params.setting_list && ((route.params.setting_list).split(",")).includes('8')) {
-      option = true;
-    }
-
-    if (schedule.length == 0) {
-      return (
-        <View style={styles.noschedule}>
-          <Text style={styles.buttonReloadLabel}>スケジュールはありません</Text>
-        </View>
-      )
-    } else {
-
-      const ymd = Moment(date).format("YYYY-MM-DD");
-
-      var array = [];
-      for (const key in schedule) {
-        var cus = schedule[key];
-        customer: for (const key2 in cus) {
-          const data = cus[key2];
-          
-          for (var c=0;c<data.length;c++) {
-            const ymd2 = data[c]["start_day"].split(" ")[0];
-            if (ymd == ymd2) {
-              array.push(data[c]);
-              if (option) continue customer;
-            }
-          }
-        }
-      }
-
-      if (array.length == 0) {
-        return (
-          <View style={styles.noschedule}>
-            <Text style={styles.buttonReloadLabel}>スケジュールはありません</Text>
-          </View>
-        )
-      }
-
-      // 時間でソートする
-      const sortStartDay = (a, b) => new Date(a.start_day) - new Date(b.start_day);
-      array = array.sort(sortStartDay);
-
-      return (
-        <FlatList
-          ref={listRef}
-          initialNumToRender={10}
-          data={array}
-          renderItem={({ item }) => {
-            return (
-              <TouchableOpacity
-                style={styles.ListItem}
-                onPress={() => {
-                  
-                  var array2 = [];
-                  for (const key in schedule) {
-                    var cus = schedule[key];
-                    for (const key2 in cus) {
-                      if (key2 == item.customer_id) {
-                        const data = cus[key2];
-                        for (var c=0;c<data.length;c++) {
-                          if (item.title != data[c]["title"] && data[c]["send_check"] != '1') {
-                            array2.push(data[c]);
-                          }
-                        }
-                      }
-                    }
-                  }
-
-                  // 時間でソートする
-                  if (array2.length > 0) {
-                    const sortStartDay = (a, b) => new Date(a.start_day) - new Date(b.start_day);
-                    array2 = array2.sort(sortStartDay);
-                  }
-
-                  getName(item.customer_id,item.title);
-                  setSub(item);
-                  setLists(array2);
-                  setModal(true);
-                }}
-              >
-                <View style={styles.ListInner}>
-                  <Text style={[{fontSize:16},item.send_check=='1'?{width:'57%'}:{width:'65%'}]}>{item.title}</Text>
-                  <Text style={{color:'red',fontSize:14}}>{item.send_check=='1'&&'[済]'}</Text>
-                  <Text style={styles.date}>{item.start_day}</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
-          keyExtractor={(item) => `${item.title}`}
-        />
-      )
-    }
-  },[schedule])
-
-  const scheduleList = useMemo(() => {
-
-    // 【個人ID】設定No8.同じお客様のスケジュールはまとめて表示制御部分
-    var option = false;
-    if (route.params.setting_list && ((route.params.setting_list).split(",")).includes('8')) {
-      option = true;
-    }
-
-    return (
-      <View style={option?styles.listmodal:styles.listmodal2}>
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            top:8,
-            right:10,
-            zIndex:999
-          }}
-          onPress={()=>setModal(false)}
-        >
-          <Feather name='x-circle' color='#ccc' size={35} />
-        </TouchableOpacity>
-        <View style={{width:'90%',height:'90%',justifyContent:'center'}}>
-          <View style={{width:'85%'}}>
-            <Text style={{fontSize:16,fontWeight:'500'}}>{sub.title}</Text>
-            <Text style={{fontSize:13}}>{sub.start_day}</Text>
-          </View>
-          <View style={{flexDirection:'row',justifyContent:'center'}}>
-            <TouchableOpacity style={styles.buttonContainer2} onPress={()=>check_customer_on_off_db(sub)}>
-              <Text style={styles.buttonLabel}>{sub.send_check=='1'?'未完了にする':'完了にする'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.buttonContainer2,{marginLeft:10}]}
-              onPress={()=>{
-                setModal(false);
-                navigation.reset({
-                  index: 0,
-                  routes: [
-                    {
-                      name: "TalkScreen",
-                      params: route.params,
-                      customer: sub.customer_id,
-                      websocket: route.websocket,
-                      websocket2: route.websocket2,
-                      profile: route.profile,
-                      cus_name: name,
-                    },
-                  ],
-                });
-              }}
-            >
-              <Text style={styles.buttonLabel}>トーク画面</Text>
-            </TouchableOpacity>
-          </View>
-          {option&&lists.length>0?(
-            <FlatList
-              initialNumToRender={10}
-              data={lists}
-              renderItem={({ item,index }) => {
-                return (
-                  <View style={[styles.datalist,index==0&&{borderTopWidth:1}]}>
-                    <Text style={styles.title}>{item.title}</Text>
-                    <Text style={styles.start_day}>{item.start_day}</Text>
-                  </View>
-                )
-              }}
-              keyExtractor={(item) => `${item.title}`}
-            />
-          ):option&&lists.length==0?(
-            <View style={{flex:1,justifyContent:'center',alignItems:'center'}}>
-              <Text style={{color:'#999'}}>他のスケジュールはありません</Text>
-            </View>
-          )
-          :(<></>)}
-        </View>
-      </View>
-    )
-  },[lists,name])
-
-  async function getName(id,title) {
-    var sql = `select name from customer_mst where customer_id = '${id}';`;
-    var customer = await db_select(sql);
-
-    var name_ = '';
-    
-    if (customer != false) {
-      name_ = customer[0]["name"];
-    } else {
-      name_ = title.split(":")[1];
-      if (name_.indexOf('(担当者') != -1) {
-        name_ = name_.split("(担当者")[0];
-      }
-      if (name_.indexOf('【') != -1) {
-        name_ = name_.split("【")[0];
-      }
-    }
-
-    setName(name_);
-  }
-
-  async function check_customer_on_off_db(sub) {
-    
     const AsyncAlert = async (txt) => new Promise((resolve) => {
       Alert.alert(
         '確認',
-        `${sub["title"]}を【${txt}】にしてよろしいですか？`,
+        `${sub["note"]}を【${txt}】にしてよろしいですか？`,
         [
           {
             text: 'はい',
@@ -633,15 +605,23 @@ export default function Schedule(props) {
     var flg = sub.send_check == '1' ? '' : '1';
 
     let formData = new FormData();
-    formData.append('ID',route.params.account);
-    formData.append('pass',route.params.password);
-    formData.append('act','customer_check');
-    formData.append('val[app_flg]',1);
-    formData.append('val[id]',sub.customer_id);
-    formData.append('val[selecter]',sub.customer_select);
-    formData.append('val[key]',sub.key);
-    formData.append('val[flg]',flg);
-    
+
+    if (sub.customer_select == "0") {
+      formData.append('val[app_flg]',1);
+      formData.append('act','check');
+      formData.append('val[id]',sub.event_id);
+      formData.append('val[flg]',flg);
+    } else {
+      formData.append('ID',route.params.account);
+      formData.append('pass',route.params.password);
+      formData.append('act','customer_check');
+      formData.append('val[app_flg]',1);
+      formData.append('val[id]',sub.event_id);
+      formData.append('val[selecter]',sub.customer_select);
+      formData.append('val[key]',sub.flg);
+      formData.append('val[flg]',flg);
+    }
+
     fetch(domain+'php/ajax/update.php',
     {
       method: 'POST',
@@ -653,14 +633,13 @@ export default function Schedule(props) {
     .then((response) => response.json())
     .then(async(json) => {
       setModal(false);
-      setLoading(true);
-      await onRefresh();
+      await onRefresh(null,null);
     })
     .catch((error) => {
       console.log(error);
       Alert.alert('エラー','完了に失敗しました');
       setModal(false);
-      onRefresh();
+      onRefresh(null,null);
     })
     
     setModal(false);
@@ -728,6 +707,8 @@ export default function Schedule(props) {
       key: 'GET-DATA2',
       data: '',
     });
+
+    storage.remove({key:'SCHEDULE-SEARCH'});
     
     await Delete_staff_db();
     
@@ -911,6 +892,474 @@ export default function Schedule(props) {
     )
   },[bell_count])
 
+  const scheduleList = useMemo(() => {
+
+    const staff = staffList.find(stf => stf.value == sub.user_id);
+
+    return (
+      <View style={styles.listmodal}>
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top:8,
+            right:10,
+            zIndex:999
+          }}
+          onPress={()=>setModal(false)}
+        >
+          <Feather name='x-circle' color='#ccc' size={35} />
+        </TouchableOpacity>
+        <View style={{width:'90%',justifyContent:'center'}}>
+          <View style={{width:'85%'}}>
+            <View style={{flexDirection:'row'}}>
+              <Text style={{fontSize:15,fontWeight:'700'}}>
+                {sub.send_check=="1"&&(<Text style={{fontSize:15,fontWeight:'700',color:'red'}}>【済】</Text>)}
+                {sub.note}
+              </Text>
+            </View>
+            {sub.customer_select!="0"&&(
+              <Text style={{fontSize:13}}>お客様名：{sub.name}</Text>
+            )}
+            <Text style={{fontSize:13}}>担当：{staff?staff.label:"なし"}</Text>
+            <Text style={{fontSize:13}}>{sub.day}</Text>
+          </View>
+          <View style={{flexDirection:'row',justifyContent:'center'}}>
+            {sub.customer_select!="1"&&(
+              <TouchableOpacity style={styles.buttonContainer2} onPress={()=>check_on_off_db(sub)}>
+                <Text style={styles.buttonLabel}>{sub.send_check=='1'?'未完了にする':'完了にする'}</Text>
+              </TouchableOpacity>
+            )}
+            {sub.customer_select!="0"&&(
+              <TouchableOpacity
+                style={[styles.buttonContainer2,sub.customer_select!="1"&&{marginLeft:10}]}
+                onPress={()=>{
+                  setModal(false);
+                  navigation.reset({
+                    index: 0,
+                    routes: [
+                      {
+                        name: "TalkScreen",
+                        params: route.params,
+                        customer: sub.event_id,
+                        websocket: route.websocket,
+                        websocket2: route.websocket2,
+                        profile: route.profile,
+                        cus_name: sub.name,
+                      },
+                    ],
+                  });
+                }}
+              >
+                <Text style={styles.buttonLabel}>トーク画面</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </View>
+    )
+  },[sub])
+
+  /* ------------------------------------- */
+  //                 月表示
+  /* ------------------------------------- */
+  const dateFormat = (date) => dayjs(date).locale(ja).format('YYYY-MM-DD');
+
+  const COLORS = ['#FF9EAA', '#BFEA7C', '#FFBB64', '#FFFC9B'];
+
+  const eventItems = useMemo(() => {
+    const result = new Map();
+
+    if (events.length == 0) return result;
+
+    events.forEach((event, i) => {
+      const dayKey = dateFormat(event.day);
+      const diff = dayjs(event.day).diff(event.day, 'day') + 1;
+
+      if (diff === 1) {
+        const currentData = result.get(dayKey);
+        const maxIndex = currentData?.reduce((p, c) => Math.max(p, c.index), 0);
+        result.set(dayKey, [
+          ...(currentData ?? []),
+          {
+            id: i,
+            index: maxIndex !== undefined ? maxIndex + 1 : 0,
+            color: COLORS[event.customer_select],
+            note: event.note,
+            type: 'all',
+            event_id: event.customer_select=="0"?event.schedule_id:event.customer_id,
+            customer_select: event.customer_select,
+            name: event.name,
+            day: event.day,
+            flg: event.flg,
+            send_check: event.send_check,
+            user_id: event.user_id,
+          },
+        ]);
+      } else {
+        let index = null;
+
+        Array(diff)
+          .fill(null)
+          .forEach((_, i) => {
+            const date = dateFormat(dayjs(new Date(dayKey)).add(i, 'day').toDate());
+            const currentData = result.get(date);
+            if (index === null) index = currentData?.length ?? 0;
+
+            result.set(date, [
+              ...(currentData ?? []),
+              {
+                id: i,
+                index,
+                color: COLORS[event.customer_select],
+                note: event.note,
+                type: i === 0 ? 'start' : i === diff - 1 ? 'end' : 'between',
+                event_id: event.customer_select=="0"?event.schedule_id:event.customer_id,
+                customer_select: event.customer_select,
+                name: event.name,
+                day: event.day,
+                flg: event.flg,
+                send_check: event.send_check,
+                user_id: event.user_id,
+              },
+            ]);
+          });
+      }
+    });
+
+    return result;
+  }, [events]);
+  
+  const [height, setHeight] = useState(0);
+
+  const theme = useColorScheme();
+  const cellMinHeight = 90;
+
+  // カレンダーのテーマを定義
+  const calendarTheme = useMemo(
+    () => ({
+      monthTextColor: '#000',
+      textMonthFontWeight: 'bold',
+      calendarBackground: 'transparent',
+      arrowColor: '#0000ff',
+      'stylesheet.calendar.header': {
+        header: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingLeft: 10,
+          paddingRight: 10,
+          alignItems: 'center',
+          height:40
+        },
+        dayTextAtIndex5: {
+          color: 'blue'
+        },
+        dayTextAtIndex6: {
+          color: 'red'
+        },
+        week: {
+          flexDirection: 'row',
+          justifyContent: 'space-between'
+        }
+      },
+      'stylesheet.calendar.main' : {
+        week: {
+          flexDirection: 'row',
+          justifyContent: 'space-around'
+        },
+      }
+    }),
+    [theme],
+  );
+
+  const CELL_HEIGHT = 13.5;
+  const MAX_EVENTS = 5;
+  const CELL_ITEM_PADDING = 2;
+  const CELL_RADIUS = 3;
+  
+  const GoogleCalendarDayItem = (props) => {
+    const { date, eventItems: dayItems, children, state, cellMinHeight } = props;
+  
+    const events = useMemo(
+      () => (dayItems.get(date?.dateString ?? '') ?? []).sort((a, b) => b.index - a.index),
+      [date, dayItems],
+    );
+
+    const openMonthDayEvent = (item,date) => {
+      setMonth_events_date(date.dateString);
+      item.sort((a, b) => new Date(a.day) - new Date(b.day));
+      setMonth_events(item);
+      setShow_month_events(true);
+    };
+
+
+    const holiday_text = () => {
+      
+      const currentMonth = date_.getMonth() + 1;
+      const currentYear  = date_.getFullYear();
+      const currentDay   = children;
+
+      const result = holidays.filter(val => {
+        const holidayDate = new Date(val.date);
+        return (
+          holidayDate.getFullYear() === currentYear &&
+          holidayDate.getMonth() + 1 === currentMonth &&
+          holidayDate.getDate() === currentDay
+        );
+      });
+
+      if (result.length > 0) {
+        return (
+          <Text style={styles.holiday}>{result[0].name}</Text>
+        )
+      }
+
+    }
+
+    const holiday_flg = (currentDay) => {
+      
+      const currentMonth = date_.getMonth() + 1;
+      const currentYear  = date_.getFullYear();
+
+      const result = holidays.filter(val => {
+        const holidayDate = new Date(val.date);
+        return (
+          holidayDate.getFullYear() === currentYear &&
+          holidayDate.getMonth() + 1 === currentMonth &&
+          holidayDate.getDate() === currentDay
+        );
+      });
+
+      if (result.length > 0) {
+        return true;
+      } else {
+        return false;
+      }
+
+    }
+  
+    return (
+      <TouchableOpacity
+        style={[
+          styles.cell,
+          {
+            minHeight: cellMinHeight,
+            maxWidth: MAX_EVENTS * CELL_HEIGHT + CELL_ITEM_PADDING,
+            opacity: state === 'disabled' ? 0.4 : 1,
+          },
+        ]}
+        onPress={()=>openMonthDayEvent(events,date)}
+        key={children}
+      >
+        <Text style={[styles.dayText, state === 'today' && styles.todayText, holiday_flg(children) && {color:"red"}]}>{children}</Text>
+        {holiday_text()}
+        <View>{events.slice().reverse().map((event, i) => renderEvent(event, i))}</View>
+      </TouchableOpacity>
+    );
+  };
+
+  const onEventPress = (item) => {
+    setSub(item);
+    setModal(true);
+  };
+
+  const renderEvent = useCallback((v, i) => {
+
+    // 三つ以上は表示しない
+    if (i > 3) {
+      return (<></>);
+    }
+
+    if (i == 3) {
+      return (
+        <View
+          style={[
+            styles.event,
+            {
+              backgroundColor: 'transparent',
+              top: v.index * (CELL_HEIGHT + CELL_ITEM_PADDING),
+              borderTopLeftRadius: borderLeft,
+              borderBottomLeftRadius: borderLeft,
+              borderTopRightRadius: borderRight,
+              borderBottomRightRadius: borderRight,
+            },
+          ]}
+          key={i}
+        >
+          <Text style={{fontSize:10,textAlign:'center'}}>︙</Text>
+        </View>
+      )
+    }
+
+    const borderLeft = v.type === 'start' || v.type === 'all' ? CELL_RADIUS : 0;
+    const borderRight = v.type === 'end' || v.type === 'all' ? CELL_RADIUS : 0;
+    return (
+      <TouchableOpacity
+        key={`${v.id}-${i}`}
+        style={[
+          styles.event,
+          {
+            backgroundColor: v.color,
+            top: v.index * (CELL_HEIGHT + CELL_ITEM_PADDING),
+            borderTopLeftRadius: borderLeft,
+            borderBottomLeftRadius: borderLeft,
+            borderTopRightRadius: borderRight,
+            borderBottomRightRadius: borderRight,
+          },
+        ]}
+        onPress={() => onEventPress(v)}
+      >
+        {v.type === 'start' || v.type === 'all' ? (
+          <View style={styles.eventRow}>
+            <Text style={styles.eventText} numberOfLines={1}>
+              {v.send_check=="1"&&(
+                <Text style={[styles.eventText,{color:'red'}]}>
+                  済:
+                </Text>
+              )}
+              {v.note}
+            </Text>
+          </View>
+        ) : null}
+      </TouchableOpacity>
+    );
+  }, [onEventPress]);
+
+  /* ------------------------------------- */
+  //                 週表示
+  /* ------------------------------------- */
+
+  const getWeekDates = () => {
+    const week = [];
+    for (let i = 0; i < 7; i++) {
+      var day_add = new Date(date_);
+      day_add.setDate(day_add.getDate() + i);
+      week.push(day_add);
+    }
+    return week;
+  };
+
+  const onSwipeLeft = async () => {
+    const selectDate = Moment(date_).add(7, 'days').toDate();
+    setDate_(selectDate);
+    setDate_select(selectDate);
+    await onRefresh(selectDate,null);
+  };
+
+  const onSwipeRight = async () => {
+    const selectDate = Moment(date_).subtract(7, 'days').toDate();
+    setDate_(selectDate);
+    setDate_select(selectDate);
+    await onRefresh(selectDate,null);
+  };
+
+  const weekHeight = (Height - useHeaderHeight() - 80 - 40)/7;
+
+  const getSchedulesForDate = (date) => {
+    return events.filter(e => Moment(e.day).isSame(date, 'day'));
+  };
+
+  function get_youbi(weekNo) {
+    var w = ["日","月","火","水","木","金","土"];
+    return w[weekNo];
+  }
+
+  /* ------------------------------------- */
+  //                 一日表示
+  /* ------------------------------------- */
+
+  const eventItemsDay = useMemo(() => {
+
+    const result = [];
+    var today = Moment(date_).format("YYYY-MM-DD");
+
+    if (events.length == 0) return [];
+
+    events.forEach((event, i) => {
+
+      var eventDay = Moment(event.day);
+
+      // 時間部分を取得
+      var hour = eventDay.hour();
+      var minute = eventDay.minute();
+      var second = eventDay.second();
+
+      if (hour === 0 && minute === 0 && second === 0) {
+          eventDay.hour(22).minute(0).second(0);  // 00:00は22時に設定
+      } else if (hour >= 0 && hour < 9) {
+          eventDay.hour(8).minute(0).second(0);   // 0:01〜8:59は8時に設定
+      } else if (hour >= 21 && hour < 24) {
+          eventDay.hour(22).minute(0).second(0);  // 21:00〜23:59は22時に設定
+      }
+
+      var start_ = eventDay.format('YYYY-MM-DD HH:00:00');
+      var end_   = eventDay.add(1, 'hour').format('YYYY-MM-DD HH:00:00');
+
+      today = Moment(event.day).format("YYYY-MM-DD");
+
+      const data = {
+        id: i,
+        start: start_,
+        end: end_,
+        note: event.note,
+        color:COLORS[event.customer_select],
+        event_id: event.customer_select=="0"?event.schedule_id:event.customer_id,
+        customer_select: event.customer_select,
+        name: event.name,
+        day: event.day,
+        flg: event.flg,
+        send_check: event.send_check,
+        user_id: event.user_id,
+      }
+
+      result.push(data);
+
+    });
+
+    return {[today]:result};
+
+  }, [events,date_]);
+
+  const onDateChanged = async(date) => {
+    const today = Moment(date_).format("YYYY-MM-DD");
+    if (today != date) {
+      const selectDate = new Date(date);
+      setDate_select(selectDate);
+      setDate_(selectDate);
+      await onRefresh(selectDate,null);
+    }
+  };
+
+  const onDateChanged2 = (date) => {
+    const today = Moment(date_).format("YYYY-MM-DD");
+    if (today != date) {
+      const selectDate = new Date(date);
+      setDate_select(selectDate);
+    }
+  };
+
+  const renderEventDay = (item) => {
+    return (
+      <TouchableOpacity
+        style={{ backgroundColor: item.color, padding: 5 }}
+        onPress={()=>{
+          setSub(item);
+          setModal(true);
+        }}
+      >
+        <Text style={styles.day_event}>
+          {item.send_check=="1"&&(
+            <Text style={[styles.day_event,{color:'red'}]}>
+              【済】
+            </Text>
+          )}
+          {item.note}
+        </Text>
+        <Text style={styles.day_event_name}>{item.name}様</Text>
+        <Text style={styles.day_event_date}>{item.day}</Text>
+      </TouchableOpacity>
+    )
+  };
+
   return (
     <SideMenu
       menu={headerRight}
@@ -921,33 +1370,158 @@ export default function Schedule(props) {
       menuPosition={'right'}
       openMenuOffset={deviceScreen.width * 0.5}
     >
-      <View style={styles.container}>
-        <Loading isLoading={isLoading} />
-        <View style={{zIndex: 500,flexDirection:'row'}}>
-          <View>
-            <DropDownPicker
-              style={styles.DropDown}
-              dropDownContainerStyle={styles.dropDownContainer}
-              open={open}
-              value={staff_value}
-              items={staffList}
-              setOpen={setOpen}
-              setValue={setStaff_Value}
-              placeholder="▼　担当者"
+      <Modal
+        isVisible={addchat}
+        swipeDirection={['up']}
+        onSwipeComplete={()=>setAddchat(false)}
+        backdropOpacity={0.5}
+        animationInTiming={100}
+        animationOutTiming={300}
+        animationIn={'fadeIn'}
+        animationOut={'fadeOut'}
+        propagateSwipe={true}
+        transparent={true}
+        style={{margin: 0,justifyContent:'flex-start'}}
+        onBackdropPress={()=>setAddchat(false)}
+      >
+      <View style={[styles.roomheader,{height:headerHeight},Platform.OS === 'ios'&&{paddingTop:statusBarHeight},{backgroundColor:global.fc_flg?"#FF8F8F":"#6C9BCF"}]}>
+        <Text style={[styles.headertitle,{marginLeft:16}]}>スケジュール</Text>
+        
+        <View style={{marginRight:5,flexDirection:'row',marginLeft:'auto'}}>
+          <TouchableOpacity
+            style={{width:50,height:50,justifyContent:'center',alignItems:'center'}}
+            onPress={() => {
+              setAddchat(!addchat);
+              setMenu(false);
+            }}
+          >
+            <MaterialCommunityIcons
+              name="calendar-search"
+              color="white"
+              size={35}
             />
-          </View>
-          <TouchableOpacity style={styles.Datebtn} onPress={()=>setShow(true)}>
-            <Text style={styles.Datebtn_text}>{Moment(date).format("YYYY-MM-DD")}</Text>
           </TouchableOpacity>
+          <>
+          <View style={bell_count?[styles.bell,{backgroundColor:!global.fc_flg?"red":"#574141"}]:{display:'none'}}>
+            <Text Id="bell_text" style={styles.belltext} >{bell_count}</Text>
+          </View>
+          <TouchableOpacity
+            style={{width:50,height:50,justifyContent:'center',alignItems:'center'}}
+            onPress={() => {
+              setAddchat(false);
+              setMenu(!menu);
+            }}
+          >
+            <Feather
+              name="menu"
+              color="white"
+              size={35}
+            />
+          </TouchableOpacity>
+          </>
+        </View>
+      </View>
+      <View style={styles.roommenu}>
+        <Text style={styles.title}>表示方法</Text>
+        <View style={{marginTop:5}}>
+          <RadioButtonRN
+            data={search_flg_list}
+            value={search_flg}
+            selectedBtn={(e) => {
+
+              storage.load({
+                key : 'SCHEDULE-SEARCH'
+              })
+              .then(data => {
+                if (data) {
+                  storage.save({
+                    key: 'SCHEDULE-SEARCH',
+                    data: {
+                      ...data,
+                      search_flg: e.value,
+                    }
+                  });
+                }
+              })
+
+              setSearch_flg(e.value);
+            }}
+            animationTypes={['rotate']}
+            activeColor={'#191970'}
+            initial={Number(search_flg)}
+            boxStyle={styles.radio_box}
+            style={{flexDirection:'row',marginVertical:5}}
+            textStyle={{fontSize:14,marginLeft:5}}
+            circleSize={10}
+          />
+        </View>
+        <Text style={styles.title}>検索条件</Text>
+        <View style={{flexDirection:'row',marginTop:10}}>
+          <Text style={[styles.searchLabel,{width:"40%"}]}>スタッフ</Text>
+          {options.includes('8')&&(
+            <Text style={[styles.searchLabel,{width:"18%",marginLeft:"2%"}]}>種別</Text>
+          )}
+          <Text style={[styles.searchLabel,{width:"38%",marginLeft:"2%"}]}>日付選択</Text>
+        </View>
+        <View style={{flexDirection:'row',marginTop:5}}>
+          <Dropdown
+            style={[styles.DropDown,{width:"40%"}]}
+            containerStyle={{width:"40%"}}
+            placeholderStyle={{fontSize:14}}
+            selectedTextStyle={{fontSize:14}}
+            itemTextStyle={{fontSize:14}}
+            renderItem={(item)=>(
+              <View style={styles.dropItem}>
+                <Text style={styles.dropItemText}>{item.label}</Text>
+              </View>
+            )}
+            value={staff_value}
+            data={staffList}
+            setValue={setStaff_Value}
+            placeholder="▼　担当者"
+            labelField="label"
+            valueField="value"
+            onChange={(item) => setStaff_Value(item.value)}
+          />
+          {options.includes('8')&&(
+            <Dropdown
+              style={[styles.DropDown,{width:"18%",marginLeft:"2%"}]}
+              containerStyle={{width:"18%"}}
+              placeholderStyle={{fontSize:14}}
+              selectedTextStyle={{fontSize:14}}
+              itemTextStyle={{fontSize:14}}
+              renderItem={(item)=>(
+                <View style={styles.dropItem}>
+                  <Text style={styles.dropItemText}>{item.label}</Text>
+                </View>
+              )}
+              value={categorty}
+              data={categortyList}
+              setValue={setCategorty}
+              placeholder="▼　種別"
+              labelField="label"
+              valueField="value"
+              onChange={(item) => setCategorty(item.value)}
+            />
+          )}
+          <TouchableOpacity style={styles.Datebtn} onPress={()=>setShow(true)}>
+            <Text style={styles.Datebtn_text}>
+              {search_flg!="3"?
+              Moment(date_select).format("YYYY年MM月DD日"):
+              Moment(date_select).format("YYYY年MM月")}
+              </Text>
+          </TouchableOpacity>
+          {search_flg!="3"?(
+          <>
           {(show && Platform.OS === 'android') && (
             <DateTimePicker
-              value={date}
-              mode={'date'}
+              value={date_select}
+              mode={"date"}
               display="default"
               locale={'ja'}
               onChange={(event, selectedDate) => {
-                const currentDate = selectedDate || date;
-                setDate(currentDate);
+                const currentDate = selectedDate || date_select;
+                setDate_select(currentDate);
                 setShow(false);
               }}
             />
@@ -978,33 +1552,364 @@ export default function Schedule(props) {
                   <Feather name='x-circle' color='#ccc' size={35} />
                 </TouchableOpacity>
                 <DateTimePicker
-                  value={date}
-                  mode={'date'}
+                  value={date_select}
+                  mode={"date"}
+                  is24Hour={true}
                   display="spinner"
                   locale={'ja'}
                   onChange={(event, selectedDate) => {
-                    const currentDate = selectedDate || date;
-                    setDate(currentDate);
+                    const currentDate = selectedDate || date_select;
+                    setDate_select(currentDate);
                   }}
                   textColor="#fff"
                 />
               </View>
             </Modal>
           )}
-          <TouchableOpacity
-            style={styles.buttonContainer}
-            onPress={()=>{
-              setLoading(true);
-              onRefresh();
+          </>):(
+          <Modal
+            isVisible={show}
+            swipeDirection={null}
+            backdropOpacity={0.5}
+            animationInTiming={300}
+            animationOutTiming={500}
+            animationIn={'slideInDown'}
+            animationOut={'slideOutUp'}
+            propagateSwipe={true}
+            style={{alignItems: 'center'}}
+            onBackdropPress={()=>{
+              setShow(false);
+              setDate_select(new Date(date_y,date_m,date_.getDate()));
             }}
           >
-            <Text style={styles.buttonLabel}>表　示</Text>
-          </TouchableOpacity>
+            <View style={styles.date_mdl}>
+              <TouchableOpacity
+                style={{
+                  position: 'absolute',
+                  top:8,
+                  right:10,
+                  zIndex:999
+                }}
+                onPress={()=>{
+                  setShow(false);
+                  setDate_select(new Date(date_y,date_m,date_.getDate()));
+                }}
+              >
+                <Feather name='x-circle' color='#ccc' size={35} />
+              </TouchableOpacity>
+              <View style={{flexDirection:'row'}}>
+                <WheelPickerExpo
+                  width={80}
+                  items={yearList}
+                  onChange={ ({ item }) => {setDate_y(item.value)}}
+                  initialSelectedIndex={1}
+                />
+                <WheelPickerExpo
+                  width={80}
+                  items={monthList}
+                  onChange={ ({ item }) => {setDate_m(item.value)}}
+                  initialSelectedIndex={date_m}
+                />
+              </View>
+            </View>
+          </Modal>
+          )}
         </View>
-        <View style={{zIndex: 100,flex:1}}>
-          {comList}
+        <View style={{flexDirection:'row',marginTop:15}}>
+          <CheckBox
+            title='問合せ'
+            checked={schedule_flg1}
+            onPress={() => setSchedule_flg1(!schedule_flg1)}
+            containerStyle={[styles.checkbox,{borderColor:'#BFEA7C'}]}
+            iconType="material-community"
+            checkedIcon="checkbox-marked"
+            uncheckedIcon="checkbox-blank-outline"
+            checkedColor="#BFEA7C"
+          />
+          <CheckBox
+            title='来店'
+            checked={schedule_flg2}
+            onPress={() => setSchedule_flg2(!schedule_flg2)}
+            containerStyle={[styles.checkbox,{borderColor:'#FFBB64',marginLeft:"2%"}]}
+            iconType="material-community"
+            checkedIcon="checkbox-marked"
+            uncheckedIcon="checkbox-blank-outline"
+            checkedColor="#FFBB64"
+          />
+          <CheckBox
+            title='契約'
+            checked={schedule_flg3}
+            onPress={() => setSchedule_flg3(!schedule_flg3)}
+            containerStyle={[styles.checkbox,{borderColor:'#FFFC9B',marginLeft:"2%"}]}
+            iconType="material-community"
+            checkedIcon="checkbox-marked"
+            uncheckedIcon="checkbox-blank-outline"
+            checkedColor="#FFFC9B"
+          />
+          <CheckBox
+            title={"その他\nフリー"}
+            checked={schedule_flg4}
+            onPress={() => setSchedule_flg4(!schedule_flg4)}
+            containerStyle={[styles.checkbox,{borderColor:'#FF9EAA',marginLeft:"2%"}]}
+            iconType="material-community"
+            checkedIcon="checkbox-marked"
+            uncheckedIcon="checkbox-blank-outline"
+            checkedColor="#FF9EAA"
+            textStyle={{fontSize:10}}
+          />
         </View>
-        
+        <TouchableOpacity
+          style={styles.buttonContainer}
+          onPress={async()=>{
+            
+            storage.save({
+              key: 'SCHEDULE-SEARCH',
+              data: {
+                search_flg: search_flg,
+                staff_value:staff_value,
+                categorty: categorty,
+                schedule_flg1: schedule_flg1,
+                schedule_flg2: schedule_flg2,
+                schedule_flg3: schedule_flg3,
+                schedule_flg4: schedule_flg4,
+              }
+            });
+
+            setAddchat(false);
+            setLoading(true);
+            setDate_(date_select);
+            await onRefresh(date_select,null);
+          }}
+        >
+          <Text style={styles.buttonLabel}>表　示</Text>
+        </TouchableOpacity>
+      </View>
+      </Modal>
+      <View style={styles.container}>
+        <Loading isLoading={isLoading} />
+        <Popover from={new Rect(Width-85,110)} isVisible={showPopover} onRequestClose={() => closePopover()}>
+          <View style={{width:180,height:60,justifyContent:'center'}}>
+            <Text style={{textAlign:'center'}}>表示方法や検索条件は{"\n"}コチラから</Text>
+          </View>
+        </Popover>
+        <View
+          style={{zIndex: 100,flex:1}}
+          onLayout={(event) => {
+            const { height } = event.nativeEvent.layout;
+            setHeight(height);
+          }}
+        >
+          {search_flg=="1"?
+            (
+            <View style={{height:Height - useHeaderHeight() - 80}}>
+              <CalendarProvider
+                date={Moment(date_).format("YYYY-MM-DD")}
+                onDateChanged={(date)=>{onDateChanged(date)}}
+                disabledOpacity={0.6}
+              >
+                <ExpandableCalendar
+                  firstDay={1}
+                  onDayPress={(date)=>{onDateChanged2(date.dateString)}}
+                />
+                <TimelineList
+                  events={eventItemsDay}
+                  timelineProps={{
+                    format24h: true,
+                    overlapEventsSpacing: 7,
+                    rightEdgeSpacing: 24,
+                    start: 8,
+                    end: 23,
+                    renderEvent:((item)=>renderEventDay(item))
+                  }}
+                />
+              </CalendarProvider>
+            </View>
+            ):
+            search_flg=="2"?
+            (
+              <>
+              <View style={styles.week_month}>
+                <TouchableOpacity
+                  style={{marginRight:'auto',paddingHorizontal:15}}
+                  onPress={onSwipeRight}
+                >
+                  <MaterialCommunityIcons
+                    name="menu-left"
+                    color="#999"
+                    size={40}
+                  />
+                </TouchableOpacity>
+                <Text style={styles.week_month_text}>{Moment(date_).format('YYYY年 M月')}</Text>
+                <TouchableOpacity
+                  style={{marginLeft:'auto',paddingHorizontal:15}}
+                  onPress={onSwipeLeft}
+                >
+                  <MaterialCommunityIcons
+                    name="menu-right"
+                    color="#999"
+                    size={40}
+                  />
+                </TouchableOpacity>
+              </View>
+              <GestureRecognizer
+                onSwipeLeft={onSwipeLeft}
+                onSwipeRight={onSwipeRight}
+                config={{ velocityThreshold: 0.3, directionalOffsetThreshold: 80 }}
+                style={styles.week_wrapper}
+              >
+                <FlatList
+                  scrollEnabled={false}
+                  data={getWeekDates()}
+                  renderItem={({ item,index }) => {
+                    const event = getSchedulesForDate(item);
+                    return (
+                      <View style={[styles.week_container,{height:weekHeight},index==6&&{borderBottomWidth:0}]}>
+                        <View style={{alignItems:'center',marginRight:20,width:'15%'}}>
+                          <Text style={styles.week_day}>{Moment(item).format('DD')}</Text>
+                          <Text style={styles.week_youbi}>{get_youbi(item.getDay())}曜日</Text>
+                        </View>
+                        {event.length > 0 && (
+                          <ScrollView
+                            showsVerticalScrollIndicator={true}
+                            scrollEnabled={event.length>3?true:false}
+                            style={{maxHeight:weekHeight-10}}
+                            persistentScrollbar={true}
+                            indicatorStyle={'black'}
+                          >
+                            {event.map((e,i) => (
+                              <TouchableOpacity
+                                style={styles.week_event}
+                                onPress={()=>{
+                                  var newData = e;
+                                  newData["event_id"] = e.schedule_id;
+                                  setSub(newData);
+                                  setModal(true);
+                                }}
+                                key={i}
+                                activeOpacity={0.6}
+                              >
+                                <View style={[styles.week_event_tag,{backgroundColor:COLORS[e.customer_select]}]}></View>
+                                <Text style={styles.week_event_time}>{Moment(e.day).format('HH:mm')}</Text>
+                                <Text style={styles.week_event_text}>
+                                  {e.send_check=="1"&&(
+                                    <Text style={[styles.week_event_text,{color:'red'}]}>
+                                      【済】
+                                    </Text>
+                                  )}
+                                  {e.note}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
+                        )}
+                      </View>
+                    );
+                  }}
+                  keyExtractor={(item) => item}
+                  pagingEnabled
+                />
+              </GestureRecognizer>
+              </>
+            ):
+            search_flg=="3"?
+            (
+              <>
+              <CalendarList
+                date={date_}
+                key={theme}
+                pastScrollRange={12}
+                futureScrollRange={12}
+                hideExtraDays={true}
+                monthFormat="yyyy年 M月"
+                dayComponent={(d,i) => <GoogleCalendarDayItem {...d} eventItems={eventItems} cellMinHeight={cellMinHeight} key={i}/>}
+                markingType="custom"
+                theme={calendarTheme}
+                horizontal={true}
+                hideArrows={false}
+                pagingEnabled={true}
+                weekVerticalMargin={0}
+                onVisibleMonthsChange={async(months) => {
+                  const selectDate = new Date(date_.getFullYear(),(months[0].month)-1,date_.getDate());
+                  setDate_(selectDate);
+                  setDate_select(selectDate);
+                  await onRefresh(selectDate,null);
+                }}
+              />
+              <Modal
+                isVisible={show_month_events}
+                swipeDirection={null}
+                backdropOpacity={0.5}
+                animationInTiming={300}
+                animationOutTiming={500}
+                animationIn={'slideInDown'}
+                animationOut={'slideOutUp'}
+                propagateSwipe={true}
+                style={{alignItems: 'center',zIndex:888}}
+                onBackdropPress={()=>setShow_month_events(false)}
+              >
+                <Modal
+                  isVisible={modal}
+                  swipeDirection={null}
+                  backdropOpacity={0.5}
+                  animationInTiming={300}
+                  animationOutTiming={500}
+                  animationIn={'slideInDown'}
+                  animationOut={'slideOutUp'}
+                  propagateSwipe={true}
+                  style={{alignItems: 'center',zIndex:999}}
+                  onBackdropPress={()=>setModal(false)}
+                >
+                  {scheduleList}
+                </Modal>
+                <View style={styles.month_events}>
+                  <TouchableOpacity
+                    style={{
+                      position: 'absolute',
+                      top:8,
+                      right:10,
+                      zIndex:999
+                    }}
+                    onPress={()=>setShow_month_events(false)}
+                  >
+                    <Feather name='x-circle' color='#ccc' size={35} />
+                  </TouchableOpacity>
+                  <Text style={styles.month_events_date}>{month_events_date}</Text>
+                  <ScrollView
+                    showsVerticalScrollIndicator={true}
+                    persistentScrollbar={true}
+                    indicatorStyle={'black'}
+                  >
+                    {month_events.map((e,i) => (
+                      <TouchableOpacity
+                        style={styles.week_event}
+                        onPress={()=>{
+                          var newData = e;
+                          newData["event_id"] = e.schedule_id;
+                          setSub(newData);
+                          setModal(true);
+                        }}
+                        key={i}
+                        activeOpacity={0.6}
+                      >
+                        <View style={[styles.week_event_tag,{backgroundColor:COLORS[e.customer_select]}]}></View>
+                        <Text style={styles.week_event_time}>{Moment(e.day).format('HH:mm')}</Text>
+                        <Text style={styles.week_event_text}>
+                          {e.send_check=="1"&&(
+                            <Text style={[styles.week_event_text,{color:'red'}]}>
+                              【済】
+                            </Text>
+                          )}
+                          {e.note}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </Modal>
+              </>
+            ):(<></>)
+          }
+        </View>
         <Footer
           onPress0={() => {
             navigation.reset({
@@ -1060,7 +1965,7 @@ export default function Schedule(props) {
           animationIn={'slideInDown'}
           animationOut={'slideOutUp'}
           propagateSwipe={true}
-          style={{alignItems: 'center'}}
+          style={{alignItems: 'center',zIndex:999}}
           onBackdropPress={()=>setModal(false)}
         >
           {scheduleList}
@@ -1071,10 +1976,10 @@ export default function Schedule(props) {
 }
 
 const styles = StyleSheet.create({
-  header_name: {
-    color:'#ffffff',
-    fontSize:18,
-    fontWeight:'500'
+  headertitle: {
+    color:'#fff',
+    fontWeight:'700',
+    fontSize:16
   },
   header_img: {
     width: 150,
@@ -1096,23 +2001,23 @@ const styles = StyleSheet.create({
     color: "#000000",
   },
   DropDown: {
-    width: 150,
     fontSize: 16,
-    height: 40,
-    marginLeft: 10,
-    marginTop:10,
-    marginBottom:20,
+    height: 35,
+    borderRadius:5,
+    backgroundColor:'#fff',
+    borderWidth:1,
+    paddingHorizontal:5,
   },
-  dropDownContainer: {
-    width: 150,
-    marginLeft: 10,
+  dropItem: {
+    padding:10,
+  },
+  dropItemText: {
+    fontSize:14,
   },
   Datebtn: {
-    width: 100,
-    height: 50,
-    marginTop:10,
-    marginLeft: 10,
-    marginBottom:20,
+    width: "38%",
+    height: 35,
+    marginLeft: "2%",
     backgroundColor:'#fff',
     borderRadius:8,
     borderWidth:1,
@@ -1130,25 +2035,20 @@ const styles = StyleSheet.create({
     bottom:10
   },
   buttonContainer: {
-    height: 45,
+    height: 35,
     backgroundColor: "#b3b3b3",
     borderRadius: 4,
     alignSelf: "center",
-    marginTop:10,
-    marginLeft: 'auto',
-    marginRight:10,
-    marginBottom:20,
+    justifyContent:'center',
+    marginVertical:20
   },
   buttonContainer2: {
-    height: 45,
     backgroundColor: "#b3b3b3",
     borderRadius: 4,
-    alignSelf: "center",
     marginVertical:10,
   },
   buttonLabel: {
-    fontSize: 16,
-    lineHeight: 30,
+    fontSize: 14,
     paddingVertical: 8,
     paddingHorizontal: 20,
     color: "#000000",
@@ -1222,6 +2122,14 @@ const styles = StyleSheet.create({
     fontSize:20,
     marginLeft:10
   },
+  date_mdl: {
+    width:250,
+    height:230,
+    backgroundColor:'#fff',
+    alignItems:'center',
+    justifyContent:'center',
+    borderRadius:5
+  },
   iosdate: {
     width:300,
     height:260,
@@ -1232,15 +2140,7 @@ const styles = StyleSheet.create({
   },
   listmodal: {
     width:300,
-    height:300,
-    backgroundColor:'#fff',
-    alignItems:'center',
-    justifyContent:'center',
-    borderRadius:5
-  },
-  listmodal2: {
-    width:300,
-    height:150,
+    paddingVertical:20,
     backgroundColor:'#fff',
     alignItems:'center',
     justifyContent:'center',
@@ -1254,12 +2154,170 @@ const styles = StyleSheet.create({
     justifyContent:'center',
     padding:5
   },
-  title: {
-    fontSize:14,
-    color:'#555'
-  },
   start_day: {
     fontSize:12,
     color:'#777'
+  },
+  cell: {
+    width: '100%',
+    borderBottomWidth:1,
+    borderColor:'#bfbfbf'
+  },
+  dayText: {
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  todayText: {
+    color: 'blue',
+    fontWeight: 'bold',
+  },
+  event: {
+    width: '99%',
+    height: 13.5,
+    borderRadius: 3,
+    position: 'absolute',
+    left: 0,
+    zIndex: 2,
+    justifyContent: 'center',
+  },
+  eventRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  eventText: {
+    color: '#000',
+    fontSize: 9,
+    fontWeight: '500',
+    paddingLeft: 2,
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 2,
+    shadowOpacity: 0.2,
+  },
+  holiday: {
+    fontSize:8,
+    color:'#bfbfbf',
+    textAlign:'center'
+  },
+  checkbox: {
+    height:40,
+    width: "23.5%",
+    borderWidth:2,
+    margin: 0,
+    marginRight: 0,
+    paddingLeft: 10,
+    paddingVertical:5,
+    borderRadius: 5,
+    backgroundColor:'#fff',
+    alignItems:'center',
+    justifyContent:'center',
+    marginLeft:0
+  },
+  roomheader :{
+    width:'100%',
+    flexDirection:'row',
+    alignItems:'center'
+  },
+  roommenu: {
+    width:Width,
+    backgroundColor:'#fff',
+    paddingHorizontal:15
+  },
+  title: {
+    fontSize:16,
+    color:'#384955',
+    fontWeight:'bold',
+    marginTop: 20,
+  },
+  searchLabel: {
+    fontSize:12,
+    color:'#999'
+  },
+  radio_box: {
+    width:80,
+    borderRadius: 0,
+    borderWidth: 0,
+    paddingHorizontal: 5,
+    paddingVertical: 0,
+    marginTop: 0,
+    backgroundColor:'transparent'
+  },
+  week_month: {
+    height:40,
+    justifyContent:'center',
+    alignItems:'center',
+    backgroundColor:'#dcdcdc',
+    flexDirection:'row'
+  },
+  week_month_text: {
+    fontSize:16,
+    textAlign:'center',
+    fontWeight:'700'
+  },
+  week_wrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  week_container: {
+    width:Width,
+    borderBottomWidth:0.8,
+    borderColor:'#999',
+    backgroundColor:'#fff',
+    alignItems: 'center',
+    flexDirection:'row',
+    paddingHorizontal:20
+  },
+  week_day: {
+    fontSize: 35,
+    fontWeight: '800',
+    color:'#333'
+  },
+  week_youbi: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color:'#999'
+  },
+  week_event: {
+    marginBottom: 7,
+    flexDirection:'row',
+    alignItems:'center'
+  },
+  week_event_tag: {
+    width:8,
+    height:18,
+    marginRight:5
+  },
+  week_event_text: {
+    fontSize: 12,
+  },
+  week_event_time: {
+    fontSize:12,
+    color:'#999',
+    marginRight:20
+  },
+  day_event: {
+    fontSize:14,
+    fontWeight:'700'
+  },
+  day_event_name: {
+    fontSize:12,
+  },
+  day_event_date :{
+    fontSize:12,
+    color:'#999'
+  },
+  month_events: {
+    backgroundColor:'#fff',
+    paddingHorizontal:30,
+    paddingBottom:10,
+    borderRadius:10,
+    maxHeight:400,
+  },
+  month_events_date: {
+    paddingTop:20,
+    marginBottom:15,
+    fontSize:18,
+    fontWeight:'700'
   }
 });
