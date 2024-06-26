@@ -372,7 +372,8 @@ export default function LogInScreen(props) {
             staff.mail3,
             staff.top_staff_list,
             staff.setting_list7_mail,
-            global.fc_flg
+            global.fc_flg,
+            shops.option_list
           ];
             
           await Insert_staff_db(staff.account,staff.password,staff_data);
@@ -424,7 +425,7 @@ export default function LogInScreen(props) {
     var staff_mst = await db_select(sql);
 
     if (staff_mst == false) {
-      var insert_staff = `insert into staff_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
+      var insert_staff = `insert into staff_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
       await db_write(insert_staff,data);
     }
   
@@ -589,7 +590,8 @@ export default function LogInScreen(props) {
         staff.mail3,
         staff.top_staff_list,
         staff.setting_list7_mail,
-        global.fc_flg
+        global.fc_flg,
+        shops.option_list
       ];
         
       await Insert_staff_db(staff.account,staff.password,staff_data);
@@ -694,7 +696,8 @@ export default function LogInScreen(props) {
           staff.mail3,
           staff.top_staff_list,
           staff.setting_list7_mail,
-          global.fc_flg
+          global.fc_flg,
+          shops.option_list
         ];
           
         await Insert_staff_db(staff.account,staff.password,staff_data);

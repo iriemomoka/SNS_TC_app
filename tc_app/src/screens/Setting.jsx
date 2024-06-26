@@ -983,6 +983,7 @@ async function Delete_staff_db(){
     "chat_room",
     "chat_message",
     "comment_mst",
+    "schedule_mst",
   ]
   
   for (var d=0;d<dbList.length;d++) {

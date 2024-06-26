@@ -75,6 +75,7 @@ const Height = Dimensions.get("window").height;
 export default function Schedule(props) {
 
   const [isLoading, setLoading] = useState(false);
+  const [end, setEnd] = useState(true);
 
   const { navigation, route } = props;
 
@@ -210,40 +211,6 @@ export default function Schedule(props) {
       data: true,
     });
   }
-  
-  // 検索条件保存
-  useEffect(() => {
-    storage.load({
-      key : 'SCHEDULE-SEARCH'
-    })
-    .then(data => {
-      if (data) {
-        setSearch_flg(data.search_flg);
-        setStaff_Value(data.staff_value);
-        setCategorty(data.categorty);
-        setSchedule_flg1(data.schedule_flg1);
-        setSchedule_flg2(data.schedule_flg2);
-        setSchedule_flg3(data.schedule_flg3);
-        setSchedule_flg4(data.schedule_flg4);
-        onRefresh(null,data);
-      }
-    })
-    .catch(err => {
-      storage.save({
-        key: 'SCHEDULE-SEARCH',
-        data: {
-          search_flg: search_flg,
-          staff_value:staff_value,
-          categorty: categorty,
-          schedule_flg1: schedule_flg1,
-          schedule_flg2: schedule_flg2,
-          schedule_flg3: schedule_flg3,
-          schedule_flg4: schedule_flg4,
-        }
-      });
-      onRefresh(null,null);
-    })
-  }, []);
 
   useLayoutEffect(() => {
 
@@ -431,6 +398,38 @@ export default function Schedule(props) {
       setHolidays(currentMonthHolidays);
     }
 
+    // 検索条件
+    storage.load({
+      key : 'SCHEDULE-SEARCH'
+    })
+    .then(data => {
+      if (data) {
+        setSearch_flg(data.search_flg);
+        setStaff_Value(data.staff_value);
+        setCategorty(data.categorty);
+        setSchedule_flg1(data.schedule_flg1);
+        setSchedule_flg2(data.schedule_flg2);
+        setSchedule_flg3(data.schedule_flg3);
+        setSchedule_flg4(data.schedule_flg4);
+        onRefresh(null,data);
+      }
+    })
+    .catch(err => {
+      storage.save({
+        key: 'SCHEDULE-SEARCH',
+        data: {
+          search_flg: search_flg,
+          staff_value:staff_value,
+          categorty: categorty,
+          schedule_flg1: schedule_flg1,
+          schedule_flg2: schedule_flg2,
+          schedule_flg3: schedule_flg3,
+          schedule_flg4: schedule_flg4,
+        }
+      });
+      onRefresh(null,null);
+    })
+
     await getBELL();
 
   }
@@ -439,7 +438,9 @@ export default function Schedule(props) {
 
     if (!sendDate) sendDate = date_;
 
-    setLoading(true);
+    const loadflg = await Insert_schedule_db();
+
+    if (loadflg) setLoading(true);
 
     const startTime = Date.now(); // 開始時間
 
@@ -449,11 +450,33 @@ export default function Schedule(props) {
     const time = (endTime - startTime)/1000;
     console.log('onRefreshschedule：'+time + '秒');
 
+    setEnd(false);
+
     if (schedule) {
       if (!schedule["schedule"]) {
         setEvents([]);
       } else {
-        setEvents(schedule["schedule"]);
+        var eventList = schedule["schedule"];
+        eventList.sort((a, b) => new Date(a.day) - new Date(b.day));
+
+        const updatedData = eventList.map(event => {
+          if (event.customer_select === "0") {
+            if (event.schedule_id) {
+              event.event_id = event.schedule_id;
+            }
+          } else {
+            if (event.customer_id) {
+              event.event_id = event.customer_id;
+            }
+          }
+          delete event.schedule_id;
+          delete event.customer_id;
+          return event;
+        });
+        
+        setEvents(updatedData);
+        setLoading(false);
+        await Insert_schedule_db(updatedData);
       }
 
       setOptions(schedule["shop_option_list"])
@@ -559,15 +582,105 @@ export default function Schedule(props) {
 
   });
 
+  // スケジュール取得
+  async function Insert_schedule_db(schedule) {
+
+    if (schedule) {
+
+      const startTime = Date.now(); // 開始時間
+      for (var s=0;s<schedule.length;s++) {
+        
+        var sch = schedule[s];
+
+        var sql = `insert or replace into schedule_mst values (?,?,?,?,?,?,?,?);`;
+
+        var data = [
+          sch.event_id,
+          sch.customer_select,
+          sch.day,
+          sch.flg,
+          sch.name,
+          sch.note,
+          sch.send_check,
+          sch.user_id,
+        ];
+        
+        await db_write(sql,data);
+      }
+      const endTime = Date.now(); // 終了時間
+      const time = (endTime - startTime)/1000;
+      console.log('Insert_schedule_db：'+time + '秒');
+
+    } else {
+
+      const S_S = await storage.load({key : 'SCHEDULE-SEARCH'});
+      
+      var sql = "select * from schedule_mst where 1 = 1 ";
+  
+      if (S_S.search_flg == "1") { // 一日
+        sql += ` and day like '${Moment(date_).format("YYYY-MM-DD")}%' `;
+      } else if (S_S.search_flg == "2") { // 週
+        var startOfWeek = Moment(date_).format("YYYY-MM-DD 00:00:00");
+        var endOfWeek = Moment(date_).add(7, 'days').format("YYYY-MM-DD 23:59:59");
+        sql += ` AND day >= '${startOfWeek}' AND day <= '${endOfWeek}'`;
+      } else if (S_S.search_flg == "3") { // 月
+        sql += ` and day like '${Moment(date_).format("YYYY-MM")}%' `;
+      }
+  
+      if (S_S.staff_value) {
+        sql += ` and user_id = '${S_S.staff_value}' `;
+      }
+  
+      var schedule_flg = false;
+  
+      
+      for (var i=1;i<=4;i++) {
+        if (S_S[`schedule_flg${i}`]) {
+          schedule_flg = true;
+        }
+      }
+  
+      if (schedule_flg) {
+  
+        var arr = [];
+        if (S_S.schedule_flg1) {
+          arr.push("customer_select = '1'");
+        }
+        if (S_S.schedule_flg2) {
+          arr.push("customer_select = '2'");
+        }
+        if (S_S.schedule_flg3) {
+          arr.push("customer_select = '3'");
+        }
+        if (S_S.schedule_flg4) {
+          arr.push("customer_select = '0'");
+        }
+  
+        sql += ` and ( ${arr.join(" or ")} ) `;
+  
+      }
+  
+      var sc = await db_select(sql);
+  
+      if (sc != false) {
+        setEvents(sc);
+        return false;
+      } else {
+        setEvents([]);
+        return true;
+      }
+
+    }
+    
+  }
+
   // スタッフリスト取得
   async function Insert_staff_list_db() {
 
     const sl = await GetDB('staff_list');
 
     if (sl != false) {
-      
       setStaffs(sl);
-      
     } else {
       setStaffs([]);
     }
@@ -602,6 +715,8 @@ export default function Schedule(props) {
 
     if (!await AsyncAlert(txt)) return;
 
+    setLoading(true);
+
     var flg = sub.send_check == '1' ? '' : '1';
 
     let formData = new FormData();
@@ -633,12 +748,14 @@ export default function Schedule(props) {
     .then((response) => response.json())
     .then(async(json) => {
       setModal(false);
+      setShow_month_events(false);
       await onRefresh(null,null);
     })
     .catch((error) => {
       console.log(error);
       Alert.alert('エラー','完了に失敗しました');
       setModal(false);
+      setShow_month_events(false);
       onRefresh(null,null);
     })
     
@@ -661,6 +778,7 @@ export default function Schedule(props) {
       "chat_room",
       "chat_message",
       "comment_mst",
+      "schedule_mst",
     ]
     
     for (var d=0;d<dbList.length;d++) {
@@ -986,7 +1104,7 @@ export default function Schedule(props) {
             color: COLORS[event.customer_select],
             note: event.note,
             type: 'all',
-            event_id: event.customer_select=="0"?event.schedule_id:event.customer_id,
+            event_id: event.event_id,
             customer_select: event.customer_select,
             name: event.name,
             day: event.day,
@@ -1013,7 +1131,7 @@ export default function Schedule(props) {
                 color: COLORS[event.customer_select],
                 note: event.note,
                 type: i === 0 ? 'start' : i === diff - 1 ? 'end' : 'between',
-                event_id: event.customer_select=="0"?event.schedule_id:event.customer_id,
+                event_id: event.event_id,
                 customer_select: event.customer_select,
                 name: event.name,
                 day: event.day,
@@ -1152,7 +1270,13 @@ export default function Schedule(props) {
       >
         <Text style={[styles.dayText, state === 'today' && styles.todayText, holiday_flg(children) && {color:"red"}]}>{children}</Text>
         {holiday_text()}
-        <View>{events.slice().reverse().map((event, i) => renderEvent(event, i))}</View>
+        <View>
+          {events.slice().reverse().map((event, i) => (
+            <React.Fragment key={i}>
+              {renderEvent(event, i)}
+            </React.Fragment>
+          ))}
+        </View>
       </TouchableOpacity>
     );
   };
@@ -1302,7 +1426,7 @@ export default function Schedule(props) {
         end: end_,
         note: event.note,
         color:COLORS[event.customer_select],
-        event_id: event.customer_select=="0"?event.schedule_id:event.customer_id,
+        event_id: event.event_id,
         customer_select: event.customer_select,
         name: event.name,
         day: event.day,
@@ -1354,8 +1478,8 @@ export default function Schedule(props) {
           )}
           {item.note}
         </Text>
-        <Text style={styles.day_event_name}>{item.name}様</Text>
-        <Text style={styles.day_event_date}>{item.day}</Text>
+        {item.name&&(<Text style={styles.day_event_name}>{item.name}様</Text>)}
+        <Text style={styles.day_event_date}>{Moment(item.day).format("HH:mm")}</Text>
       </TouchableOpacity>
     )
   };
@@ -1751,12 +1875,13 @@ export default function Schedule(props) {
                   />
                 </TouchableOpacity>
               </View>
-              <GestureRecognizer
+              {/* <GestureRecognizer
                 onSwipeLeft={onSwipeLeft}
                 onSwipeRight={onSwipeRight}
                 config={{ velocityThreshold: 0.3, directionalOffsetThreshold: 80 }}
                 style={styles.week_wrapper}
-              >
+              > */}
+              <View style={styles.week_wrapper}>
                 <FlatList
                   scrollEnabled={false}
                   data={getWeekDates()}
@@ -1780,24 +1905,27 @@ export default function Schedule(props) {
                               <TouchableOpacity
                                 style={styles.week_event}
                                 onPress={()=>{
-                                  var newData = e;
-                                  newData["event_id"] = e.schedule_id;
-                                  setSub(newData);
+                                  setSub(e);
                                   setModal(true);
                                 }}
                                 key={i}
                                 activeOpacity={0.6}
                               >
-                                <View style={[styles.week_event_tag,{backgroundColor:COLORS[e.customer_select]}]}></View>
-                                <Text style={styles.week_event_time}>{Moment(e.day).format('HH:mm')}</Text>
-                                <Text style={styles.week_event_text}>
-                                  {e.send_check=="1"&&(
-                                    <Text style={[styles.week_event_text,{color:'red'}]}>
-                                      【済】
-                                    </Text>
-                                  )}
-                                  {e.note}
-                                </Text>
+                                <View style={{width:'20%',flexDirection:'row',alignItems:'center'}}>
+                                  <View style={[styles.week_event_tag,{backgroundColor:COLORS[e.customer_select]},e.name&&{height:30}]}></View>
+                                  <Text style={styles.week_event_time}>{Moment(e.day).format('HH:mm')}</Text>
+                                </View>
+                                <View style={{width:'80%'}}>
+                                  <Text style={styles.week_event_text}>
+                                    {e.send_check=="1"&&(
+                                      <Text style={[styles.week_event_text,{color:'red'}]}>
+                                        【済】
+                                      </Text>
+                                    )}
+                                    {e.note}
+                                  </Text>
+                                  {e.name&&(<Text style={styles.week_event_time}>{e.name}様</Text>)}
+                                </View>
                               </TouchableOpacity>
                             ))}
                           </ScrollView>
@@ -1808,7 +1936,8 @@ export default function Schedule(props) {
                   keyExtractor={(item) => item}
                   pagingEnabled
                 />
-              </GestureRecognizer>
+              </View>
+              {/* </GestureRecognizer> */}
               </>
             ):
             search_flg=="3"?
@@ -1829,10 +1958,12 @@ export default function Schedule(props) {
                 pagingEnabled={true}
                 weekVerticalMargin={0}
                 onVisibleMonthsChange={async(months) => {
-                  const selectDate = new Date(date_.getFullYear(),(months[0].month)-1,date_.getDate());
-                  setDate_(selectDate);
-                  setDate_select(selectDate);
-                  await onRefresh(selectDate,null);
+                  if (!end) {
+                    const selectDate = new Date(date_.getFullYear(),(months[0].month)-1,date_.getDate());
+                    setDate_(selectDate);
+                    setDate_select(selectDate);
+                    await onRefresh(selectDate,null);
+                  }
                 }}
               />
               <Modal
@@ -1883,24 +2014,27 @@ export default function Schedule(props) {
                       <TouchableOpacity
                         style={styles.week_event}
                         onPress={()=>{
-                          var newData = e;
-                          newData["event_id"] = e.schedule_id;
-                          setSub(newData);
+                          setSub(e);
                           setModal(true);
                         }}
                         key={i}
                         activeOpacity={0.6}
                       >
-                        <View style={[styles.week_event_tag,{backgroundColor:COLORS[e.customer_select]}]}></View>
-                        <Text style={styles.week_event_time}>{Moment(e.day).format('HH:mm')}</Text>
-                        <Text style={styles.week_event_text}>
-                          {e.send_check=="1"&&(
-                            <Text style={[styles.week_event_text,{color:'red'}]}>
-                              【済】
-                            </Text>
-                          )}
-                          {e.note}
-                        </Text>
+                        <View style={{width:'20%',flexDirection:'row',alignItems:'center'}}>
+                          <View style={[styles.week_event_tag,{backgroundColor:COLORS[e.customer_select]},e.name&&{height:30}]}></View>
+                          <Text style={styles.week_event_time}>{Moment(e.day).format('HH:mm')}</Text>
+                        </View>
+                        <View style={{width:'80%'}}>
+                          <Text style={styles.week_event_text} numberOfLines={1}>
+                            {e.send_check=="1"&&(
+                              <Text style={[styles.week_event_text,{color:'red'}]}>
+                                【済】
+                              </Text>
+                            )}
+                            {e.note}
+                          </Text>
+                          {e.name&&(<Text style={styles.week_event_time}>{e.name}様</Text>)}
+                        </View>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -2266,7 +2400,8 @@ const styles = StyleSheet.create({
     backgroundColor:'#fff',
     alignItems: 'center',
     flexDirection:'row',
-    paddingHorizontal:20
+    paddingLeft:20,
+    paddingRight:10
   },
   week_day: {
     fontSize: 35,
@@ -2294,7 +2429,6 @@ const styles = StyleSheet.create({
   week_event_time: {
     fontSize:12,
     color:'#999',
-    marginRight:20
   },
   day_event: {
     fontSize:14,
@@ -2308,11 +2442,12 @@ const styles = StyleSheet.create({
     color:'#999'
   },
   month_events: {
+    width:"90%",
     backgroundColor:'#fff',
-    paddingHorizontal:30,
+    paddingHorizontal:20,
     paddingBottom:10,
     borderRadius:10,
-    maxHeight:400,
+    maxHeight:600
   },
   month_events_date: {
     paddingTop:20,

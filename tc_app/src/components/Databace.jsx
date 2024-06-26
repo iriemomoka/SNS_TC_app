@@ -167,8 +167,11 @@ exports.CreateDB = function(props){
         [],
         (_, { rows }) => {
           
+          var staff_mst = rows._array;
+
+          if (staff_mst.length == 0) return;
           
-          if(rows._array.length == 17) {
+          if(staff_mst.length == 17) {
             
             tx.executeSql(
               `alter table "staff_mst" add column "line_id" text;`,
@@ -221,7 +224,7 @@ exports.CreateDB = function(props){
             
           }
           
-          if(rows._array.length == 24) {
+          if(staff_mst.length == 24) {
             tx.executeSql(
               `alter table "staff_mst" add column "fc_flg" text;`,
               [],
@@ -229,7 +232,24 @@ exports.CreateDB = function(props){
               (e) => {console.log("fc_flg失敗");}
             );
           }
+
+          var shop_option_list = false;
           
+          for (var cm=0;cm<staff_mst.length;cm++) {
+            if (staff_mst[cm]["name"] == "shop_option_list") {
+              shop_option_list = true;
+            }
+          }
+
+          if (!shop_option_list) {
+            tx.executeSql(
+              `alter table "staff_mst" add column "shop_option_list" text;`,
+              [],
+              () => {console.log("shop_option_list追加");},
+              (e) => {console.log("shop_option_list失敗");}
+            );
+          }
+
         },
         () => {
           console.log("スタッフテーブル　カラム追加失敗");
@@ -271,6 +291,7 @@ exports.CreateDB = function(props){
                     "top_staff_list"	TEXT,
                     "setting_list7_mail"	TEXT,
                     "fc_flg"	TEXT,
+                    "shop_option_list"	TEXT,
                     PRIMARY KEY("account")
                   );`,
                   [],
@@ -664,6 +685,44 @@ exports.CreateDB = function(props){
         }
       );
       
+      // スケジュール
+      tx.executeSql(
+        `select * from schedule_mst;`,  
+        [],
+        () => {},
+        () => {
+          // スケジュール追加
+          tx.executeSql(
+            `CREATE TABLE "schedule_mst" (
+              "event_id"	TEXT,
+              "customer_select"	TEXT,
+              "day"	TEXT,
+              "flg"	TEXT,
+              "name"	TEXT,
+              "note"	TEXT,
+              "send_check"	TEXT,
+              "user_id"	TEXT,
+              PRIMARY KEY("event_id","customer_select","flg")
+            );`,
+            [],
+            () => {
+              console.log("スケジュール追加");
+
+              // スケジュールインデックス作成
+              tx.executeSql(
+                `CREATE INDEX "index_schedule_mst" ON "schedule_mst" (
+                  "event_id"
+                );`,
+                [],
+                () => {console.log("スケジュールインデックス作成");},
+                (a,e) => {console.log(e);}
+              );
+            },
+            () => {console.log("スケジュール追加失敗");}
+          );
+        }
+      );
+
     });
     
     resolve();

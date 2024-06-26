@@ -73,6 +73,8 @@ export default function CommunicationHistoryScreen(props) {
   const [menu, setMenu] = useState(false);
   const deviceScreen = Dimensions.get('window');
   
+  const [shop_options, setShop_options] = useState([]);
+
   const listRef = useRef([]);
   
   // 参照データ取得日時
@@ -150,6 +152,8 @@ export default function CommunicationHistoryScreen(props) {
       });
 
       Display(true);
+
+      GetDB('staff_mst').then(staff_mst=>staff_mst!=false&&setShop_options(staff_mst[0].shop_option_list.split(",")));
 
       var sql = `select unread from chat_room where del_flg != '1';`;
       db_select(sql).then(function(rooms){
@@ -1159,6 +1163,7 @@ export default function CommunicationHistoryScreen(props) {
       "chat_room",
       "chat_message",
       "comment_mst",
+      "schedule_mst",
     ]
     
     for (var d=0;d<dbList.length;d++) {
@@ -1270,6 +1275,7 @@ export default function CommunicationHistoryScreen(props) {
   }
   
   const headerRight = useMemo(() => {
+    // console.log(shop_options);
     return (
       <View style={{backgroundColor:'#fff',flex:1,paddingTop:25}}>
         <TouchableOpacity
@@ -1413,7 +1419,7 @@ export default function CommunicationHistoryScreen(props) {
         </TouchableOpacity>
       </View>
     )
-  },[bell_count])
+  },[bell_count,shop_options])
 
   const comList = useMemo(() => {
     if (memos.length == 0 && name == "") {
