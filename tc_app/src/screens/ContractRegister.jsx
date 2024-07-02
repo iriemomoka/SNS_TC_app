@@ -14,16 +14,7 @@ import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 
 import Loading from '../components/Loading';
-import { db,db_write,GetDB } from '../components/Databace';
-
-import Storage from 'react-native-storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// ローカルストレージ読み込み
-const storage = new Storage({
-  storageBackend: AsyncStorage,
-  defaultExpires: null,
-});
+import { db,db_write,GetDB,storage } from '../components/Databace';
 
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = 'https://www.total-cloud.net/';

@@ -26,6 +26,7 @@ import Follow from './src/screens/Follow';
 import SurveyList from './src/screens/SurveyList';
 import SurveyAnswer from './src/screens/SurveyAnswer';
 import ThanksPost from './src/screens/ThanksPost';
+import WorkProgress from './src/screens/WorkProgress';
 
 import { Context1 } from './src/components/ExportContext';
 
@@ -144,6 +145,10 @@ export default function App() {
             <Stack.Screen
               name="ThanksPost"
               component={ThanksPost}
+            />
+            <Stack.Screen
+              name="WorkProgress"
+              component={WorkProgress}
             />
           </Stack.Navigator>
         </NavigationContainer>

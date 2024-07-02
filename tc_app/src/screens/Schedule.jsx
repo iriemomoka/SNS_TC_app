@@ -49,18 +49,8 @@ LocaleConfig.locales.jp = {
 LocaleConfig.defaultLocale = 'jp';
 
 import Loading from "../components/Loading";
-import { GetDB,db_select,db_write } from '../components/Databace';
+import { GetDB,db_select,db_write,storage } from '../components/Databace';
 import Footer from "../components/Footer";
-
-import Storage from 'react-native-storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { color } from "react-native-elements/dist/helpers";
-
-// ローカルストレージ読み込み
-const storage = new Storage({
-  storageBackend: AsyncStorage,
-  defaultExpires: null,
-});
 
 const db = SQLite.openDatabase("db");
 
@@ -78,6 +68,8 @@ export default function Schedule(props) {
   const [end, setEnd] = useState(true);
 
   const { navigation, route } = props;
+
+  const [shop_options, setShop_options] = useState([]);
 
   const [events, setEvents] = useState([]);
   const [sub, setSub] = useState({
@@ -262,6 +254,8 @@ export default function Schedule(props) {
   useEffect(() => {
 
     console.log('--------------------------')
+
+    GetDB('staff_mst').then(staff_mst=>staff_mst!=false&&setShop_options(staff_mst[0].shop_option_list.split(",")));
 
     Display(true);
 
@@ -826,7 +820,8 @@ export default function Schedule(props) {
       data: '',
     });
 
-    storage.remove({key:'SCHEDULE-SEARCH'});
+    await storage.remove({key:'SCHEDULE-SEARCH'});
+    await storage.remove({key:'WORKPROGRESS-SEARCH'});
     
     await Delete_staff_db();
     
@@ -995,6 +990,33 @@ export default function Schedule(props) {
             <Text style={styles.menutext}>ありがとう</Text>
           </TouchableOpacity>
         )}
+        {shop_options.includes('13')&&(
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: "WorkProgress",
+                    params: route.params,
+                    websocket: route.websocket,
+                    websocket2: route.websocket2,
+                    profile: route.profile,
+                    previous:'Schedule'
+                  },
+                ],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="chart-box"
+              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
+              size={35}
+            />
+            <Text style={styles.menutext}>業務進捗表</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={styles.menulist}
           onPress={() => logout()}
@@ -1008,7 +1030,7 @@ export default function Schedule(props) {
         </TouchableOpacity>
       </View>
     )
-  },[bell_count])
+  },[bell_count,shop_options])
 
   const scheduleList = useMemo(() => {
 
@@ -1063,6 +1085,7 @@ export default function Schedule(props) {
                         websocket2: route.websocket2,
                         profile: route.profile,
                         cus_name: sub.name,
+                        previous:'Schedule'
                       },
                     ],
                   });
@@ -1394,36 +1417,13 @@ export default function Schedule(props) {
   const eventItemsDay = useMemo(() => {
 
     const result = [];
-    var today = Moment(date_).format("YYYY-MM-DD");
 
     if (events.length == 0) return [];
 
     events.forEach((event, i) => {
 
-      var eventDay = Moment(event.day);
-
-      // 時間部分を取得
-      var hour = eventDay.hour();
-      var minute = eventDay.minute();
-      var second = eventDay.second();
-
-      if (hour === 0 && minute === 0 && second === 0) {
-          eventDay.hour(22).minute(0).second(0);  // 00:00は22時に設定
-      } else if (hour >= 0 && hour < 9) {
-          eventDay.hour(8).minute(0).second(0);   // 0:01〜8:59は8時に設定
-      } else if (hour >= 21 && hour < 24) {
-          eventDay.hour(22).minute(0).second(0);  // 21:00〜23:59は22時に設定
-      }
-
-      var start_ = eventDay.format('YYYY-MM-DD HH:00:00');
-      var end_   = eventDay.add(1, 'hour').format('YYYY-MM-DD HH:00:00');
-
-      today = Moment(event.day).format("YYYY-MM-DD");
-
       const data = {
         id: i,
-        start: start_,
-        end: end_,
         note: event.note,
         color:COLORS[event.customer_select],
         event_id: event.event_id,
@@ -1439,9 +1439,60 @@ export default function Schedule(props) {
 
     });
 
-    return {[today]:result};
+    return result;
 
-  }, [events,date_]);
+  }, [events]);
+
+  const eventTimes = useMemo(() => {
+
+    const result = {
+      "朝": 0,
+      "9:00": 0,
+      "10:00": 0,
+      "11:00": 0,
+      "12:00": 0,
+      "13:00": 0,
+      "14:00": 0,
+      "15:00": 0,
+      "16:00": 0,
+      "17:00": 0,
+      "18:00": 0,
+      "19:00": 0,
+      "20:00": 0,
+      "21:00": 0,
+      "夜": 0,
+    };
+
+    if (events.length == 0) return result;
+
+    const times =  get24Dates();
+
+    for (var e in events) {
+      var item = events[e];
+
+      const item_time = Moment(item.day).format("HH:00");
+
+      const hour_moment = Number(Moment(item.day).format("HH"));
+
+      if (0 < hour_moment && hour_moment < 9) {
+        result['朝'] += 1;
+      } else if (hour_moment == 0 || 22 <= hour_moment && hour_moment < 24) {
+        result['夜'] += 1;
+      }
+
+      for (var t in times) {
+        var time = times[t];
+  
+        if (time == item_time) {
+          result[time] += 1;
+        }
+      }
+
+    }
+
+    return result;
+
+  }, [events]);
 
   const onDateChanged = async(date) => {
     const today = Moment(date_).format("YYYY-MM-DD");
@@ -1449,39 +1500,94 @@ export default function Schedule(props) {
       const selectDate = new Date(date);
       setDate_select(selectDate);
       setDate_(selectDate);
+      setLoading(true);
       await onRefresh(selectDate,null);
     }
   };
 
-  const onDateChanged2 = (date) => {
-    const today = Moment(date_).format("YYYY-MM-DD");
-    if (today != date) {
-      const selectDate = new Date(date);
-      setDate_select(selectDate);
+  const renderEventDay = (time) => {
+
+    const result = [];
+
+    const count = {
+      "朝": 0,
+      "9:00": 0,
+      "10:00": 0,
+      "11:00": 0,
+      "12:00": 0,
+      "13:00": 0,
+      "14:00": 0,
+      "15:00": 0,
+      "16:00": 0,
+      "17:00": 0,
+      "18:00": 0,
+      "19:00": 0,
+      "20:00": 0,
+      "21:00": 0,
+      "夜": 0,
+    };
+
+    for (var i=0;i<eventItemsDay.length;i++) {
+
+      var eventItem = eventItemsDay[i];
+
+      const time_len = eventTimes;
+  
+      var flg = false;
+  
+      const item_time = Moment(eventItem.day).format("HH:00");
+      const hour_moment = Number(Moment(eventItem.day).format("HH"));
+  
+      if (time == item_time) {
+        flg = true;
+      } else if (time == '朝') {
+        if (0 < hour_moment && hour_moment < 9) {
+          flg = true;
+        }
+      } else if (time == '夜') {
+        if (hour_moment == 0 || 22 <= hour_moment && hour_moment < 24) {
+          flg = true;
+        }
+      }
+  
+      if (flg) {
+
+        count[time] += 1;
+  
+        const scrollWidth = Width - 30;
+        const eveLen = time_len[time];
+
+        var eveWid = (((scrollWidth)-((scrollWidth*0.02)*2))/3)-10;
+
+        if (eveLen > 0 && eveLen < 4) {
+          const eveMar = eveLen>1?eveLen-1:0;
+          eveWid = ((scrollWidth)-((scrollWidth*0.02)*eveMar))/eveLen;
+        }
+
+        const data = {
+          ...eventItem,
+          eveWid:eveWid,
+          scrollWidth:scrollWidth,
+          item_time:item_time,
+          marginFlg: count[time]!=eveLen
+        }
+  
+        result.push(data);
+      }
     }
+
+    return result
+
   };
 
-  const renderEventDay = (item) => {
-    return (
-      <TouchableOpacity
-        style={{ backgroundColor: item.color, padding: 5 }}
-        onPress={()=>{
-          setSub(item);
-          setModal(true);
-        }}
-      >
-        <Text style={styles.day_event}>
-          {item.send_check=="1"&&(
-            <Text style={[styles.day_event,{color:'red'}]}>
-              【済】
-            </Text>
-          )}
-          {item.note}
-        </Text>
-        {item.name&&(<Text style={styles.day_event_name}>{item.name}様</Text>)}
-        <Text style={styles.day_event_date}>{Moment(item.day).format("HH:mm")}</Text>
-      </TouchableOpacity>
-    )
+  function get24Dates() {
+    const week = [];
+    week.push("朝");
+    for (let i = 9; i <= 21; i++) {
+      week.push(String(i+":00"));
+    }
+    week.push("夜");
+    return week;
   };
 
   return (
@@ -1833,18 +1939,53 @@ export default function Schedule(props) {
               >
                 <ExpandableCalendar
                   firstDay={1}
-                  onDayPress={(date)=>{onDateChanged2(date.dateString)}}
+                  onDayPress={(date)=>{onDateChanged(date.dateString)}}
                 />
-                <TimelineList
-                  events={eventItemsDay}
-                  timelineProps={{
-                    format24h: true,
-                    overlapEventsSpacing: 7,
-                    rightEdgeSpacing: 24,
-                    start: 8,
-                    end: 23,
-                    renderEvent:((item)=>renderEventDay(item))
+                <FlatList
+                  data={get24Dates()}
+                  renderItem={({ item,index }) => {
+                    return (
+                      <View style={{width:"100%",height:130,borderBottomWidth:0.8,borderColor:'#666',paddingHorizontal:15,paddingVertical:10,backgroundColor:'#fff'}}>
+                        <Text style={{marginBottom:5}}>{item}</Text>
+                        <ScrollView
+                          showsVerticalScrollIndicator={true}
+                          scrollEnabled={eventTimes[item]>3?true:false}
+                          persistentScrollbar={true}
+                          indicatorStyle={'black'}
+                          horizontal={true}
+                        >
+                          {renderEventDay(item).map((r,i)=>{
+                            return (
+                              <TouchableOpacity
+                                style={[
+                                  { backgroundColor: r.color, padding: 5,width:r.eveWid,minWidth:r.eveWid},
+                                  r.marginFlg&&{marginRight:r.scrollWidth*0.02}
+                                ]}
+                                onPress={()=>{
+                                  setSub(r);
+                                  setModal(true);
+                                }}
+                                activeOpacity={0.3}
+                                key={i}
+                              >
+                                <Text style={styles.day_event}>
+                                  {r.send_check=="1"&&(
+                                    <Text style={[styles.day_event,{color:'red'}]}>
+                                      【済】
+                                    </Text>
+                                  )}
+                                  {r.note}
+                                </Text>
+                                {r.name&&(<Text style={styles.day_event_name}>{r.name}様</Text>)}
+                                <Text style={styles.day_event_date}>{r.item_time}</Text>
+                              </TouchableOpacity>
+                            )
+                          })}
+                        </ScrollView>
+                      </View>
+                    )
                   }}
+                  keyExtractor={(item) => item}
                 />
               </CalendarProvider>
             </View>
@@ -1896,7 +2037,7 @@ export default function Schedule(props) {
                         {event.length > 0 && (
                           <ScrollView
                             showsVerticalScrollIndicator={true}
-                            scrollEnabled={event.length>3?true:false}
+                            scrollEnabled={event.length>1?true:false}
                             style={{maxHeight:weekHeight-10}}
                             persistentScrollbar={true}
                             indicatorStyle={'black'}
@@ -2221,8 +2362,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     borderRadius: 10,
-    paddingLeft: 5,
-    paddingRight: 5,
     right: 5,
     top:5,
     zIndex:999,
@@ -2235,8 +2374,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     borderRadius: 10,
-    paddingLeft: 5,
-    paddingRight: 5,
     width:20,
     height:20,
     marginLeft:5
@@ -2431,14 +2568,14 @@ const styles = StyleSheet.create({
     color:'#999',
   },
   day_event: {
-    fontSize:14,
+    fontSize:12,
     fontWeight:'700'
   },
   day_event_name: {
-    fontSize:12,
+    fontSize:10,
   },
   day_event_date :{
-    fontSize:12,
+    fontSize:10,
     color:'#999'
   },
   month_events: {

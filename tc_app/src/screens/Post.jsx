@@ -35,17 +35,8 @@ import Modal from "react-native-modal";
 import { GestureHandlerRootView,PanGestureHandler } from 'react-native-gesture-handler';
 
 import Loading from "../components/Loading";
-import { GetDB,db_select,db_write } from '../components/Databace';
+import { GetDB,db_select,db_write,storage } from '../components/Databace';
 import Footer from "../components/Footer";
-
-import Storage from 'react-native-storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// ローカルストレージ読み込み
-const storage = new Storage({
-  storageBackend: AsyncStorage,
-  defaultExpires: null,
-});
 
 const db = SQLite.openDatabase("db");
 
@@ -1324,8 +1315,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     borderRadius: 10,
-    paddingLeft: 5,
-    paddingRight: 5,
     right: 5,
     top:5,
     zIndex:999,
@@ -1338,8 +1327,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     borderRadius: 10,
-    paddingLeft: 5,
-    paddingRight: 5,
     width:20,
     height:20,
     marginLeft:5

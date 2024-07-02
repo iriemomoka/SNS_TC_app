@@ -13,16 +13,7 @@ import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import Loading from '../components/Loading';
-import { CreateDB, GetDB,db_select,db_write} from '../components/Databace';
-
-import Storage from 'react-native-storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// ローカルストレージ読み込み
-const storage = new Storage({
-  storageBackend: AsyncStorage,
-  defaultExpires: null,
-});
+import { CreateDB, GetDB,db_select,db_write,storage} from '../components/Databace';
 
 const db = SQLite.openDatabase("db");
 

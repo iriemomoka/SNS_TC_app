@@ -29,16 +29,7 @@ import RadioButtonRN from "radio-buttons-react-native";
 import * as SQLite from "expo-sqlite";
 
 import Loading from "../components/Loading";
-import { GetDB, db_select, db_write } from "../components/Databace";
-
-import Storage from "react-native-storage";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-// ローカルストレージ読み込み
-const storage = new Storage({
-  storageBackend: AsyncStorage,
-  defaultExpires: null,
-});
+import { GetDB, db_select, db_write,storage } from "../components/Databace";
 
 const db = SQLite.openDatabase("db");
 

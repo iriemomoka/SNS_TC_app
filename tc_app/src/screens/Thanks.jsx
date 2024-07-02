@@ -37,17 +37,8 @@ import Moment from 'moment';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import Loading from "../components/Loading";
-import { GetDB,db_select,db_write } from '../components/Databace';
+import { GetDB,db_select,db_write,storage } from '../components/Databace';
 import Footer from "../components/Footer";
-
-import Storage from 'react-native-storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// ローカルストレージ読み込み
-const storage = new Storage({
-  storageBackend: AsyncStorage,
-  defaultExpires: null,
-});
 
 const db = SQLite.openDatabase("db");
 

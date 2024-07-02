@@ -10,20 +10,11 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from "react-native-modal";
 
 import Loading from '../components/Loading';
-import { db,db_write } from '../components/Databace';
+import { db,db_write,storage } from '../components/Databace';
 
 import TagInput from 'react-native-tags-input';
 
 import * as ImagePicker from 'expo-image-picker';
-
-import Storage from 'react-native-storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// ローカルストレージ読み込み
-const storage = new Storage({
-  storageBackend: AsyncStorage,
-  defaultExpires: null,
-});
 
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = 'https://www.total-cloud.net/';
@@ -1031,8 +1022,10 @@ async function logout() {
     data: '',
   });
   
-  storage.remove({key:'SCHEDULE-SEARCH'});
-  
+
+  await storage.remove({key:'SCHEDULE-SEARCH'});
+  await storage.remove({key:'WORKPROGRESS-SEARCH'});
+
   await Delete_staff_db();
   
   if(global.sp_token && global.sp_id){

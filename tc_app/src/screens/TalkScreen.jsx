@@ -108,13 +108,14 @@ export default function TalkScreen(props) {
                 navigation.reset({
                   index: 0,
                   routes: [{
-                    name: 'CommunicationHistory' ,
+                    name: route.previous=="Schedule"||route.previous=="WorkProgress"?route.previous:"CommunicationHistory",
                     params: route.params,
                     websocket:route.websocket,
                     websocket2: route.websocket2,
                     profile:route.profile,
                     previous:'TalkScreen',
-                    reload:reload
+                    reload:reload,
+                    withAnimation2: true
                   }],
                 });
               }
@@ -128,13 +129,14 @@ export default function TalkScreen(props) {
         navigation.reset({
           index: 0,
           routes: [{
-            name: 'CommunicationHistory' ,
+            name: route.previous=="Schedule"||route.previous=="WorkProgress"?route.previous:"CommunicationHistory",
             params: route.params,
             websocket:route.websocket,
             websocket2: route.websocket2,
             profile:route.profile,
             previous:'TalkScreen',
-            reload:reload
+            reload:reload,
+            withAnimation2: true
           }],
         });
       }
@@ -164,13 +166,14 @@ export default function TalkScreen(props) {
                           navigation.reset({
                             index: 0,
                             routes: [{
-                              name: 'CommunicationHistory' ,
+                              name: route.previous=="Schedule"||route.previous=="WorkProgress"?route.previous:"CommunicationHistory",
                               params: route.params,
                               websocket:route.websocket,
                               websocket2: route.websocket2,
                               profile:route.profile,
                               previous:'TalkScreen',
-                              reload:reload
+                              reload:reload,
+                              withAnimation2: true
                             }],
                           });
                         }
@@ -184,13 +187,14 @@ export default function TalkScreen(props) {
                   navigation.reset({
                     index: 0,
                     routes: [{
-                      name: 'CommunicationHistory' ,
+                      name: route.previous=="Schedule"||route.previous=="WorkProgress"?route.previous:"CommunicationHistory",
                       params: route.params,
                       websocket:route.websocket,
                       websocket2: route.websocket2,
                       profile:route.profile,
                       previous:'TalkScreen',
-                      reload:reload
+                      reload:reload,
+                      withAnimation2: true
                     }],
                   });
                 }

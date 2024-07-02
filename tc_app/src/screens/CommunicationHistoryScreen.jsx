@@ -34,18 +34,9 @@ import SideMenu from 'react-native-side-menu-updated';
 import * as SQLite from "expo-sqlite";
 
 import Loading from "../components/Loading";
-import { GetDB,db_select,db_write } from '../components/Databace';
+import { GetDB,db_select,db_write,storage } from '../components/Databace';
 import Footer from "../components/Footer";
 import { Context1 } from "../components/ExportContext";
-
-import Storage from 'react-native-storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// ローカルストレージ読み込み
-const storage = new Storage({
-  storageBackend: AsyncStorage,
-  defaultExpires: null,
-});
 
 const db = SQLite.openDatabase("db");
 
@@ -144,6 +135,8 @@ export default function CommunicationHistoryScreen(props) {
 
     console.log('--------------------------')
 
+    GetDB('staff_mst').then(staff_mst=>staff_mst!=false&&setShop_options(staff_mst[0].shop_option_list.split(",")));
+    
     // ログイン時のみサーバーDB見に行く
     if (route.previous == "LogIn") {
 
@@ -152,8 +145,6 @@ export default function CommunicationHistoryScreen(props) {
       });
 
       Display(true);
-
-      GetDB('staff_mst').then(staff_mst=>staff_mst!=false&&setShop_options(staff_mst[0].shop_option_list.split(",")));
 
       var sql = `select unread from chat_room where del_flg != '1';`;
       db_select(sql).then(function(rooms){
@@ -200,6 +191,7 @@ export default function CommunicationHistoryScreen(props) {
                 websocket2: route.websocket2,
                 profile: route.profile,
                 cus_name: cus_data.name,
+                previous:'CommunicationHistory'
               },
             ],
           });
@@ -247,7 +239,8 @@ export default function CommunicationHistoryScreen(props) {
                   websocket: route.websocket,
                   websocket2: route.websocket2,
                   profile: route.profile,
-                  room: room
+                  room: room,
+                  previous:'CommunicationHistory'
                 },
               ],
             });
@@ -266,7 +259,7 @@ export default function CommunicationHistoryScreen(props) {
               websocket:route.websocket,
               websocket2: route.websocket2,
               profile:route.profile,
-              previous:'TimeLine',
+              previous:'CommunicationHistory',
               post: tl_data,
               flg:tl_data["flg"],
             }
@@ -284,7 +277,7 @@ export default function CommunicationHistoryScreen(props) {
               websocket:route.websocket,
               websocket2: route.websocket2,
               profile:route.profile,
-              previous:'TimeLine',
+              previous:'CommunicationHistory',
               flg:1
             }],
           });
@@ -311,6 +304,7 @@ export default function CommunicationHistoryScreen(props) {
             websocket2: route.websocket2,
             profile: route.profile,
             cus_name: route.notifications.name,
+            previous:'CommunicationHistory'
           },
         ],
       });
@@ -377,7 +371,8 @@ export default function CommunicationHistoryScreen(props) {
           websocket:route.websocket,
           websocket2: route.websocket2,
           profile:route.profile,
-          withAnimation: true
+          withAnimation: true,
+          previous:'CommunicationHistory',
         }],
       });
     }
@@ -404,7 +399,8 @@ export default function CommunicationHistoryScreen(props) {
           websocket:route.websocket,
           websocket2: route.websocket2,
           profile:route.profile,
-          flg:1
+          flg:1,
+          previous:'CommunicationHistory',
         }],
       });
     }
@@ -1211,7 +1207,8 @@ export default function CommunicationHistoryScreen(props) {
       data: '',
     });
     
-    storage.remove({key:'SCHEDULE-SEARCH'});
+    await storage.remove({key:'SCHEDULE-SEARCH'});
+    await storage.remove({key:'WORKPROGRESS-SEARCH'});
     
     await Delete_staff_db();
     
@@ -1275,7 +1272,6 @@ export default function CommunicationHistoryScreen(props) {
   }
   
   const headerRight = useMemo(() => {
-    // console.log(shop_options);
     return (
       <View style={{backgroundColor:'#fff',flex:1,paddingTop:25}}>
         <TouchableOpacity
@@ -1381,6 +1377,33 @@ export default function CommunicationHistoryScreen(props) {
             <Text style={styles.menutext}>ありがとう</Text>
           </TouchableOpacity>
         )}
+        {shop_options.includes('13')&&(
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: "WorkProgress",
+                    params: route.params,
+                    websocket: route.websocket,
+                    websocket2: route.websocket2,
+                    profile: route.profile,
+                    previous:'CommunicationHistory'
+                  },
+                ],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="chart-box"
+              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
+              size={35}
+            />
+            <Text style={styles.menutext}>業務進捗表</Text>
+          </TouchableOpacity>
+        )}
         {/* <TouchableOpacity
           style={styles.menulist}
           onPress={() => {
@@ -1475,6 +1498,7 @@ export default function CommunicationHistoryScreen(props) {
                           websocket2: route.websocket2,
                           profile: route.profile,
                           cus_name: item.name,
+                          previous:'CommunicationHistory'
                         },
                       ],
                     });
@@ -1720,8 +1744,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     borderRadius: 10,
-    paddingLeft: 5,
-    paddingRight: 5,
     right: 5,
     top:5,
     zIndex:999,
@@ -1734,8 +1756,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     borderRadius: 10,
-    paddingLeft: 5,
-    paddingRight: 5,
     width:20,
     height:20,
     marginLeft:5

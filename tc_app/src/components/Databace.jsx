@@ -1,4 +1,12 @@
 import * as SQLite from "expo-sqlite";
+import Storage from 'react-native-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// ローカルストレージ読み込み
+exports.storage = new Storage({
+  storageBackend: AsyncStorage,
+  defaultExpires: null,
+});
 
 // DB接続
 exports.db = SQLite.openDatabase("db");

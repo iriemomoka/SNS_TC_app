@@ -1,10 +1,10 @@
 {
   "devToolsPort": 19002,
   "expoServerPort": null,
-  "packagerPort": 19000,
+  "packagerPort": null,
   "packagerPid": null,
-  "expoServerNgrokUrl": "https://xh-3e5.tc-ooishi.tc-app.exp.direct",
-  "packagerNgrokUrl": "https://xh-3e5.tc-ooishi.tc-app.exp.direct",
-  "ngrokPid": 20448,
+  "expoServerNgrokUrl": null,
+  "packagerNgrokUrl": null,
+  "ngrokPid": null,
   "webpackServerPort": null
 }

@@ -25,19 +25,11 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import ColorPicker from 'react-native-color-picker-ios-android'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Popover, { Rect } from 'react-native-popover-view';
-import Storage from 'react-native-storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// ローカルストレージ読み込み
-const storage = new Storage({
-  storageBackend: AsyncStorage,
-  defaultExpires: null,
-});
 
 import Loading from '../components/Loading';
 
 // DB接続
-import { db,db_select } from './Databace';
+import { db,db_select,storage } from './Databace';
 
 // let domain = 'http://family.chinser.co.jp/irie/tc_app/';
 let domain = 'https://www.total-cloud.net/';

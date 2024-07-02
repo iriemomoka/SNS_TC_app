@@ -39,17 +39,8 @@ import * as ImagePicker from 'expo-image-picker';
 import Toast from 'react-native-root-toast';
 
 import Loading from "../components/Loading";
-import { GetDB,db_select,db_write } from '../components/Databace';
+import { GetDB,db_select,db_write,storage } from '../components/Databace';
 import Footer from "../components/Footer";
-
-import Storage from 'react-native-storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// ローカルストレージ読み込み
-const storage = new Storage({
-  storageBackend: AsyncStorage,
-  defaultExpires: null,
-});
 
 const db = SQLite.openDatabase("db");
 
@@ -65,6 +56,8 @@ export default function TimeLine(props) {
   const [isLoading, setLoading] = useState(false);
 
   const { navigation, route } = props;
+
+  const [shop_options, setShop_options] = useState([]);
 
   const [edit, setEdit] = useState(false);
 
@@ -189,6 +182,8 @@ export default function TimeLine(props) {
   useEffect(() => {
 
     console.log('--------------------------')
+
+    GetDB('staff_mst').then(staff_mst=>staff_mst!=false&&setShop_options(staff_mst[0].shop_option_list.split(",")));
 
     Display();
 
@@ -638,7 +633,8 @@ export default function TimeLine(props) {
       data: '',
     });
     
-    storage.remove({key:'SCHEDULE-SEARCH'});
+    await storage.remove({key:'SCHEDULE-SEARCH'});
+    await storage.remove({key:'WORKPROGRESS-SEARCH'});
     
     await Delete_staff_db();
     
@@ -805,6 +801,33 @@ export default function TimeLine(props) {
           />
           <Text style={styles.menutext}>ありがとう</Text>
         </TouchableOpacity>
+        {shop_options.includes('13')&&(
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: "WorkProgress",
+                    params: route.params,
+                    websocket: route.websocket,
+                    websocket2: route.websocket2,
+                    profile: route.profile,
+                    previous:'TimeLine'
+                  },
+                ],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="chart-box"
+              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
+              size={35}
+            />
+            <Text style={styles.menutext}>業務進捗表</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={styles.menulist}
           onPress={() => logout()}
@@ -818,7 +841,7 @@ export default function TimeLine(props) {
         </TouchableOpacity>
       </View>
     )
-  },[bell_count])
+  },[bell_count,shop_options])
 
   const ChallengeView = useMemo(()=>{
     return (
@@ -2279,8 +2302,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     borderRadius: 10,
-    paddingLeft: 5,
-    paddingRight: 5,
     right: 5,
     top:5,
     zIndex:999,
@@ -2293,8 +2314,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     borderRadius: 10,
-    paddingLeft: 5,
-    paddingRight: 5,
     width:20,
     height:20,
     marginLeft:5
