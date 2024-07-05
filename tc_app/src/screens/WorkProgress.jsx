@@ -378,7 +378,7 @@ export default function WorkProgress(props) {
               navigation.reset({
                 index: 0,
                 routes: [{
-                  name: route.previous!="TalkScreen"?route.previous:"CommunicationHistory",
+                  name: route.previous!="TalkScreen"&&route.previous!="SupportChat"?route.previous:"CommunicationHistory",
                   params: route.params,
                   websocket:route.websocket,
                   websocket2: route.websocket2,
@@ -553,7 +553,6 @@ export default function WorkProgress(props) {
     })
     .then(data => {
       if (data) {
-        console.log(data)
         setDate_select(new Date(data.date));
         setStaff_Value(data.staff_value);
         onRefresh(new Date(data.date));
@@ -952,6 +951,31 @@ export default function WorkProgress(props) {
               size={35}
             />
             <Text style={styles.menutext}>ありがとう</Text>
+          </TouchableOpacity>
+        )}
+        {!global.fc_flg&&(
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [{
+                  name: 'SupportChat' ,
+                  params: route.params,
+                  websocket:route.websocket,
+                  websocket2: route.websocket2,
+                  profile:route.profile,
+                  previous:'WorkProgress',
+                }],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="face-agent"
+              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
+              size={35}
+            />
+            <Text style={[styles.menutext,{fontSize:16}]}>サポートチャット</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity

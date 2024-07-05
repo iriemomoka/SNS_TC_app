@@ -27,6 +27,7 @@ import SurveyList from './src/screens/SurveyList';
 import SurveyAnswer from './src/screens/SurveyAnswer';
 import ThanksPost from './src/screens/ThanksPost';
 import WorkProgress from './src/screens/WorkProgress';
+import SupportChat from './src/screens/SupportChat';
 
 import { Context1 } from './src/components/ExportContext';
 
@@ -149,6 +150,10 @@ export default function App() {
             <Stack.Screen
               name="WorkProgress"
               component={WorkProgress}
+            />
+            <Stack.Screen
+              name="SupportChat"
+              component={SupportChat}
             />
           </Stack.Navigator>
         </NavigationContainer>

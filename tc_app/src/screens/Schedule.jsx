@@ -1017,6 +1017,31 @@ export default function Schedule(props) {
             <Text style={styles.menutext}>業務進捗表</Text>
           </TouchableOpacity>
         )}
+        {!global.fc_flg&&(
+          <TouchableOpacity
+            style={styles.menulist}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [{
+                  name: 'SupportChat' ,
+                  params: route.params,
+                  websocket:route.websocket,
+                  websocket2: route.websocket2,
+                  profile:route.profile,
+                  previous:'Schedule',
+                }],
+              });
+            }}
+          >
+            <MaterialCommunityIcons
+              name="face-agent"
+              color={global.fc_flg?"#FF8F8F":"#6C9BCF"}
+              size={35}
+            />
+            <Text style={[styles.menutext,{fontSize:16}]}>サポートチャット</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={styles.menulist}
           onPress={() => logout()}
