@@ -569,6 +569,7 @@ export default function ContractRegister(props) {
     formData.append('ID',route.params.account);
     formData.append('pass',route.params.password);
     formData.append('act',!hojin?'contract':'cjs_contract');
+    formData.append('fc_flg',global.fc_flg);
     formData.append('val[app_flg]',1);
     formData.append('val[id]',route.customer);
     formData.append('val[shop_id]',route.params.shop_id);
@@ -752,6 +753,7 @@ export default function ContractRegister(props) {
     formData.append('act','save_sms_data');
     formData.append('ID',route.params.account);
     formData.append('pass',route.params.password);
+    formData.append('fc_flg',global.fc_flg);
     formData.append('val[id]',route.customer);
     formData.append('val[category_key]',sms_send_flg);
     formData.append('val[sms_send_tel]',sms_send_tel);
@@ -799,6 +801,7 @@ export default function ContractRegister(props) {
     formData2.append('category_key',sms_send_flg);
     formData2.append('tel',sms_send_tel);
     formData2.append('app_flg',1);
+    formData.append('fc_flg',global.fc_flg);
 
     const result2 = await sendFetch(formData2,"2");
 
@@ -834,6 +837,7 @@ export default function ContractRegister(props) {
     formData.append('act','save_sms_file_data');
     formData.append('ID',route.params.account);
     formData.append('pass',route.params.password);
+    formData.append('fc_flg',global.fc_flg);
     formData.append('val[id]',route.customer);
     formData.append('val[category_key]',sms_send_flg);
     formData.append('val[shop_id]',route.params.shop_id);
@@ -1171,6 +1175,9 @@ export default function ContractRegister(props) {
     
   },[form,Keiyaku1,Keiyaku2,reroad,staffs,contract_sms,key_btn,agreement_btn])
 
+  const chk = !global.fc_flg?"#81aee6":"#e6c4f5";
+  const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
+
   return (
     <>
     <Loading isLoading={isLoading} />
@@ -1182,24 +1189,24 @@ export default function ContractRegister(props) {
         <View style={{flexDirection:'row',width:'100%'}}>
           <TouchableOpacity
             onPress={()=>{setForm(0)}}
-            style={form==0?styles.active_tab:styles.inactivetab}
+            style={form==0?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
           >
             <Text style={styles.tab_txt}>申込手続き</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={()=>{setForm(1)}}
-            style={form==1?styles.active_tab:styles.inactivetab}
+            style={form==1?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
           >
             <Text style={styles.tab_txt}>契約準備</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={()=>{setForm(2)}}
-            style={form==2?styles.active_tab:styles.inactivetab}
+            style={form==2?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
           >
             <Text style={styles.tab_txt}>契 約</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.table}>
+        <View style={[styles.table,{backgroundColor:spc}]}>
           {ContractList}
           {(show && Platform.OS === 'android') && (
             <DateTimePicker
@@ -1453,7 +1460,7 @@ export default function ContractRegister(props) {
             </Modal>
           )}
           <View style={{flexDirection: 'row',alignSelf: 'center'}}>
-            <TouchableOpacity onPress={()=>{onSubmit()}} style={styles.submit}>
+            <TouchableOpacity onPress={()=>{onSubmit()}} style={[styles.submit,{backgroundColor:chk}]}>
               <Text style={styles.submitText}>保　存</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={()=>{ClearData()}} style={styles.clear}>
@@ -1466,9 +1473,6 @@ export default function ContractRegister(props) {
     </>
   );
 }
-
-const chk = !global.fc_flg?"#81aee6":"#e6c4f5";
-const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
 
 const styles = StyleSheet.create({
   header_img: {
@@ -1498,7 +1502,6 @@ const styles = StyleSheet.create({
     alignItems:'center',
     borderTopLeftRadius:10,
     borderTopRightRadius:10,
-    backgroundColor:spc,
   },
   inactivetab: {
     width:"33%",
@@ -1517,7 +1520,6 @@ const styles = StyleSheet.create({
   },
   table: {
     width:'99%',
-    backgroundColor:spc,
     paddingHorizontal:5,
     paddingBottom:15
   },
@@ -1605,7 +1607,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width:100,
     height:40,
-    backgroundColor:chk,
     shadowColor: "#a3a3a3",
     shadowOffset: { width: 1, height: 1 },
     shadowOpacity:1,

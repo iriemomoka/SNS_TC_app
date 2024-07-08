@@ -714,6 +714,7 @@ export default function Schedule(props) {
     var flg = sub.send_check == '1' ? '' : '1';
 
     let formData = new FormData();
+    formData.append('fc_flg',global.fc_flg);
 
     if (sub.customer_select == "0") {
       formData.append('val[app_flg]',1);

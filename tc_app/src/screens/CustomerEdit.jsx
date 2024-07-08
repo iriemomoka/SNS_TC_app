@@ -1678,6 +1678,9 @@ export default function CustomerEdit(props) {
     )
   },[contract])
 
+  const chk = !global.fc_flg?"#81aee6":"#e6c4f5";
+  const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
+
   return (
     <>
     <Loading isLoading={isLoading} />
@@ -1692,31 +1695,31 @@ export default function CustomerEdit(props) {
           <View style={{flexDirection:'row',width:'100%'}}>
             <TouchableOpacity
               onPress={()=>{setForm(0)}}
-              style={form==0?styles.active_tab:styles.inactivetab}
+              style={form==0?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
             >
               <Text style={styles.tab_txt}>基 本</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={()=>{setForm(1)}}
-              style={form==1?styles.active_tab:styles.inactivetab}
+              style={form==1?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
             >
               <Text style={styles.tab_txt}>反 響</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={()=>{setForm(2)}}
-              style={form==2?styles.active_tab:styles.inactivetab}
+              style={form==2?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
             >
               <Text style={styles.tab_txt}>来 店</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={()=>{setForm(3)}}
-              style={form==3?styles.active_tab:styles.inactivetab}
+              style={form==3?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
             >
               <Text style={styles.tab_txt}>契 約</Text>
             </TouchableOpacity>
           </View>
           
-          <View style={styles.table}>
+          <View style={[styles.table,{backgroundColor:spc}]}>
             {
               form==0?BasicList:
               form==1?ReverberationList:
@@ -1724,7 +1727,7 @@ export default function CustomerEdit(props) {
               form==3?ContractList:(<></>)
             }
           </View>
-          <TouchableOpacity onPress={()=>{onSubmit()}} style={styles.submit}>
+          <TouchableOpacity onPress={()=>{onSubmit()}} style={[styles.submit,{backgroundColor:chk}]}>
             <Text style={styles.submitText}>保　存</Text>
           </TouchableOpacity>
         </View>
@@ -1733,9 +1736,6 @@ export default function CustomerEdit(props) {
     </>
   );
 }
-
-const chk = !global.fc_flg?"#81aee6":"#e6c4f5";
-const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
 
 const styles = StyleSheet.create({
   header_img: {
@@ -1765,7 +1765,6 @@ const styles = StyleSheet.create({
     alignItems:'center',
     borderTopLeftRadius:10,
     borderTopRightRadius:10,
-    backgroundColor:spc,
   },
   inactivetab: {
     width:"25%",
@@ -1784,7 +1783,6 @@ const styles = StyleSheet.create({
   },
   table: {
     width:'100%',
-    backgroundColor:spc,
     paddingHorizontal:12,
     paddingBottom:15
   },
@@ -1897,7 +1895,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width:100,
     height:40,
-    backgroundColor:chk,
     shadowColor: "#a3a3a3",
     shadowOffset: { width: 1, height: 1 },
     shadowOpacity:1,

@@ -3576,6 +3576,7 @@ export function MyModal5(props){
           let formData = new FormData();
 
           formData.append('app_flg',1);
+          formData.append('fc_flg',global.fc_flg);
           formData.append('customer_id',route.customer);
           formData.append('shop_id',route.params.shop_id);
           formData.append('control','senpuki_transfer_mail');
@@ -4468,6 +4469,7 @@ export function MyModal5_condition(props){
     }
     
     formData.append('app_flg',1);
+    formData.append('fc_flg',global.fc_flg);
     formData.append('act','article_search_senpuki');
     formData.append('val[id]',route.customer);
     formData.append('val[shop_id]',route.params.shop_id);
@@ -5156,6 +5158,7 @@ export function MyModal6(props){
     formData.append('ID',route.params.account);
     formData.append('pass',route.params.password);
     formData.append('act','register_all');
+    formData.append('fc_flg',global.fc_flg);
     formData.append('val[app_flg]',1);
     formData.append('val[id]',id,);
     formData.append('val[customer_id]',customer_id);

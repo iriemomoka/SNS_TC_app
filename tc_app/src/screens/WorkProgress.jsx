@@ -629,6 +629,7 @@ export default function WorkProgress(props) {
     formData.append('customer_id',customer_id);
     formData.append('act','getDetailsData');
     formData.append('app_flg',1);
+    formData.append('fc_flg',global.fc_flg);
 
     return new Promise((resolve, reject)=>{
       fetch(domain + "php/ajax/work_progress.php",
@@ -1251,6 +1252,7 @@ export default function WorkProgress(props) {
     formData.append('user_id',route.params.account);
     formData.append('data',JSON.stringify(return_data));
     formData.append('app_flg',1);
+    formData.append('fc_flg',global.fc_flg);
 
     const save = () => {
       return new Promise((resolve, reject)=>{
@@ -1344,6 +1346,9 @@ export default function WorkProgress(props) {
 
   }
 
+  const chk = !global.fc_flg?"#81aee6":"#e6c4f5";
+  const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
+  
   return (
     <SideMenu
       menu={headerRight}
@@ -1462,37 +1467,37 @@ export default function WorkProgress(props) {
         <View style={{flexDirection:'row',width:'100%'}}>
           <TouchableOpacity
             onPress={()=>{setForm(0)}}
-            style={form==0?styles.active_tab:styles.inactivetab}
+            style={form==0?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
           >
             <Text style={styles.tab_txt}>来店</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={()=>{setForm(1)}}
-            style={form==1?styles.active_tab:styles.inactivetab}
+            style={form==1?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
           >
             <Text style={styles.tab_txt}>再来</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={()=>{setForm(2)}}
-            style={form==2?styles.active_tab:styles.inactivetab}
+            style={form==2?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
           >
             <Text style={styles.tab_txt}>物担</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={()=>{setForm(3)}}
-            style={form==3?styles.active_tab:styles.inactivetab}
+            style={form==3?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
           >
             <Text style={styles.tab_txt}>繰越</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={()=>{setForm(4)}}
-            style={[form==4?styles.active_tab:styles.inactivetab,{width:"17%"}]}
+            style={[form==4?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab,{width:"17%"}]}
           >
             <Text style={styles.tab_txt}>他業者</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={()=>{setForm(5)}}
-            style={form==5?styles.active_tab:styles.inactivetab}
+            style={form==5?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
           >
             <Text style={styles.tab_txt}>付帯</Text>
           </TouchableOpacity>
@@ -2207,7 +2212,7 @@ export default function WorkProgress(props) {
                       </View>
                     )
                   })}
-                  <TouchableOpacity onPress={()=>{onSubmit()}} style={styles.submit}>
+                  <TouchableOpacity onPress={()=>{onSubmit()}} style={[styles.submit,{backgroundColor:chk}]}>
                     <Text style={styles.submitText}>保　存</Text>
                   </TouchableOpacity>
                 </ScrollView>
@@ -2369,9 +2374,6 @@ export default function WorkProgress(props) {
   );
 }
 
-const chk = !global.fc_flg?"#81aee6":"#e6c4f5";
-const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
-
 const styles = StyleSheet.create({
   bell: {
     justifyContent:"center",
@@ -2472,7 +2474,6 @@ const styles = StyleSheet.create({
     alignItems:'center',
     borderTopLeftRadius:10,
     borderTopRightRadius:10,
-    backgroundColor:spc,
   },
   inactivetab: {
     width:"16.6%",
@@ -2491,7 +2492,6 @@ const styles = StyleSheet.create({
   },
   table: {
     width:'100%',
-    backgroundColor:spc,
     paddingHorizontal:10,
     paddingVertical:15,
     marginBottom:10
@@ -2630,7 +2630,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width:100,
     height:40,
-    backgroundColor:chk,
     shadowColor: "#a3a3a3",
     shadowOffset: { width: 1, height: 1 },
     shadowOpacity:1,

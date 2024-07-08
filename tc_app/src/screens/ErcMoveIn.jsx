@@ -34,6 +34,9 @@ export default function ErcMoveIn(props) {
   
   const { navigation, route } = props;
   
+  const chk = !global.fc_flg?"#81aee6":"#e6c4f5";
+  const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
+  
   const [isLoading, setLoading] = useState(false);
 
   // 0：物件情報 1：申込情報１ 2:申込情報２
@@ -1202,6 +1205,7 @@ export default function ErcMoveIn(props) {
     formData.append('customer_id',route.customer);
     formData.append('act', "getErcData");
     formData.append('app_flg', "1");
+    formData.append('fc_flg',global.fc_flg);
 
     return new Promise((resolve, reject)=>{
       fetch(domain+'php/ajax/erc_move_in.php',
@@ -1230,6 +1234,7 @@ export default function ErcMoveIn(props) {
     formData.append('shop_id',route.params.shop_id);
     formData.append('customer_id',route.customer);
     formData.append('act', "getQRCode");
+    formData.append('fc_flg',global.fc_flg);
 
     return new Promise((resolve, reject)=>{
       fetch(domain+'php/ajax/erc_move_in.php',
@@ -1254,6 +1259,7 @@ export default function ErcMoveIn(props) {
   const getErcDataAddress = useCallback((flg,data) => {
     
     let formData = new FormData();
+    formData.append('fc_flg',global.fc_flg);
 
     if (flg == "zip") {
       formData.append('act', "searchAddress");
@@ -1289,6 +1295,7 @@ export default function ErcMoveIn(props) {
     formData.append('customer_id',route.customer);
     formData.append('act', act);
     formData.append('app_flg', "1");
+    formData.append('fc_flg',global.fc_flg);
 
     if (act == "setCheckData") {
       let check = !move_in.check_flg ? 1 : 0;
@@ -1742,7 +1749,7 @@ export default function ErcMoveIn(props) {
           />
         </View>
         <View style={{flexDirection:'row',alignSelf: 'center'}}>
-          <TouchableOpacity onPress={()=>{erc_data_create_btn()}} style={styles.submit}>
+          <TouchableOpacity onPress={()=>{erc_data_create_btn()}} style={[styles.submit,{backgroundColor:chk}]}>
             <Text style={styles.submitText}>登　録</Text>
           </TouchableOpacity>
         </View>
@@ -2334,13 +2341,13 @@ export default function ErcMoveIn(props) {
         </View>
         {move_in.erc_send_flg != "1"&&(
           <View style={{flexDirection:'row',alignSelf: 'center'}}>
-            <TouchableOpacity onPress={()=>{erc_customer_update_btn("1")}} style={styles.submit}>
+            <TouchableOpacity onPress={()=>{erc_customer_update_btn("1")}} style={[styles.submit,{backgroundColor:chk}]}>
               <Text style={styles.submitText}>保　存</Text>
             </TouchableOpacity>
             {move_in.guarantee_company != "1" || !move_in.erc_type || !move_in.agree_timestamp?(
               <></>
             ):(
-              <TouchableOpacity onPress={()=>{erc_customer_send_btn("1")}} style={[styles.submit,{marginLeft:10}]}>
+              <TouchableOpacity onPress={()=>{erc_customer_send_btn("1")}} style={[styles.submit,{marginLeft:10,backgroundColor:chk}]}>
                 <Text style={styles.submitText}>えるく送信</Text>
               </TouchableOpacity>
             )}
@@ -3158,13 +3165,13 @@ export default function ErcMoveIn(props) {
         )}
         {move_in.erc_send_flg != "1"&&(
           <View style={{flexDirection:'row',alignSelf: 'center'}}>
-            <TouchableOpacity onPress={()=>{erc_customer_update_btn("2")}} style={styles.submit}>
+            <TouchableOpacity onPress={()=>{erc_customer_update_btn("2")}} style={[styles.submit,{backgroundColor:chk}]}>
               <Text style={styles.submitText}>保　存</Text>
             </TouchableOpacity>
             {move_in.guarantee_company != "1" || !move_in.erc_type || !move_in.agree_timestamp?(
               <></>
             ):(
-              <TouchableOpacity onPress={()=>{erc_customer_send_btn("2")}} style={[styles.submit,{marginLeft:10}]}>
+              <TouchableOpacity onPress={()=>{erc_customer_send_btn("2")}} style={[styles.submit,{marginLeft:10,backgroundColor:chk}]}>
                 <Text style={styles.submitText}>えるく送信</Text>
               </TouchableOpacity>
             )}
@@ -4253,13 +4260,13 @@ export default function ErcMoveIn(props) {
         )}
         {move_in.erc_send_flg != "1"&&(
           <View style={{flexDirection:'row',alignSelf: 'center'}}>
-            <TouchableOpacity onPress={()=>{erc_customer_update_btn("1")}} style={styles.submit}>
+            <TouchableOpacity onPress={()=>{erc_customer_update_btn("1")}} style={[styles.submit,{backgroundColor:chk}]}>
               <Text style={styles.submitText}>保　存</Text>
             </TouchableOpacity>
             {move_in.guarantee_company != "1" || !move_in.erc_type || !move_in.agree_timestamp?(
               <></>
             ):(
-              <TouchableOpacity onPress={()=>{erc_customer_send_btn("1")}} style={[styles.submit,{marginLeft:10}]}>
+              <TouchableOpacity onPress={()=>{erc_customer_send_btn("1")}} style={[styles.submit,{marginLeft:10,backgroundColor:chk}]}>
                 <Text style={styles.submitText}>えるく送信</Text>
               </TouchableOpacity>
             )}
@@ -4863,13 +4870,13 @@ export default function ErcMoveIn(props) {
           )}
           {move_in.erc_send_flg != "1"&&(
             <View style={{flexDirection:'row',alignSelf: 'center'}}>
-              <TouchableOpacity onPress={()=>{erc_customer_update_btn("2")}} style={styles.submit}>
+              <TouchableOpacity onPress={()=>{erc_customer_update_btn("2")}} style={[styles.submit,{backgroundColor:chk}]}>
                 <Text style={styles.submitText}>保　存</Text>
               </TouchableOpacity>
               {move_in.guarantee_company != "1" || !move_in.erc_type || !move_in.agree_timestamp?(
                 <></>
               ):(
-                <TouchableOpacity onPress={()=>{erc_customer_send_btn("2")}} style={[styles.submit,{marginLeft:10}]}>
+                <TouchableOpacity onPress={()=>{erc_customer_send_btn("2")}} style={[styles.submit,{marginLeft:10,backgroundColor:chk}]}>
                   <Text style={styles.submitText}>えるく送信</Text>
                 </TouchableOpacity>
               )}
@@ -5194,13 +5201,13 @@ export default function ErcMoveIn(props) {
           </View>
           {move_in.erc_send_flg != "1"&&(
             <View style={{flexDirection:'row',alignSelf: 'center'}}>
-              <TouchableOpacity onPress={()=>{erc_customer_update_btn("2")}} style={styles.submit}>
+              <TouchableOpacity onPress={()=>{erc_customer_update_btn("2")}} style={[styles.submit,{backgroundColor:chk}]}>
                 <Text style={styles.submitText}>保　存</Text>
               </TouchableOpacity>
               {move_in.guarantee_company != "1" || !move_in.erc_type || !move_in.agree_timestamp?(
                 <></>
               ):(
-                <TouchableOpacity onPress={()=>{erc_customer_send_btn("2")}} style={[styles.submit,{marginLeft:10}]}>
+                <TouchableOpacity onPress={()=>{erc_customer_send_btn("2")}} style={[styles.submit,{marginLeft:10,backgroundColor:chk}]}>
                   <Text style={styles.submitText}>えるく送信</Text>
                 </TouchableOpacity>
               )}
@@ -5265,6 +5272,7 @@ export default function ErcMoveIn(props) {
     formData.append('customer_id',route.customer);
     formData.append('act', "setErcData");
     formData.append('app_flg', "1");
+    formData.append('fc_flg',global.fc_flg);
     formData.append('data', JSON.stringify(input_data));
 
     const setErcData = (data) => {
@@ -5574,12 +5582,14 @@ export default function ErcMoveIn(props) {
     formData.append('registration', JSON.stringify(registration));
     formData.append('resident', JSON.stringify(registration2));
     formData.append('app_flg', "1");
+    formData.append('fc_flg',global.fc_flg);
     
     // 本人確認書類(画像)を保存
     let formData2 = new FormData();
     formData2.append('act', "setErcImage");
     formData2.append('customer_id',route.customer);
     formData2.append('app_flg', "1");
+    formData2.append('fc_flg',global.fc_flg);
 
     if (filedata1) {
       let filename = filedata1.assets[0].uri.split('/').pop();
@@ -5701,6 +5711,7 @@ export default function ErcMoveIn(props) {
     formData.append('act', "sendErc");
     formData.append('type', type);
     formData.append('app_flg', "1");
+    formData.append('fc_flg',global.fc_flg);
 
     const sendErc = (data) => {
       return new Promise((resolve, reject)=>{
@@ -7051,7 +7062,7 @@ export default function ErcMoveIn(props) {
           <View style={{flexDirection:'row',width:'100%'}}>
             <TouchableOpacity
               onPress={()=>{setForm(0)}}
-              style={form==0?styles.active_tab:styles.inactivetab}
+              style={form==0?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab}
             >
               <Text style={styles.tab_txt}>物件情報</Text>
             </TouchableOpacity>
@@ -7059,20 +7070,20 @@ export default function ErcMoveIn(props) {
               <>
                 <TouchableOpacity
                   onPress={()=>{setForm(1)}}
-                  style={[form==1?styles.active_tab:styles.inactivetab,{width:'33.5%'}]}
+                  style={[form==1?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab,{width:'33.5%'}]}
                 >
                   <Text style={styles.tab_txt}>申込情報①</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={()=>{setForm(2)}}
-                  style={[form==2?styles.active_tab:styles.inactivetab,{width:'33.5%'}]}
+                  style={[form==2?[styles.active_tab,{backgroundColor:spc}]:styles.inactivetab,{width:'33.5%'}]}
                 >
                   <Text style={styles.tab_txt}>申込情報②</Text>
                 </TouchableOpacity>
               </>
             )}
           </View>
-          <View style={styles.table}>
+          <View style={[styles.table,{backgroundColor:spc}]}>
             {
               form==0?Move_inList:
               form==1?
@@ -7216,9 +7227,6 @@ export default function ErcMoveIn(props) {
   );
 }
 
-const chk = !global.fc_flg?"#81aee6":"#e6c4f5";
-const spc = !global.fc_flg?"#dce6fc":"#ffe8f0";
-
 const styles = StyleSheet.create({
   header_img: {
     width:150,
@@ -7247,7 +7255,6 @@ const styles = StyleSheet.create({
     alignItems:'center',
     borderTopLeftRadius:10,
     borderTopRightRadius:10,
-    backgroundColor:spc,
   },
   inactivetab: {
     width:"33%",
@@ -7306,7 +7313,6 @@ const styles = StyleSheet.create({
   },
   table: {
     width:'100%',
-    backgroundColor:spc,
     paddingHorizontal:12,
     paddingBottom:15
   },
@@ -7505,7 +7511,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width:100,
     height:40,
-    backgroundColor:chk,
     shadowColor: "#a3a3a3",
     shadowOffset: { width: 1, height: 1 },
     shadowOpacity:1,
