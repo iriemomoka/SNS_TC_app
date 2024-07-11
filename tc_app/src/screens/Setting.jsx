@@ -434,7 +434,9 @@ export default function Setting(props) {
 	      // キャンセルじゃなかった場合【ローディングを挟む】
 	      if(!result["cancelled"]) setLoading(true);
 
-        let filename = result.uri.split('/').pop();
+        var Image_ = result.assets[0];
+      
+        let filename = Image_.uri.split('/').pop();
   
         let match = /\.(\w+)$/.exec(filename);
         let type = match ? `image/${match[1]}` : `image`;
@@ -448,7 +450,7 @@ export default function Setting(props) {
         formData.append('img_no',img_no);
         formData.append('act','save_staff_img');
         formData.append('formdata_flg',1);
-        formData.append('file', { uri: result.uri, name: filename, type });
+        formData.append('file', { uri: Image_.uri, name: filename, type });
         formData.append('fc_flg',global.fc_flg);
 
           // サーバー上のDBを更新して返す。

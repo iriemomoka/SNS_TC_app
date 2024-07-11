@@ -29,7 +29,7 @@ import * as Notifications from "expo-notifications";
 import { Feather } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import SideMenu from 'react-native-side-menu-updated';
-import * as SQLite from "expo-sqlite";
+import * as SQLite from 'expo-sqlite/legacy';
 import Modal from "react-native-modal";
 import { useHeaderHeight } from '@react-navigation/elements';
 import Constants from 'expo-constants';

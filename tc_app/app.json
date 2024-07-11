@@ -2,7 +2,7 @@
   "expo": {
     "name": "TC",
     "slug": "totalcloud",
-    "version": "2.7.5",
+    "version": "2.7.6",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -23,7 +23,7 @@
     "ios": {
       "bundleIdentifier": "com.totalcloud.totalcloud",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "2.7.5",
+      "buildNumber": "2.7.6",
       "infoPlist": {
         "UIRequiresFullScreen": "YES",
         "CFBundleDevelopmentRegion": "ja_JP",
@@ -35,7 +35,7 @@
       "supportsTablet": true
     },
     "android": {
-      "versionCode": 79,
+      "versionCode": 80,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
@@ -89,17 +89,21 @@
         "expo-notifications",
         {
           "icon": "./assets/notificationicon.png",
-          "sounds": ["./assets/notification_sound.wav"]
+          "sounds": [
+            "./assets/notification_sound.wav"
+          ]
         }
       ],
       [
         "expo-build-properties",
         {
-         "android": {
-           "usesCleartextTraffic": true
-         }
+          "android": {
+            "usesCleartextTraffic": true
+          }
         }
-      ]
+      ],
+      "expo-font",
+      "expo-asset"
     ],
     "owner": "tc_ooishi"
   },

@@ -8,14 +8,14 @@
       "distribution": "internal"
     },
     "preview": {
-      "node": "16.18.1",
+      "node": "18.19.0",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
-      "node": "16.18.1"
+      "node": "18.19.0"
     }
   },
   "submit": {

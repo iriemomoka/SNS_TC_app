@@ -6,7 +6,7 @@ import { FloatingLabelInput } from 'react-native-floating-label-input';
 import { Feather } from '@expo/vector-icons';
 import Toast from 'react-native-root-toast';
 import VersionCheck from 'react-native-version-check-expo'
-import * as SQLite from "expo-sqlite";
+import * as SQLite from 'expo-sqlite/legacy';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';

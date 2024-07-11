@@ -30,7 +30,7 @@ import {
 import * as Notifications from "expo-notifications";
 import { MaterialCommunityIcons,Ionicons,Octicons } from '@expo/vector-icons';
 import SideMenu from 'react-native-side-menu-updated';
-import * as SQLite from "expo-sqlite";
+import * as SQLite from 'expo-sqlite/legacy';
 import DropDownPicker, { Item } from "react-native-dropdown-picker";
 import { Feather } from "@expo/vector-icons";
 import Modal from "react-native-modal";

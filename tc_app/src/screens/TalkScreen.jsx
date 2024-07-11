@@ -9,7 +9,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as Notifications from 'expo-notifications';
 import GestureRecognizer from 'react-native-swipe-gestures';
 import * as Haptics from 'expo-haptics';
-import { Camera } from 'expo-camera';
+import { useCameraPermissions } from 'expo-camera';
 import { Audio } from 'expo-av';
 import SideMenu from 'react-native-side-menu-updated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -1085,10 +1085,12 @@ export default function TalkScreen(props) {
   	  if (!result.cancelled) {
         
         setLoading(true);
-        setModal0(false)
+        setModal0(false);
 
-        let filename = result.uri.split('/').pop();
-
+        var Image_ = result.assets[0];
+      
+        let filename = Image_.uri.split('/').pop();
+  
         let match = /\.(\w+)$/.exec(filename);
         let type = match ? `image/${match[1]}` : `image`;
         
@@ -1099,7 +1101,7 @@ export default function TalkScreen(props) {
         formData.append('act','get_talk');
         formData.append('LINE_flg',1);
         formData.append('formdata_flg',1);
-        formData.append('file', { uri: result.uri, name: filename, type });
+        formData.append('file', { uri: Image_.uri, name: filename, type });
         formData.append('fc_flg',global.fc_flg);
         
         fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
@@ -1117,7 +1119,7 @@ export default function TalkScreen(props) {
               [{
                 _id:String(Number(messages[0]._id)+1),
                 text:'',
-                image:result.uri,
+                image:Image_.uri,
                 createdAt: new Date(),
                 user:{
                   _id: 1,
@@ -1158,13 +1160,15 @@ export default function TalkScreen(props) {
       setModal0(false);
     } else {
   	  
-  	  if (result.type != "cancel") {
+  	  if (!result.cancelled) {
         
         setLoading(true);
         setModal0(false)
 
-        let filename = result.uri.split('/').pop();
-
+        var File_ = result.assets[0];
+      
+        let filename = File_.uri.split('/').pop();
+  
         let match = /\.(\w+)$/.exec(filename);
         let type = match ? `image/${match[1]}` : `image`;
         
@@ -1176,7 +1180,7 @@ export default function TalkScreen(props) {
         formData.append('LINE_flg',1);
         formData.append('file_flg',1);
         formData.append('formdata_flg',1);
-        formData.append('file', { uri: result.uri, name: filename, type });
+        formData.append('file', { uri: File_.uri, name: filename, type });
         formData.append('fc_flg',global.fc_flg);
         
         fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
@@ -1228,7 +1232,7 @@ export default function TalkScreen(props) {
 	  }
   };
 	
-  const [c_permission, c_requestPermission] = Camera.useCameraPermissions();
+  const [c_permission, c_requestPermission] = useCameraPermissions();
 
   const CameraPermissionsCheck = async() => {
 

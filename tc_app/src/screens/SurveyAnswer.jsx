@@ -26,7 +26,7 @@ import { Feather } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import SideMenu from "react-native-side-menu-updated";
 import RadioButtonRN from "radio-buttons-react-native";
-import * as SQLite from "expo-sqlite";
+import * as SQLite from 'expo-sqlite/legacy';
 
 import Loading from "../components/Loading";
 import { GetDB, db_select, db_write,storage } from "../components/Databace";

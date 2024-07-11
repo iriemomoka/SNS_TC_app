@@ -20,11 +20,11 @@ package io.invertase.googlemobileads;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.ViewGroup;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.views.view.ReactViewGroup;
 import com.google.ads.mediation.admob.AdMobAdapter;
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
 
 public class ReactNativeGoogleMobileAdsCommon {
 
-  static AdSize getAdSizeForAdaptiveBanner(String preDefinedAdSize, ReactViewGroup reactViewGroup) {
+  static AdSize getAdSizeForAdaptiveBanner(String preDefinedAdSize, ViewGroup reactViewGroup) {
 
     try {
       Display display =
@@ -63,7 +63,7 @@ public class ReactNativeGoogleMobileAdsCommon {
     }
   }
 
-  static AdSize getAdSize(String preDefinedAdSize, ReactViewGroup reactViewGroup) {
+  static AdSize getAdSize(String preDefinedAdSize, ViewGroup reactViewGroup) {
     if (preDefinedAdSize.matches(
         "ADAPTIVE_BANNER|ANCHORED_ADAPTIVE_BANNER|INLINE_ADAPTIVE_BANNER")) {
       return ReactNativeGoogleMobileAdsCommon.getAdSizeForAdaptiveBanner(
@@ -178,8 +178,15 @@ public class ReactNativeGoogleMobileAdsCommon {
 
       for (Map.Entry<String, Object> entry : customTargeting.entrySet()) {
         String key = entry.getKey();
-        String value = (String) entry.getValue();
-        builder.addCustomTargeting(key, value);
+        Object value = entry.getValue();
+
+        if (value instanceof String) {
+          String finalValue = (String) value;
+          builder.addCustomTargeting(key, finalValue);
+        } else {
+          ArrayList finalValue = (ArrayList) value;
+          builder.addCustomTargeting(key, finalValue);
+        }
       }
     }
 

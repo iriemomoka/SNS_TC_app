@@ -24,7 +24,7 @@ import { Dropdown } from 'react-native-element-dropdown';
 import * as Notifications from "expo-notifications";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from '@react-native-community/datetimepicker';
-import * as SQLite from "expo-sqlite";
+import * as SQLite from 'expo-sqlite/legacy';
 import Moment from 'moment';
 import Modal from "react-native-modal";
 import SideMenu from 'react-native-side-menu-updated';

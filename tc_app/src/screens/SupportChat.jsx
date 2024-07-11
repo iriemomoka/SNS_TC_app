@@ -884,7 +884,7 @@ export default function SupportChat(props) {
 
       var Image_ = result.assets[0];
 
-      if(Image_.size > 10000000) {
+      if(Image_.fileSize > 10000000) {
         Alert.alert('','ファイルのサイズが大きすぎます(10MBまで)');
         return;
       }

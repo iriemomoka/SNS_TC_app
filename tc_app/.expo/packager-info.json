@@ -1,6 +1,6 @@
 {
   "devToolsPort": 19002,
-  "expoServerPort": null,
+  "expoServerPort": 19000,
   "packagerPort": 19000,
   "packagerPid": null,
   "expoServerNgrokUrl": "https://xh-3e5.tc-ooishi.tc-app.exp.direct",

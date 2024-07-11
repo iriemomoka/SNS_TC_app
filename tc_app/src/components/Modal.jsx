@@ -15,9 +15,7 @@ import Autocomplete from 'react-native-autocomplete-input';
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
 import RadioButtonRN from 'radio-buttons-react-native';
-import * as SQLite from "expo-sqlite";
-import * as Permissions from "expo-permissions";
-import { Camera } from 'expo-camera';
+import { useCameraPermissions } from 'expo-camera';
 import { Audio } from 'expo-av';
 import RenderHtml from 'react-native-render-html';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
@@ -372,7 +370,7 @@ export function MyModal1(props) {
     setModal4(!Modal4);
     setModal4_flg(flg);
   };
-  const [c_permission, c_requestPermission] = Camera.useCameraPermissions();
+  const [c_permission, c_requestPermission] = useCameraPermissions();
 
   // HTMLエディタのキーボードを閉じる
   const keyboardClose = () => {
@@ -602,12 +600,15 @@ export function MyModal1(props) {
     });
 
     if (result) {
-      if(result.size > 7000000) {
+
+      var Image_ = result.assets[0];
+
+      if(Image_.fileSize > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
       }else{
-        result.name = result.uri.split('/').pop();
+        result.name = Image_.uri.split('/').pop();
         setFilename(result.name);
-        setFiledata(result);
+        setFiledata(Image_);
       }
       
     }

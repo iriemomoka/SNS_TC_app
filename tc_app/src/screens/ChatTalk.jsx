@@ -1328,7 +1328,9 @@ export default function ChatTalk(props) {
 
     if (!result.canceled) {
       
-      let filename = result.uri.split('/').pop();
+      var File_ = result.assets[0];
+      
+      let filename = File_.uri.split('/').pop();
 
       let match = /\.(\w+)$/.exec(filename);
       let type = match ? `image/${match[1]}` : `image`;
@@ -1352,7 +1354,7 @@ export default function ChatTalk(props) {
       formData.append('message_flg',"2");
       formData.append('note',"");
       formData.append('user_list',user_list);
-      formData.append('file', { uri: result.uri, name: filename, type });
+      formData.append('file', { uri: File_.uri, name: filename, type });
       formData.append('formdata_flg',1);
       
       fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
