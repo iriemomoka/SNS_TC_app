@@ -2,7 +2,7 @@
   "expo": {
     "name": "TC",
     "slug": "totalcloud",
-    "version": "2.7.6",
+    "version": "2.7.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -23,7 +23,7 @@
     "ios": {
       "bundleIdentifier": "com.totalcloud.totalcloud",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "2.7.6",
+      "buildNumber": "2.7.7",
       "infoPlist": {
         "UIRequiresFullScreen": "YES",
         "CFBundleDevelopmentRegion": "ja_JP",
@@ -35,7 +35,7 @@
       "supportsTablet": true
     },
     "android": {
-      "versionCode": 80,
+      "versionCode": 81,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
