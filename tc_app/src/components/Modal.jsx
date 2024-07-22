@@ -1,4 +1,4 @@
-import React,{ useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React,{ useState, useEffect, useMemo, useRef } from 'react';
 import {
   StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, TouchableWithoutFeedback, Linking, Keyboard, Dimensions
 } from 'react-native';
@@ -23,6 +23,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import ColorPicker from 'react-native-color-picker-ios-android'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Popover, { Rect } from 'react-native-popover-view';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import Loading from '../components/Loading';
 
@@ -1053,6 +1054,7 @@ export function MyModal1(props) {
         mail_format={mail_format}
         editorRef={editorRef}
         inputCursorPosition={inputCursorPosition}
+        line_flg={false}
       />
       <MyModal4 
         isVisible={Modal4}
@@ -1731,7 +1733,7 @@ export function MyModal2(props){
 
 export function MyModal3(props){
   
-  const { route,isVisible,onSwipeComplete,onClose,msgtext,property,inquiry,station_list,address,c_d,mail_format,editorRef,inputCursorPosition,flg } = props;
+  const { route,isVisible,onSwipeComplete,onClose,msgtext,property,inquiry,station_list,address,c_d,mail_format,editorRef,inputCursorPosition,flg,line_flg } = props;
   
   const [isRecommended, setRecommended] = useState(false);
 
@@ -2307,11 +2309,92 @@ export function MyModal3(props){
           editorRef.current.setContentHTML(insertMsg);
         }
       }
+    } else {
+      if(props.setMsgtext) {
+        props.setMsgtext("");
+      } else if (props.setNote) {
+        props.setNote("");
+        if (mail_format == '1') {
+          editorRef.current.setContentHTML("");
+        }
+      }
     }
   },[insertMsg])
-
-  const ListData = flg=="property"?(search_results?search_results:property):inquiry;
   
+  var ListData = useMemo(()=>{
+
+    var result = [];
+
+    if (flg=="property") {
+      if (search_results) {
+        result = search_results?search_results:[];
+      } else {
+        result = property?property:[];
+      }
+    } else {
+      result = inquiry?inquiry:[];
+    }
+
+    if (result.length > 0) {
+      result.forEach(obj => {
+        obj.check = false;
+      });
+    }
+
+    return result;
+
+  },[flg,search_results,property,inquiry]);
+
+  function carouselSelectedCheck(index) {
+    
+    ListData[index]["check"] = !ListData[index]["check"];
+
+		let contact_text = "";
+    let list = [];
+
+		ListData.forEach((v) => {
+      if (v["check"]) {
+
+        if (contact_text == "") contact_text = "【物件挿入(カルーセル)】\n";
+
+        let customerId = route.customer;
+        let articleId  = v["article_id"];
+        let fc_flg     = !global.fc_flg ? 0 : 1;
+        let uri        = "https://www.total-cloud.net/show/"+customerId+"/1/"+articleId+"/"+fc_flg+"/";
+        
+        contact_text += v["img_gaikan"].replace("?size=70&","?size=250&") + "\n",
+        contact_text += v["article_name"] + " " + v["room_no"] + "号室" + "\n";
+        contact_text += "最寄駅: " + v["line_name1"] + v["station_name1"] + "\n";
+        contact_text += uri + "\n\n";
+
+        let carouselData = {
+          "img": v["img_gaikan"].replace("?size=70&","?size=500&"),
+          "title": v["article_name"] + " " + v["room_no"] + "号室",
+          "text": "最寄駅: " + v["line_name1"] + v["station_name1"],
+          "uri":   uri,
+        };
+
+        list.push(carouselData);
+      }
+		});
+
+    setInsertMsg(contact_text);
+    props.setCarouselList(list);
+    setChecked(!checked);
+
+  }
+  
+  function carouselCancelCheck() {
+		ListData.forEach((v) => {
+      v["check"] = false;
+    })
+    setInsertMsg("");
+    props.setCarouselList([]);
+    setChecked(!checked);
+  }
+
+  const [checked, setChecked] = useState(true);
+
   return (
     <Modal
       isVisible={isVisible}
@@ -2338,9 +2421,16 @@ export function MyModal3(props){
             指定されている条件でおすすめ物件が表示されます。{"\n"}
             [挿入]ボタンをクリックすると文中に挿入されます。
             </Text>
-            <TouchableOpacity style={styles.searchBtn} onPress={recommended}>
-              <Text>オススメ物件を探す</Text>
-            </TouchableOpacity>
+            <View style={{flexDirection:'row'}}>
+              <TouchableOpacity style={styles.searchBtn} onPress={recommended}>
+                <Text>オススメ物件を探す</Text>
+              </TouchableOpacity>
+              {line_flg&&(
+                <TouchableOpacity style={[styles.searchBtn,{marginLeft:'4%'}]} onPress={()=>carouselCancelCheck()}>
+                  <Text>カルーセル全解除</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </>
         ):(
           <Text style={[styles.templateText,{marginBottom:10}]}>
@@ -2749,11 +2839,11 @@ export function MyModal3(props){
             </View>
           </View>
         </Modal>
-        {ListData&&ListData.length>0?(
+        {ListData.length>0?(
           <FlatList 
             horizontal
-            data={flg=="property"?(search_results?search_results:property):inquiry}
-            renderItem={({ item }) =>
+            data={ListData}
+            renderItem={({ item,index }) =>
               (
                 <TouchableOpacity
                   activeOpacity={1}
@@ -2761,7 +2851,7 @@ export function MyModal3(props){
                 >
                   <View style={styles.propertyInner}>
                     <Text style={styles.propertyTitle}>{item.article_name}{"\n"}
-                    <Text style={{fontSize:12}}>{item.floor}階</Text></Text>
+                    <Text style={{fontSize:12}}>{item.room_no}号室</Text></Text>
                     <View style={styles.propertyInfo}>
                       <Text>沿線：</Text><Text>{item.line_name1}</Text>
                     </View>
@@ -2783,16 +2873,33 @@ export function MyModal3(props){
                       </View>
                     </View>
                     <TouchableOpacity
-                      style={styles.propertyInner}
                       onPress={() => proInsert(item)}
                     >
-                      <Image source={require('../../assets/btn_app.png')} />
+                      <LinearGradient
+                        colors={['#999', '#333']}
+                        style={styles.propertyBtn}
+                        >
+                        <Text style={styles.propertyBtn_txt}>URL挿入</Text>
+                      </LinearGradient>
                     </TouchableOpacity>
+                    {(line_flg&&flg=="property")&&(
+                      <TouchableOpacity
+                        onPress={() => carouselSelectedCheck(index)}
+                      >
+                        <LinearGradient
+                          colors={item.check?['#cc3333','#990033']:['#838383', '#464646']}
+                          style={styles.propertyBtn}
+                          >
+                          <Text style={styles.propertyBtn_txt}>カルーセル</Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </TouchableOpacity>
               )
             }
             keyExtractor={(item) => `${item.article_id}`}
+            extraData={checked}
           />
         ):(
           <View style={{height:150,justifyContent:'center',alignItems:'center'}}>
@@ -5455,7 +5562,7 @@ const styles = StyleSheet.create({
   searchBtn:{
     justifyContent: 'center',
     alignItems: 'center',
-    width:180,
+    width:"48%",
     height:30,
     marginVertical:10,
     borderWidth:1,
@@ -5488,6 +5595,21 @@ const styles = StyleSheet.create({
     width:80,
     height:60,
     marginRight:5,
+  },
+  propertyBtn: {
+    paddingVertical:5,
+    backgroundColor:'#999',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius:10,
+    marginTop:8
+  },
+  propertyBtn_txt: {
+    textAlign:'center',
+    color:'#fff',
+    fontSize:14,
+    letterSpacing:5,
+    fontWeight:'700'
   },
   suggestText: {
     fontSize: 15,

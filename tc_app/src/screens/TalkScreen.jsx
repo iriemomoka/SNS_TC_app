@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
-  Platform, StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity, TextInput, Linking, LogBox, BackHandler, AppState, Dimensions, Image
+  Platform, StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity, TextInput, Linking, LogBox, BackHandler, AppState, Dimensions, Image, FlatList
 } from 'react-native';
-import { GiftedChat, Actions, Send, InputToolbar, Bubble, Time, Composer, Message  } from 'react-native-gifted-chat';
+import { GiftedChat, Actions, Send, InputToolbar, Bubble, Time, Composer, Message, MessageText } from 'react-native-gifted-chat';
 import Feather from 'react-native-vector-icons/Feather';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -58,6 +58,8 @@ export default function TalkScreen(props) {
   
   const [modal3_flg, setModal3_flg] = useState("property");
   const [modal4_flg, setModal4_flg] = useState("fixed");
+
+  const [carouselList, setCarouselList] = useState([]);
 
   const [reservation,setReservation] = useState([]);
   const [mail, setMail] = useState([]);
@@ -669,6 +671,7 @@ export default function TalkScreen(props) {
   useEffect(() => {
     
     if (talk != null && talk.length > 0) {
+      var IndexList = {};
       const msg = talk.map(com => {
 
         if (com.del_flg){
@@ -678,6 +681,10 @@ export default function TalkScreen(props) {
         var img_flg = false;
         if (com.file_path != null && (com.file_path.length) > 0) {
           img_flg = true;
+        }
+
+        if(com.line_note && (com.line_note).indexOf("【物件挿入(カルーセル)】") === 0){
+          IndexList[com.communication_id] = 0;
         }
         
         if (com.speaker === 'お客様') {
@@ -718,10 +725,13 @@ export default function TalkScreen(props) {
         }
       }).filter(data => data);
       setMessages(msg);
+      setCurrentIndex(IndexList);
     }
 
   }, [talk])
-  
+
+  const [currentIndex, setCurrentIndex] = useState({});
+
   const renderBubble = props => {
     
     const message_sender_id = props.currentMessage.user._id;
@@ -762,6 +772,128 @@ export default function TalkScreen(props) {
     );
     
   };
+
+  const renderMessageText = props => {
+
+    let carouselContent = props.currentMessage.text;
+
+    if(carouselContent.indexOf("【物件挿入(カルーセル)】") === 0){
+      return null;
+    } else {
+      return (<MessageText {...props} />)
+    }
+
+  }
+
+  const flatListRefs = useRef({});
+  const [carouselWidth, setCarouselWidth] = useState(230);
+
+  const renderCarouselView = useCallback((props) => {
+
+    let carouselContent = props.currentMessage.text;
+    let id = props.currentMessage._id;
+
+    if (carouselContent.indexOf("【物件挿入(カルーセル)】") === 0) {
+      let c_i = currentIndex[id] ?? 0;
+
+      if (carouselContent.indexOf("\r\n") > -1) {
+        carouselContent = carouselContent.replace(/\r\n/g, '\n');
+      }
+      carouselContent = carouselContent.replace("【物件挿入(カルーセル)】\n", "").split("\n\n");
+      carouselContent = carouselContent.filter(element => element !== "");
+
+      const handleNextPress = () => {
+        if (c_i < carouselContent.length - 1) {
+          c_i = c_i + 1;
+          flatListRefs.current[id]?.scrollToIndex({ index: c_i, animated: true });
+
+          setCurrentIndex(c => ({...c,[id]: c_i}));
+        }
+      };
+
+      const handlePrevPress = () => {
+        if (c_i > 0) {
+          c_i = c_i - 1;
+          flatListRefs.current[id]?.scrollToIndex({ index: c_i, animated: true });
+
+          setCurrentIndex(c => ({...c,[id]: c_i}));
+        }
+      };
+      
+      const handleLayout = (event) => {
+        const { width } = event.nativeEvent.layout;
+        setCarouselWidth(width);
+      };
+
+      return (
+        <View style={{margin:20,marginTop:10}} onLayout={handleLayout}>
+          <View style={{flexDirection:'row'}}>
+            <Text style={styles.carouselTxt}>【物件挿入(カルーセル)】</Text>
+            <Text style={[styles.carouselTxt,{marginLeft:'auto'}]}>{String(currentIndex[id]+1)}/{String(carouselContent.length)}</Text>
+          </View>
+          <View style={styles.carousel}>
+            {currentIndex[id] > 0&&(
+              <TouchableOpacity
+                style={[styles.carouselBtn, { left: -15, backgroundColor:!global.fc_flg?"#6C9BCF":"#FF8F8F" }]}
+                onPress={handlePrevPress}
+              >
+                <MaterialCommunityIcons
+                  name="chevron-left"
+                  color={"#fff"}
+                  size={35}
+                />
+              </TouchableOpacity>
+            )}
+            <FlatList
+              scrollEnabled={false}
+              ref={(ref) => { flatListRefs.current[id] = ref; }}
+              horizontal
+              data={carouselContent}
+              renderItem={({ item }) => {
+                let logArray = item.split("\n");
+                if (logArray.length < 2) return null;
+                return (
+                  <TouchableOpacity
+                    activeOpacity={1}
+                    style={[styles.property,{width:carouselWidth}]}
+                    onPress={()=>{console.log(carouselWidth)}}
+                  >
+                    <Image
+                      style={styles.propertyPhoto}
+                      source={{ uri: logArray[0] }}
+                    />
+                    <Text style={styles.propertyTitle}>{logArray[1]}</Text>
+                    <Text style={styles.propertyInfo}>{logArray[2]}駅</Text>
+                    <TouchableOpacity
+                      onPress={() => { Linking.openURL(logArray[3]) }}
+                      style={styles.propertyBtn}
+                    >
+                      <Text style={styles.propertyBtn_txt}>詳細</Text>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                );
+              }}
+              keyExtractor={(item, index) => index.toString()}
+            />
+            {currentIndex[id] < carouselContent.length - 1&&(
+              <TouchableOpacity
+                style={[styles.carouselBtn, { right: -15, backgroundColor: !global.fc_flg?"#6C9BCF":"#FF8F8F" }]}
+                onPress={handleNextPress}
+              >
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  color={"#fff"}
+                  size={35}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      );
+    } else {
+      return null;
+    }
+  }, [currentIndex,carouselWidth]);
   
   // コミュニケーション履歴データベース登録
   async function Insert_communication_db(communication){
@@ -882,6 +1014,7 @@ export default function TalkScreen(props) {
       formData.append('act','get_talk');
       formData.append('LINE_flg',1);
       formData.append('note',add[1]);
+      formData.append('carousel',JSON.stringify(carouselList));
       formData.append('formdata_flg',1);
       formData.append('fc_flg',global.fc_flg);
       
@@ -1702,7 +1835,7 @@ export default function TalkScreen(props) {
         text={msgtext?msgtext:''}
         onInputTextChanged={text => {setMsgtext(text)}}
         placeholder={customer.line?"テキストを入力してください":""}
-        disableComposer={customer.line&&customer!=false?false:true}
+        disableComposer={(customer.line&&customer!=false)&&carouselList.length==0?false:true}
         onSend={() => onSend(['LINE送信',msgtext],'line')}
         dateFormat={'MM/DD(ddd)'}
         renderMessage={(props) => {
@@ -1710,8 +1843,8 @@ export default function TalkScreen(props) {
             <GestureRecognizer
               onSwipeRight={()=>{backAction()}}
               config={{
-                velocityThreshold: 0.3,
-                directionalOffsetThreshold: 80,
+                velocityThreshold: 0.8,
+                directionalOffsetThreshold: 150,
               }}
               style={{flex: 1}}
             >
@@ -1754,6 +1887,12 @@ export default function TalkScreen(props) {
               />
             )
           }
+        }}
+        renderMessageText={renderMessageText}
+        renderCustomView={renderCarouselView}
+        extraData={{currentIndex}}
+        shouldUpdateMessage = {(props, nextProps) => {
+          return props.extraData.currentIndex !== nextProps.extraData.currentIndex
         }}
         renderMessageImage={(props)=>{
           if (Array.isArray(props.currentMessage.image)) {
@@ -1974,6 +2113,8 @@ export default function TalkScreen(props) {
                 setMsgtext={setMsgtext}
                 inputCursorPosition={inputCursorPosition}
                 mail_format={'0'}
+                line_flg={true}
+                setCarouselList={setCarouselList}
               />
               <MyModal4
                 isVisible={modal4}
@@ -2099,5 +2240,60 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     margin: 3,
     resizeMode: 'cover',
-  }
+  },
+  carousel: {
+    flexDirection:'row',
+    alignItems:'center',
+    position:'relative'
+  },
+  carouselTxt: {
+    fontSize:12,
+    marginBottom:3,
+    color:'#999',
+  },
+  carouselBtn: {
+    position:'absolute',
+    zIndex:999,
+    width:35,
+    height:35,
+    justifyContent:'center',
+    alignItems:'center',
+    borderRadius:100
+  },
+  property: {
+    justifyContent: 'center',
+    borderWidth:1,
+    borderColor:'#666',
+    padding:10,
+    marginRight:10,
+  },
+  propertyTitle: {
+    height:50,
+    fontSize:16,
+    backgroundColor:'#D9EEF4',
+    padding:2,
+    marginTop:10,
+  },
+  propertyInfo:{
+    marginVertical:5,
+  },
+  propertyPhoto: {
+    width:"100%",
+    height:150
+  },
+  propertyBtn: {
+    paddingVertical:5,
+    backgroundColor:'#999',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius:100,
+    marginTop:5
+  },
+  propertyBtn_txt: {
+    textAlign:'center',
+    color:'#fff',
+    fontSize:14,
+    letterSpacing:5,
+    fontWeight:'700'
+  },
 });
