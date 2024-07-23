@@ -45,6 +45,7 @@ export default function CustomerEdit(props) {
     sex: "",
     age: "",
     work: "",
+    memo: "",
   });
 
   const sexList = [
@@ -232,6 +233,7 @@ export default function CustomerEdit(props) {
         work: cus.work,
         shop_type: Number(cus.shop_type),
         rental_type: Number(cus.rental_type),
+        memo: cus.memo?cus.memo:"",
       })
     }
 
@@ -600,7 +602,7 @@ export default function CustomerEdit(props) {
     .then((response) => response.json())
     .then((json) => {
       if(json != "false") {
-        Alert.alert("登録にしました");
+        Alert.alert("登録しました");
       } else {
         Alert.alert("登録に失敗しました");
       }
@@ -819,6 +821,17 @@ export default function CustomerEdit(props) {
             style={{flexDirection:'row',marginVertical:5}}
             textStyle={{fontSize:16,marginLeft:10}}
             circleSize={13}
+          />
+        </View>
+        <View style={styles.input}>
+          <Text style={styles.label}>メモ</Text>
+          <TextInput
+            onChangeText={(text) => setCustomer(state => ({ ...state, memo: text }))}
+            value={customer["memo"]}
+            style={styles.textarea}
+            multiline={true}
+            disableFullscreenUI={true}
+            numberOfLines={11}
           />
         </View>
       </>

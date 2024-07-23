@@ -15,7 +15,7 @@ import SideMenu from 'react-native-side-menu-updated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import Loading from '../components/Loading';
-import { MyModal0, MyModal1, MyModal2, MyModal3, MyModal4, MyModal5, MyModal6 } from '../components/Modal';
+import { MyModal0, MyModal1, MyModal2, MyModal3, MyModal4, MyModal5, MyModal6, MyModal7 } from '../components/Modal';
 
 import { GetDB,db_select,db_write } from '../components/Databace';
 
@@ -55,6 +55,7 @@ export default function TalkScreen(props) {
   const [modal4, setModal4] = useState(false);
   const [modal5, setModal5] = useState(false);
   const [modal6, setModal6] = useState(false);
+  const [modal7, setModal7] = useState(false);
   
   const [modal3_flg, setModal3_flg] = useState("property");
   const [modal4_flg, setModal4_flg] = useState("fixed");
@@ -1795,6 +1796,26 @@ export default function TalkScreen(props) {
       openMenuOffset={Width * 0.5}
     >
       <Loading isLoading={isLoading} />
+      {customer.main&&(
+        <>
+        <TouchableOpacity
+          style={{backgroundColor:'#ccc',paddingHorizontal:10,paddingVertical:3}}
+          onPress={()=>setModal7(true)}
+          activeOpacity={1}
+        >
+          <Text style={{fontSize:12}} numberOfLines={1}>メモ：{customer.main.memo??customer.main.memo}</Text>
+        </TouchableOpacity>
+        <MyModal7
+          isVisible={modal7}
+          setModal7={setModal7}
+          onClose={()=>{setModal7(false)}}
+          route={route}
+          customer_id={customer.main.customer_id}
+          memo={customer.main.memo}
+          setCustomer={setCustomer}
+        />
+        </>
+      )}
       {(typeof customer === "object" && ("beginning_communication" in customer) && (customer.beginning_communication != null)) && (
         <>
         <MyModal6

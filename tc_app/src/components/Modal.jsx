@@ -1445,7 +1445,7 @@ export function MyModal1(props) {
                     </>
                   ) : (
                     <>
-                      <MyModal7 
+                      <MyColorPicker 
                         isVisible={color}
                         openTextColor={openTextColor}
                         setTextColor={setTextColor}
@@ -5390,7 +5390,7 @@ export function MyModal6(props){
   );
 }
 
-export function MyModal7(props){
+export function MyColorPicker(props){
   
   const { isVisible, openTextColor, setTextColor, textColor } = props;
   
@@ -5416,6 +5416,117 @@ export function MyModal7(props){
           onColorChangeComplete={(color) => {setTextColor(color)}}
         />
       </View>
+    </Modal>
+  );
+}
+
+export function MyModal7(props){
+  
+  const { isVisible,setModal7,route,customer_id,memo,setCustomer } = props;
+  
+  const [memo_, setMemo_] = useState("");
+
+  useEffect(() => {
+    if (memo) setMemo_(memo);
+  }, [memo]);
+  
+  function onSubmit(){
+    
+    let formData = new FormData();
+    formData.append('ID',route.params.account);
+    formData.append('pass',route.params.password);
+    formData.append('act','memo_edit');
+    formData.append('formdata_flg',1);
+    formData.append('fc_flg',global.fc_flg);
+    formData.append('val[customer_id]',customer_id);
+    formData.append('val[memo]',memo_);
+    
+    fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+    {
+      method: 'POST',
+      body: formData,
+      header: {
+        'content-type': 'multipart/form-data',
+      },
+    })
+    .then((response) => response.json())
+    .then((json) => {
+      if (json) {
+        setCustomer(json);
+        onClose();
+      } else {
+        Alert.alert('エラー','変更に失敗しました');
+      }
+    })
+    .catch((error) => {
+      console.log(error)
+      Alert.alert('エラー','変更に失敗しました');
+    })
+    
+  }
+  
+  const onClose = () => {
+    setModal7(false);
+  }
+  
+  const [keyboardStatus, setKeyboardStatus] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardStatus(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardStatus(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+  
+  return (
+    <Modal
+      isVisible={isVisible}
+      backdropOpacity={0.5}
+      animationInTiming={300}
+      animationOutTiming={500}
+      animationIn={'slideInDown'}
+      animationOut={'slideOutUp'}
+      onBackdropPress={()=>{
+        keyboardStatus?Keyboard.dismiss():onClose()
+      }}
+    >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <TouchableWithoutFeedback
+          onPress={()=>Keyboard.dismiss()}
+        >
+          <View style={[{height:320},styles.bottom,styles.modalInner]}>
+            <TouchableOpacity
+              style={styles.close}
+              onPress={onClose}
+            >
+              <Feather name='x-circle' color='gray' size={35} />
+            </TouchableOpacity>
+            <View style={styles.form}>
+              <View style={styles.input}>
+                <Text style={styles.label}>メモ</Text>
+                <TextInput
+                  onChangeText={(text) => {setMemo_(text)}}
+                  value={memo_}
+                  style={styles.textarea}
+                  multiline={true}
+                  disableFullscreenUI={true}
+                  numberOfLines={11}
+                />
+              </View>
+              <TouchableOpacity onPress={onSubmit} style={styles.submit}>
+                <Text style={styles.submitText}>変　更</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
