@@ -3280,7 +3280,9 @@ export function MyModal5(props){
   const [contact_tel,setContact_tel] = useState(false);
   const [free_radio,setFree_radio] = useState(false);
   const [free_text,setFree_Text] = useState('');
-  
+
+  const [contact_monster,setContact_monster] = useState(false);
+
   const [condition, setCondition] = useState(false);
   
   // 希望条件
@@ -3459,10 +3461,42 @@ export function MyModal5(props){
           value:'無し'
         },
       ]
-      
+
+      const mail_monster = [
+          {
+            label:'設定する',
+            value:'1'
+          },
+          {
+            label:'しない',
+            value:''
+          },
+        ]
+
       return (
         <>
         <ScrollView style={{height:280}}>
+
+          <View style={{flexDirection: 'row'}}>
+            <Text style={styles.cus_label}>【メールモンスター（自動追客）】</Text>
+            <Text style={[styles.cus_label,{color:'red'}]}>※必須</Text>
+          </View>
+          <RadioButtonRN
+            data={mail_monster}
+            value={contact_monster}
+            selectedBtn={(e) => {
+              setContact_monster(e.value);
+            }}
+            animationTypes={['rotate']}
+            activeColor={'#191970'}
+            initial={1}
+            style={{ flexDirection: 'row',  marginBottom:10 }}
+            boxStyle={{ width:120, marginLeft:10}}
+            textStyle={{ marginLeft:5}}
+            box={false}
+            circleSize={16}
+          />
+
           <Text style={styles.cus_label}>【氏名】</Text>
           <Text style={styles.cus_contents}>
             {name}
@@ -3490,7 +3524,7 @@ export function MyModal5(props){
           <Text style={styles.cus_contents}>
             {note}
           </Text>
-          <View style={{flexDirection: 'row'}}>
+          <View style={contact_monster==''?[{display:'none'}]:{flexDirection: 'row'}}>
             <Text style={styles.cus_label}>【電話連絡】</Text>
             <Text style={[styles.cus_label,{color:'red'}]}>※必須</Text>
           </View>
@@ -3503,15 +3537,15 @@ export function MyModal5(props){
             animationTypes={['rotate']}
             activeColor={'#191970'}
             initial={0}
-            style={{marginBottom:10}}
+            style={contact_monster==''?[{display:'none'}]:{marginBottom:10}}
             box={false}
             circleSize={16}
           />
-          <View style={{flexDirection: 'row'}}>
+          <View style={contact_monster==''?[{display:'none'}]:{flexDirection: 'row'}}>
             <Text style={styles.cus_label}>【フリー入力の有無】</Text>
             <Text style={contact_tel=='TEL電話なし'||contact_tel=='応答なし'?[styles.cus_label,{color:'red'}]:{display:'none'}}>※必須</Text>
           </View>
-          <View pointerEvents={contact_tel=='TEL電話なし'||contact_tel=='応答なし' ? 'auto' : 'none'}>
+          <View pointerEvents={contact_tel=='TEL電話なし'||contact_tel=='応答なし' ? 'auto' : 'none'} style={contact_monster==''?[{display:'none'}]:{}}>
             <RadioButtonRN
               data={data}
               value={contact_tel}
@@ -3526,18 +3560,18 @@ export function MyModal5(props){
               circleSize={16}
             />
           </View>
-          <Text style={styles.cus_label}>【フリー入力の内容】</Text>
+          <Text style={contact_monster==''?[{display:'none'}]:styles.cus_label}>【フリー入力の内容】</Text>
           <TextInput
             onChangeText={(text) => {setFree_Text(text)}}
             value={free_text}
-            style={[styles.textarea,{marginVertical:10}]}
+            style={[styles.textarea,{marginVertical:10}, contact_monster==''?[{display:'none'}]:{}]}
             multiline={true}
             disableFullscreenUI={true}
             numberOfLines={11}
             editable={contact_tel!='電話で会話した' && free_radio != '無し'?true:false}
           />
-          <Text style={styles.cus_label}>【希望条件の登録】</Text>
-          <View style={styles.follow_item}>
+          <Text style={contact_monster==''?[{display:'none'}]: styles.cus_label}>【希望条件の登録】</Text>
+          <View style={contact_monster==''?[{display:'none'}]: styles.follow_item}>
             <Text style={[styles.cus_label,{marginHorizontal:20}]}>希望条件1</Text>
             <TouchableOpacity onPress={() => {openCondition(1)}} style={styles.follow_item_btn}>
               <Text>設定</Text>
@@ -3549,7 +3583,7 @@ export function MyModal5(props){
               <Text>確認</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.follow_item}>
+          <View style={contact_monster==''?[{display:'none'}]: styles.follow_item}>
             <Text style={[styles.cus_label,{marginHorizontal:20}]}>希望条件2</Text>
             <TouchableOpacity onPress={() => {openCondition(2)}} style={styles.follow_item_btn}>
               <Text>設定</Text>
@@ -3561,7 +3595,7 @@ export function MyModal5(props){
               <Text>確認</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.follow_item}>
+          <View style={contact_monster==''?[{display:'none'}]: styles.follow_item}>
             <Text style={[styles.cus_label,{marginHorizontal:20}]}>希望条件3</Text>
             <TouchableOpacity
               onPress={() => {openCondition(3)}}
@@ -3576,7 +3610,7 @@ export function MyModal5(props){
               <Text>確認</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.follow_item}>
+          <View style={contact_monster==''?[{display:'none'}]: styles.follow_item}>
             <Text style={[styles.cus_label,{marginHorizontal:20}]}>希望条件4</Text>
             <TouchableOpacity onPress={() => {openCondition(4)}} style={styles.follow_item_btn}>
               <Text>設定</Text>
@@ -3634,21 +3668,24 @@ export function MyModal5(props){
     var err = '';
     
     if (options.includes('11') && pattern == 1) {
-      
-      if (!contact_tel) {
-        err += '【電話連絡】を選んでください\n';
-      }
-      
-      if (contact_tel != '電話で会話した') {
-        
-        if (!free_radio){
-          err += '【フリー入力の有無】を選んでください。\n';
+
+    // 自動追客ON OFF判定
+      if(contact_monster){
+      // 自動追客ONの場合
+        if (!contact_tel) {
+          err += '【電話連絡】を選んでください\n';
         }
-        
-        if (!follow_item1 || !follow_item2 || !follow_item3 || !follow_item4) {
-          err += '希望条件１から４をすべて設定してください\n';
+
+        if (contact_tel != '電話で会話した') {
+
+          if (!free_radio){
+            err += '【フリー入力の有無】を選んでください。\n';
+          }
+
+          if (!follow_item1 || !follow_item2 || !follow_item3 || !follow_item4) {
+            err += '希望条件１から４をすべて設定してください\n';
+          }
         }
-        
       }
       
       if (err) {
@@ -3678,8 +3715,7 @@ export function MyModal5(props){
     })
       .then((response) => response.json())
       .then((json) => {
-        
-        if (contact_tel && contact_tel != '電話で会話した') {
+        if (contact_tel && contact_tel != '電話で会話した' && contact_monster) {
           
           let formData = new FormData();
 
